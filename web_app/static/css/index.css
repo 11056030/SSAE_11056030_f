@@ -1,0 +1,365 @@
+@charset "UTF-8";
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+/* General styles */
+body {
+    font-family: 'Microsoft JhengHei', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f5f8;
+    color: #333;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Header */
+header {
+    background-color: #fff;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 10;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-menu a {
+    text-decoration: none;
+    color: #333;
+    padding: 5px 10px;
+    border-radius: 15px;
+    transition: background-color 0.3s;
+}
+
+.nav-menu a:hover {
+    background-color: #e0d3e0;
+}
+
+.user-icon {
+    display: flex;
+    align-items: center;
+    gap: 25px; /* 間距 */
+}
+
+.user-circle {
+    width: 40px;
+    height: 40px;
+    background-color: #AA9DA9;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative; /* 添加相對定位 */
+}
+
+.fa-user {
+    font-size: 24px;
+    color: #ffffff;
+    position: absolute; /* 絕對定位 */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* 使用變形來居中 */
+}
+
+.fa-bell {
+    font-size: 32px;
+    color: #AA9DA9;
+}
+
+
+/* Main content */
+.main-container {
+    position: relative;
+    padding: 20px;
+    min-height: calc(100vh - 150px);
+}
+
+
+#animated-line {
+    width: 100%;
+    height: 100%;
+}
+
+#animated-line path {
+    stroke-dasharray: 7549.05908203125; /* 控制總長度，這個值要大於 path 總長度 */
+    stroke-dashoffset: 7549.05908203125;
+    animation: drawLine 4s ease-in-out forwards;
+    transition: stroke-dashoffset 0.1s linear;
+}
+  
+
+  
+  
+/* Decorative shapes */
+.shape {
+    position: relative;
+    height: 300px; /* 增加高度確保有足夠空間 */
+    z-index: 1;
+}
+
+.circle-container {
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+}
+
+#circle-stroke {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    width: 340px;
+    height: 340px;
+}
+
+#circle-stroke path {
+    stroke: #D1C5D1;
+    stroke-width: 3;
+    stroke-linecap: round;
+    fill: none;
+    
+    /* 動畫設置 */
+    stroke-dasharray: 0; /* 這個值會由JavaScript設置為實際路徑長度 */
+    stroke-dashoffset: 0; /* 這個值會由JavaScript設置為實際路徑長度 */
+    animation: drawCircle 3s ease-in-out forwards; /* 3秒畫完，可以調整時間 */
+}
+
+@keyframes drawCircle {
+    from {
+        stroke-dashoffset: 3038.013427734375; /* 一個足夠大的值，會被JavaScript重設 */
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+
+
+.circle-fill {
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    
+    /* 更強烈的球形效果 */
+    background: radial-gradient(circle at 25% 25%, 
+                rgba(245, 240, 245, 0.8) 3%, 
+                rgba(224, 214, 224, 0.6) 40%,
+                rgba(216, 207, 216, 0.4) 80%,
+                rgba(219, 214, 219, 0.5) 100%);
+    box-shadow: inset -15px -15px 40px rgba(0, 0, 0, 0.2),
+                inset 15px 15px 40px rgba(255, 255, 255, 0.4),
+                8px 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* section */
+.section01 {
+    position: absolute;
+    top: 150px;
+    left: 10%;
+    background-color: #e0d3e0;
+    padding: 8px 15px;
+    border-radius: 15px;
+    z-index: 3;
+}
+
+.section02 {
+    position: absolute;
+    top: 250px;
+    left: 20%;
+    background-color: #e0d3e0;
+    padding: 8px 15px;
+    border-radius: 15px;
+    z-index: 3;
+}
+
+.section03 {
+    position: absolute;
+    top: 330px;
+    left: 15%;
+    background-color: #e0d3e0;
+    padding: 8px 15px;
+    border-radius: 15px;
+    z-index: 3;
+}
+.section04 {
+    position: absolute;
+    top: 150px;
+    right: 20%;
+    background-color: #e0d3e0;
+    padding: 8px 15px;
+    border-radius: 15px;
+    z-index: 3;
+}
+.section05 {
+    position: absolute;
+    top: 220px;
+    right: 15%;
+    background-color: #e0d3e0;
+    padding: 8px 15px;
+    border-radius: 15px;
+    z-index: 3;
+}
+
+.section06 {
+    position: absolute;
+    top: 330px;
+    right: 25%;
+    background-color: #e0d3e0;
+    padding: 8px 15px;
+    border-radius: 15px;
+    z-index: 3;
+}
+
+.section01,
+.section02,
+.section03,
+.section04,
+.section05,
+.section06 {
+  background-color: #D1C5D1; /* 白底更立體 */
+  border-radius: 15px;
+  padding: 10px 20px;
+  z-index: 3;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(0px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.section01:hover,
+.section02:hover,
+.section03:hover,
+.section04:hover,
+.section05:hover,
+.section06:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+}
+
+
+/* Feature sections */
+.feature-container {
+    position: relative;
+    z-index: 3;
+    margin-top: 220px;
+}
+
+.feature-section {
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.feature-title {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.feature-title::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    background-color: #e0d3e0;
+    border-radius: 50%;
+}
+
+.feature-description {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.feature-tag {
+    display: inline-block;
+    background-color: #e0d3e0;
+    color: #333;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.path-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background-color: #e0d3e0;
+    z-index: 2;
+}
+
+
+
+/* Footer */
+footer {
+    background-color: #e0d3e0;
+    padding: 20px;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+}
+
+.footer-logo {
+    font-weight: bold;
+}
+
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.footer-contact {
+    font-size: 14px;
+    text-align: right;
+}
+
+.social-icons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.social-icon {
+    width: 24px;
+    height: 24px;
+    background-color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
