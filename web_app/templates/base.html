@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="{% block lang %}en{% endblock %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}北面rule書說{% endblock %}</title>
+    {% load static %}
+    {% block css %}{% endblock %}
+    {% block head_js %}{% endblock %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+</head>
+
+<body>
+  {% block header %}
+  <header>
+    <div class="logo">北面rule書說</div>
+    <div class="nav-menu">
+        <a href="#">傳聲筒</a>
+        <a href="#">討論區</a>
+        <a href="#">二手書交換</a>
+        <a href="#">投稿查詢</a>
+    </div>
+    <div class="user-icon">
+      <i class="fa-solid fa-bell"></i>
+      <div class="user-circle">
+        <i class="fa-solid fa-user"></i>
+      </div>
+    </div>
+  </header>
+  {% endblock %}
+
+  {% block content %}{% endblock %}
+
+  {% block footer %}{% endblock %}
+  
+  {% block body_js %}{% endblock %}
+</body>
+</html>
