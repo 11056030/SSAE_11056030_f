@@ -1,0 +1,57 @@
+/* Login form updates */
+
+/* Align form content to the bottom */
+.login-form {
+    justify-content: flex-end; /* Align content to the bottom */
+    padding-bottom: 50px; /* Add some space at the bottom */
+}
+
+/* Update input styling */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group input {
+    width: 100%;
+    /* padding: 12px 2px; */
+    border: none;
+    border-bottom: 2px solid #6e6e6e;
+    font-size: 16px;
+    background-color: transparent;
+    transition: all 0.3s ease;
+    outline: none;
+    /* border-radius: 2px; */
+}
+
+.form-group input:focus {
+    border: 2px solid #6e6e6e;
+    /* border-radius: 4px; */
+    padding: 12px;
+    background-color: transparent;
+}
+
+/* Update password input to match other inputs */
+.password-container input {
+    width: 100%;
+    /* padding: 12px 2px; */
+    border: none;
+    border-bottom: 2px solid #6e6e6e;
+    font-size: 16px;
+    background-color: transparent;
+    transition: all 0.3s ease;
+    outline: none;
+    /* border-radius: 2px; */
+}
+
+.password-container input:focus {
+    border: 2px solid #6e6e6e;
+    /* border-radius: 2px; */
+    padding: 12px;
+    background-color: transparent;
+}
+
+/* Adjust password toggle button position for the new input style */
+.toggle-password {
+    right: 10px;
+    top: 50%;
+}
