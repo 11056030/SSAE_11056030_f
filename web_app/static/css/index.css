@@ -10,11 +10,155 @@ body {
     font-family: 'Microsoft JhengHei', Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f8f5f8;
-    color: #333;
+    background-color: #F8F6F4;
+    color: #000;
     position: relative;
     overflow-x: hidden;
 }
+  
+:root {
+--cr-main-1: #f3d4d4;
+--cr-main-2: #abbef9;
+--cr-1: color-mix(in srgb, var(--cr-main-1), var(--cr-main-2) 20%);
+--cr-2: color-mix(in srgb, var(--cr-main-1), var(--cr-main-2) 35%);
+--cr-3: color-mix(in srgb, var(--cr-main-1), var(--cr-main-2) 50%);
+--cr-4: color-mix(in srgb, var(--cr-main-1), var(--cr-main-2) 65%);
+--cr-5: color-mix(in srgb, var(--cr-main-1), var(--cr-main-2) 80%);
+}
+
+html,
+body {
+font-family: 'Poppins', sans-serif;
+height: 100%;
+}
+
+.blobs {
+position: fixed;
+z-index: -1;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+pointer-events: none;
+filter: blur(120px);
+}
+
+.blob {
+    width: max(240px, 28vw);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+  
+
+.blob:nth-of-type(1) {
+background: var(--cr-main-1);
+}
+
+.blob:nth-of-type(2) {
+background: var(--cr-main-2);
+}
+
+.blob:nth-of-type(3) {
+background: var(--cr-1);
+}
+
+.blob:nth-of-type(4) {
+background: whitesmoke;
+}
+
+.blob:nth-of-type(5) {
+background: var(--cr-3);
+}
+
+.blob:nth-of-type(6) {
+background: var(--cr-4);
+}
+
+.blob:nth-of-type(7) {
+background: var(--cr-2);
+}
+
+
+
+/* 外層容器限制顯示寬度 */
+.marquee-container {
+position: absolute;
+top: 5%;
+right: 100px;
+width: 400px; /* 控制你想要的寬度，例如 300px */
+height: 32px;  /* 可依照字體大小調整 */
+overflow: hidden; /* 超出文字隱藏，製造滾動效果 */
+z-index: 1; /* 確保仍與 blob 背景融合 */
+pointer-events: none;
+}
+
+.marquee-container-2 {
+    position: absolute;
+    top: 14%;
+    right: 350px;
+    width: 300px; /* 控制你想要的寬度，例如 300px */
+    height: 32px;  /* 可依照字體大小調整 */
+    overflow: hidden; /* 超出文字隱藏，製造滾動效果 */
+    z-index: 1; /* 確保仍與 blob 背景融合 */
+    pointer-events: none;
+}
+
+
+/* 跑馬燈文字動畫 */
+.floating-marquee {
+display: inline-block;
+font-size: clamp(18px, 6vw, 16px);
+font-weight: bold;
+text-transform: uppercase;
+opacity: 0.2;
+mix-blend-mode: overlay;
+white-space: nowrap;
+animation: scrollMarquee 12s linear infinite;
+animation-delay: 1s;
+}
+
+/* 動畫使用 translateX 滑動 */
+@keyframes scrollMarquee {
+0% {
+    transform: translateX(100%);
+}
+100% {
+    transform: translateX(-100%);
+}
+}
+
+#lpurple {
+    position: absolute; /* 固定位置 */
+    top: 0; /* 頂部對齊 */
+    left: -19px; /* 左側對齊 */
+    z-index: -1; /* 確保它在其他元素之下 */
+    width: 12%;
+    height: 12%;
+}
+
+#rpurple {
+    position: absolute; /* 固定位置 */
+    top: 400px; /* 頂部對齊 */
+    right: -40px; /* 左側對齊 */
+    z-index: -1; /* 確保它在其他元素之下 */
+    width: 18%;
+    height: 18%;
+}
+
+#dpurple {
+    position: absolute; /* 固定位置 */
+    top: 1100px; /* 頂部對齊 */
+    left: -19px; /* 左側對齊 */
+    z-index: -1; /* 確保它在其他元素之下 */
+    width: 18%;
+    height: 18%;
+}
+
+
+  
 
 /* Header */
 header {
@@ -90,6 +234,48 @@ header {
     min-height: calc(100vh - 150px);
 }
 
+.stroke-group {
+transform: translate(-20px, 20px); /* 起始位置，與fill重疊 */
+opacity: 0;
+animation: strokeMove 1s ease-out forwards;
+animation-delay: 0.5s;
+}
+
+@keyframes strokeMove {
+to {
+    transform: translate(0, 0);
+    opacity: 1;
+}
+}
+
+.stroke-group-r {
+transform: translate(60px, -60px); /* 起始位置：從右上 */
+opacity: 0;
+animation: strokeMoveLeftUp 1s ease-out forwards;
+animation-delay: 0.5s;
+}
+
+@keyframes strokeMoveLeftUp {
+to {
+    transform: translate(0, 0);
+    opacity: 1;
+}
+}
+  
+  
+#triangle-1{
+    width: 10%;
+    height: 10%;
+}
+
+#triangle-2 {
+    width: 10%;
+    height: 10%;
+    position: absolute;
+    bottom: 0;
+    right: 110px;
+}
+
 
 #animated-line {
     width: 100%;
@@ -118,8 +304,9 @@ header {
     top: 80%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 200px;
-    height: 200px;
+    width: 320px;
+    height: 320px;
+    pointer-events: auto;
 }
 
 #circle-stroke {
@@ -155,7 +342,8 @@ header {
 
 
 
-.circle-fill {
+
+.circle-particles {
     width: 320px;
     height: 320px;
     border-radius: 50%;
@@ -163,18 +351,13 @@ header {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 2;
-    
-    /* 更強烈的球形效果 */
-    background: radial-gradient(circle at 25% 25%, 
-                rgba(245, 240, 245, 0.8) 3%, 
-                rgba(224, 214, 224, 0.6) 40%,
-                rgba(216, 207, 216, 0.4) 80%,
-                rgba(219, 214, 219, 0.5) 100%);
-    box-shadow: inset -15px -15px 40px rgba(0, 0, 0, 0.2),
-                inset 15px 15px 40px rgba(255, 255, 255, 0.4),
-                8px 8px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1;
+    overflow: hidden;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+    background-color: rgba(209, 197, 209, 0.2);
 }
+
+
 
 /* section */
 .section01 {
