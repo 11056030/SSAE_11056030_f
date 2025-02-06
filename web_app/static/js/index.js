@@ -148,13 +148,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 初始化粒子效果
   tsParticles.load("tsparticles", {
-    fpsLimit: 60,
+    fpsLimit: 30,
     fullScreen: {
       enable: false
     },
     particles: {
       number: {
-        value: 120,
+        value: 250,
         density: {
           enable: true,
           value_area: 800
@@ -271,3 +271,46 @@ document.addEventListener("DOMContentLoaded", function () {
     observer.observe(strokeGroupR);
   });
 });
+
+
+//隨著滑鼠流動
+document.addEventListener('mousemove', (e) => {
+    const circle = document.querySelector('.circle-particles');
+    const rect = circle.getBoundingClientRect();
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const deltaX = (mouseX - centerX) / 20;
+    const deltaY = (mouseY - centerY) / 20;
+    
+    circle.style.transform = `translate(-50%, -50%) translate(${deltaX}px, ${deltaY}px)`;
+  });
+  
+
+
+
+{/* <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
+const blob1 = document.querySelector("#blob1 path");
+
+anime({
+targets: blob1,
+d: [
+    {
+    value: "M421.5,310Q380,380,310,400Q240,420,170,380Q100,340,120,270Q140,200,190,130Q240,60,320,100Q400,140,430,200Q460,260,421.5,310Z"
+    },
+    {
+    value: "M432.5,310Q400,400,320,420Q240,440,180,390Q120,340,130,270Q140,200,190,140Q240,80,310,110Q380,140,420,200Q460,260,432.5,310Z"
+    },
+    {
+    value: "M410.5,300Q360,370,300,390Q240,410,180,370Q120,330,130,260Q140,190,200,130Q260,70,330,110Q400,150,420,210Q440,270,410.5,300Z"
+    }
+],
+easing: "easeInOutQuad",
+duration: 6000,
+direction: "alternate",
+loop: true
+}); */}
+
+
