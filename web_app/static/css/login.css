@@ -13,6 +13,13 @@ body {
     overflow-x: hidden;
 }
 
+input:focus {
+    appearance: none;
+    -webkit-appearance: none; /* �?Safari ??Chrome 必�? */
+    -moz-appearance: none;    /* �?Firefox 必�? */
+    background: white;
+}
+  
 /* Animated Background */
 .background {
     position: fixed;
@@ -113,12 +120,23 @@ main {
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
     position: relative;
 }
 
+.frame {
+    width: 800px;
+    height: 400px;
+    background-color: transparent;
+    border-radius: 10px;
+    position: absolute;
+    border: 1px solid rgb(71, 71, 71);
+    top: 7%;
+    left: 3%;
+    z-index: -1;
+}
+
 /* Decorative box */
-.login-container::after {
+/* .login-container::after {
     content: "";
     position: absolute;
     width: 800px;
@@ -129,7 +147,7 @@ main {
     right: -20px;
     z-index: -1;
     pointer-events: none;
-}
+} */
 
 /* Sidebar */
 .login-sidebar {
@@ -162,6 +180,8 @@ main {
     padding: 40px;
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: 50px; 
 }
 
 .login-sidebar h2 {
@@ -175,6 +195,7 @@ main {
     margin-top: 20px;
     align-self: flex-start;
     margin-left: 50px;
+    font-weight: bold;
 }
 
 .login-sidebar h2::before {
@@ -190,22 +211,35 @@ main {
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 8px;
     font-size: 16px;
+    font-weight: bold;
     color: #333;
 }
 
+
 .form-group input {
+    appearance: none;
+    -webkit-appearance: none; /* �?Safari ??Chrome 必�? */
+    -moz-appearance: none;    /* �?Firefox 必�? */
+    border: none;
+    border-bottom: 2px solid #6e6e6e;
+    outline: none;
     width: 100%;
     padding: 12px;
-    border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 16px;
+}
+.form-group input:focus {
+    background-color: white;
+}
+.form-group input::placeholder {
+    background-color: white;
 }
 
 .password-container {
@@ -265,3 +299,8 @@ main {
 .btn-submit:hover {
     background-color: #333;
 }
+
+/* 修改input預設顏色 */
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px white inset;
+  }
