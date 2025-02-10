@@ -452,6 +452,36 @@ to {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   }
   
+  .dialog-text {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 24px;
+    font-weight: 350;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 320px; /* Reduced to ensure text stays within the bubble */
+    transition: all 0.3s ease;
+  }
+  
+  .dialog-group-l:hover .dialog-text {
+    animation: text-scroll 20s linear infinite;
+  }
+  
+  @keyframes text-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    40% {
+      transform: translateX(calc(-100% + 320px));
+    }
+    60% {
+      transform: translateX(calc(-100% + 320px));
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+  
   .path-outline {
     transition: transform 0.3s ease;
     pointer-events: auto;
