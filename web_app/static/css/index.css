@@ -352,8 +352,8 @@ to {
     transform: translate(-50%, -50%);
     z-index: 1;
     overflow: hidden;
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
-    background-color: rgba(209, 197, 209, 0.2);
+    /* box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+    background-color: rgba(209, 197, 209, 0.2); */
 }
 
 

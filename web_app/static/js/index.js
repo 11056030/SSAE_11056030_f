@@ -477,24 +477,34 @@ function initTechParticles() {
         vx += (Math.random() - 0.5) * 0.6;
         vy += (Math.random() - 0.5) * 0.6;
       } else {
-        // 滑鼠沒有互動時，讓粒子均勻分布在整個圓形內
-        if (normalizedDist > 0.85) { // 提前在接觸邊緣前就開始反彈
-          // 從圓形外圈引導粒子回到中心
-          const angleToCenter = Math.atan2(centerY - particleScreenY, centerX - particleScreenX);
-          const pullStrength = Math.pow(Math.min(1, (normalizedDist - 0.85) / 0.15), 2) * 4.0; // 增強引力
-          vx += Math.cos(angleToCenter) * pullStrength;
-          vy += Math.sin(angleToCenter) * pullStrength;
+        // 滑鼠沒有互動時，讓粒子回到初始圓形分布位置（且速度歸零）
+        if (!particle.basePosition) {
+          // 初始化 basePosition 為初始位置
+          particle.basePosition = { x: particle.position.x, y: particle.position.y };
         }
-        
-        // 增加均勻的引力，確保粒子均勻分布在圓形內
-        const centerPull = 0.05; // 弱引力確保粒子向圓心聚集
-        const angleToCenter = Math.atan2(centerY - particleScreenY, centerX - particleScreenX);
-        vx += Math.cos(angleToCenter) * centerPull;
-        vy += Math.sin(angleToCenter) * centerPull;
-        
-        // 增加輕微的隨機運動，讓粒子在圓內均勻分布
-        vx += (Math.random() - 0.5) * 0.1;
-        vy += (Math.random() - 0.5) * 0.1;
+        // 讓 basePosition.x 隨時間小幅度左右晃動
+        if (!particle.baseOrigin) {
+          particle.baseOrigin = { x: particle.basePosition.x, y: particle.basePosition.y };
+        }
+        const t = Date.now() * 0.002 + (particle.baseOrigin.x % 100); // 每個粒子 phase 不同
+        const swing = Math.sin(t) * 6; // 晃動幅度 6px
+        const swingX = particle.baseOrigin.x + swing;
+        // 計算回歸向量（x 軸晃動，y 軸靜止）
+        const dx = swingX - particle.position.x;
+        const dy = particle.baseOrigin.y - particle.position.y;
+        const distToBase = Math.sqrt(dx * dx + dy * dy);
+        const returnSpeed = 0.18;
+        if (distToBase > 0.5) {
+          vx = dx * returnSpeed;
+          vy = dy * returnSpeed;
+        } else {
+          particle.position.x = swingX;
+          particle.position.y = particle.baseOrigin.y;
+          particle.velocity.x = 0;
+          particle.velocity.y = 0;
+          vx = 0;
+          vy = 0;
+        }
       }
       
       // 滑鼠互動 - 逃離效果，減少互動範圍
@@ -505,9 +515,14 @@ function initTechParticles() {
         vy += Math.sin(angleFromMouse) * repulseFactor;
       }
       
-      // 應用速度
-      particle.velocity.x = particle.velocity.x * 0.92 + vx * 0.08;
-      particle.velocity.y = particle.velocity.y * 0.92 + vy * 0.08;
+      // 應用速度（滑鼠不在時，直接設為 vx/vy）
+      if (!isMouseInteracting) {
+        particle.velocity.x = vx;
+        particle.velocity.y = vy;
+      } else {
+        particle.velocity.x = particle.velocity.x * 0.92 + vx * 0.08;
+        particle.velocity.y = particle.velocity.y * 0.92 + vy * 0.08;
+      }
       
       // 限制最大速度
       const speed = Math.sqrt(particle.velocity.x * particle.velocity.x + particle.velocity.y * particle.velocity.y);
