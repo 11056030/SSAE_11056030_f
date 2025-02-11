@@ -29,11 +29,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
+            // Show error message when form is submitted
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.style.display = 'block';
+            }
+            
             // Here you would typically send the data to a server
             console.log('Login attempt:', username);
             
             // For demo purposes, simulate a successful login
-            alert('登入成功！');
+            // Uncomment for actual implementation
+            // alert('登入成功！');
             // Redirect to home page or dashboard
             // window.location.href = '/dashboard';
         });
@@ -46,6 +53,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Clear form fields
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
+            
+            // Hide error message when cancel is clicked
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
             
             // Or redirect to home page
             // window.location.href = '/';
