@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block lang %}zh-Hant{% endblock %}
+
+{% block title %}北商rule事說 - 登入{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/reset.css' %}">
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<div class="background">
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+</div>
+
+<main>
+    <div class="login-container">
+        <div class="frame"></div>
+        <div class="login-sidebar">
+            <h2>登入</h2>
+            <div class="sidebar-text">
+                請使用學校帳號進行登入
+            </div>
+        </div>
+        <div class="login-form">
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">帳號</label>
+                    <input type="text" id="username" name="username" placeholder="11056000.ntub.edu.tw" required style="background-color:pink;">
+                </div>
+                <div class="form-group">
+                    <label for="password">密碼</label>
+                    <div class="password-container">
+                        <input type="password" id="password" name="password" required>
+                        <button type="button" id="togglePassword" class="toggle-password">
+                            <img src="{% static 'image/eye.svg' %}" alt="顯示密碼">
+                        </button>
+                    </div>
+                    <p class="error-message" id="errorMessage" style="display: none;">您的帳號或密碼輸入錯誤</p>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel">取消</button>
+                    <button type="submit" class="btn-submit">確定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block body_js %}
+<script src="{% static 'js/login.js' %}"></script>
+{% endblock %}

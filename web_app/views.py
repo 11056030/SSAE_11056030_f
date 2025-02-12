@@ -1,3 +1,11 @@
 from django.shortcuts import render
 
-# Create your views here.
+# 這是各畫面的連結
+def index(request):
+  return render(request, 'index.html')
+
+def login(request):
+  return render(request, 'login.html')
+
+def chat(request):
+  return render(request, 'chat.html')
