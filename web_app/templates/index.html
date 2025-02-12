@@ -1,39 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>這是首頁</title>
-    <!--{% load static %}-->
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="../static/css/index.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.42.4/tsparticles.min.js"></script>
-    <script src="../static/js/index.js"></script>
+{% extends 'base.html' %}
+{% load static %}
 
-</head>
+{% block lang %}zh-Hant{% endblock %}
 
-<body>
-  <header>
-    <div class="logo">logooo</div>
-    <div class="nav-menu">
-        <a href="#">傳聲筒</a>
-        <a href="#">討論區</a>
-        <a href="#">二手書交換</a>
-        <a href="#">投稿查詢</a>
-    </div>
-    <div class="user-icon">
-      <i class="fa-solid fa-bell"></i>
-      <div class="user-circle">
-        <i class="fa-solid fa-user"></i>
-      </div>
-    </div>
-  </header>
+{% block title %}北商rule書說 - 首頁{% endblock %}
 
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
 
+{% block head_js %}
+<script src="https://cdn.jsdelivr.net/npm/tsparticles@1.42.4/tsparticles.min.js"></script>
+{% endblock %}
 
+{% block content %}
   <div class="main-container">
 
     <div class="blobs">
@@ -137,13 +117,6 @@
             <path d="M67.266 14.4791L43.6915 79.6489L112.59 67.7235L67.266 14.4791Z" stroke="#635C63" stroke-width="2"/>
           </g>
         </svg>
-        
-        <!--<svg id="triangle-1" xmlns="http://www.w3.org/2000/svg" width="188" height="143" viewBox="0 0 188 143" fill="none">
-          <path d="M152.521 102.905L104.945 47.015L80.1997 115.423L152.521 102.905Z" fill="#D1C5D1"/>
-          <path d="M125.569 35.5694L101.994 100.739L170.893 88.8138L125.569 35.5694Z" stroke="#635C63" stroke-width="2"/>
-          <path d="M94.2181 81.8137L46.6427 25.9242L21.897 94.3321L94.2181 81.8137Z" fill="#D1C5D1"/>
-          <path d="M67.266 14.4791L43.6915 79.6489L112.59 67.7235L67.266 14.4791Z" stroke="#635C63" stroke-width="2"/>
-        </svg>-->
 
         <svg id="animated-line" xmlns="http://www.w3.org/2000/svg" width="1826" height="1736" viewBox="0 0 1826 1736" fill="none">
           <path d="M182.717 1C182.717 1 788.061 316.164 570.5 336.5C-670.5 452.5 1231.5 612 1344 609C1404 603 1520 588 1533 545.5C1546.24 502.224 1488.91 477.05 1445 488C1393.78 500.772 1358 513.5 1344 609C1329 721.5 1461 1142.5 1736.5 1321.5C1840.79 1389.26 1881.45 1319.22 1696 1310.5C1451.5 1299 966.283 1193.5 793.783 1180C348.564 1145.16 -293.147 1268.99 151.5 1310.5C236.46 1318.43 438.783 1361 370 1310.5C345.197 1292.29 328.324 1283.72 298 1278.5C185.052 1259.07 306 1369.5 370 1467.5C655.429 1904.56 1508 1673 1508 1673" stroke="#635C63" stroke-width="2"/>
@@ -157,42 +130,11 @@
           <path d="M68.2753 53.2116L67.5312 122.51L128.633 88.513L68.2753 53.2116Z" stroke="#635C63" stroke-width="2"/>
           </g>
         </svg>
-
- 
-          <!---<div class="feature-section">
-              <div class="feature-title">傳聲筒</div>
-              <div class="feature-description">
-                  無論是和朋友一起吃午餐、參加復肉派對、還是漂亮外送免運，都可以在這裡揪團，邀請其他人一起參與，藉此認識志同道合的夥伴，讓每個活動都充滿樂趣與互動。
-              </div>
-              <div class="feature-tag">活動 × 朋友</div>
-          </div>
-
-          <div class="feature-section">
-              <div class="feature-title">討論區</div>
-              <div class="feature-description">
-                  無論是學術、生活、還是校園趣事，都能找到共同話題，互相交流心得、分享經驗，擴展視野並建立友誼。
-              </div>
-              <div class="feature-tag">話題 × 交流</div>
-          </div>
-
-          <div class="feature-section">
-              <div class="feature-title">舊書 × 新書</div>
-              <div class="feature-description">
-                  無論是麥當理書籍，還是尋找所需的教材，都能在這裡輕鬆達成，既能幫助環保，又能節省購書開支，讓書本的價值得以延續。
-              </div>
-              <div class="feature-tag">二手書交換</div>
-          </div>
-
-          <div class="feature-section">
-              <div class="feature-title">法規查詢</div>
-              <div class="feature-description">
-                  無論是想知道畢業需修滿多少學分，還是學校的其他規範，通通能輕鬆即時獲得準確的資訊。
-              </div>
-              <div class="feature-tag">法規 × 智能</div>
-          </div>-->
       </div>
   </div>
+{% endblock %}
 
+{% block footer %}
   <footer>
       <div>
           <div class="footer-logo">北面rule書說</div>
@@ -214,10 +156,8 @@
           </div>
       </div>
   </footer>
-    
-</body>
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-/>
-</html>
+{% endblock %}
+
+{% block body_js %}
+<script src="{% static 'js/index.js' %}"></script>
+{% endblock %}

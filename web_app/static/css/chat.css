@@ -1,0 +1,437 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* 導覽列樣式 */
+.nav-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: white;
+    border-bottom: 1px solid #e0e0e0;
+    height: 80px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.app-branding {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+}
+
+.app-icon {
+    width: 30px;
+    height: 30px;
+    background-color: #9999cc;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.app-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 側邊欄樣式 */
+.sidebar {
+    width: 250px;
+    background-color: white;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.3s ease, width 0.3s ease, opacity 0.2s ease;
+}
+
+.sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 0;
+    opacity: 0;
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 20px;
+    left: 15px;
+    width: 36px;
+    height: 36px;
+    background-color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    z-index: 50;
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    color: #666;
+}
+
+.sidebar-toggle.visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.nav-tabs {
+    display: flex;
+    margin-right: auto;
+}
+
+.nav-tab {
+    padding: 0 15px;
+    cursor: pointer;
+    color: #666;
+    font-size: 14px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.nav-tab.active {
+    color: #7676b3;
+}
+
+.nav-tab.active:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 15px;
+    right: 15px;
+    height: 2px;
+    background-color: #7676b3;
+}
+
+.chat-history-header {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.history-title {
+    font-weight: bold;
+    color: #333;
+}
+
+.close-btn {
+    cursor: pointer;
+    color: #999;
+}
+
+.new-chat-btn {
+    margin: 15px;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.new-chat-btn span {
+    margin-right: 5px;
+}
+
+.upload-pdf-btn {
+    margin: 0 15px 15px;
+    padding: 10px;
+    background-color: #7676b3;
+    color: white;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.upload-pdf-btn:hover {
+    background-color: #6565a3;
+}
+
+.upload-pdf-btn span {
+    margin-right: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.chat-list, .file-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.file-list {
+    padding: 15px;
+}
+
+.file-item {
+    padding: 12px;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.file-item:hover {
+    background-color: #e8e8f0;
+}
+
+.file-item-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.file-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    color: #7676b3;
+}
+
+.file-name {
+    font-weight: bold;
+    color: #333;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #999;
+}
+
+.empty-files-message {
+    color: #999;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+.chat-tabs {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.chat-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+}
+
+.chat-tab.active {
+    border-bottom: 2px solid #333;
+    color: #333;
+}
+
+.chat-item {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.chat-item:hover {
+    background-color: #f5f5f5;
+}
+
+.chat-item.selected {
+    background-color: #f0f0f5;
+    border-left: 3px solid #7676b3;
+}
+
+.chat-item-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.chat-item-date {
+    font-size: 12px;
+    color: #999;
+}
+
+/* 主內容區樣式 */
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    justify-content: center;
+}
+
+/* 確保側邊欄收起時主內容區仍然居中 */
+.sidebar.collapsed ~ .chat-area {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* 當側邊欄收起時的主內容區調整 */
+.sidebar.collapsed + .chat-area {
+    margin-left: 0;
+}
+
+/* 主聊天區域樣式 */
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    text-align: center;
+}
+
+.frame-info {
+    color: #999;
+    font-size: 14px;
+    margin-right: 15px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+}
+
+.header-action-btn {
+    width: 30px;
+    height: 30px;
+    background-color: #9999cc;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.messages-container {
+    flex: 1;
+    width: 100%;
+    max-width: 800px;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #f0f0f5;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="pattern" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="20" fill="%23d9d9e6" opacity="0.3" /><line x1="0" y1="0" x2="100" y2="100" stroke="%23d9d9e6" stroke-width="1" opacity="0.2" /><line x1="100" y1="0" x2="0" y2="100" stroke="%23d9d9e6" stroke-width="1" opacity="0.2" /></pattern></defs><rect width="100%" height="100%" fill="url(%23pattern)" /></svg>');
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+}
+
+.message {
+    margin-bottom: 20px;
+    max-width: 70%;
+    display: flex;
+}
+
+.message.received {
+    align-self: flex-start;
+}
+
+.message.sent {
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.message-bubble {
+    padding: 12px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.received .message-bubble {
+    background-color: #b8b8c6;
+    color: white;
+    border-top-left-radius: 4px;
+}
+
+.sent .message-bubble {
+    background-color: #e6e6e6;
+    color: #333;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-input-container {
+    padding: 10px 15px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+    margin-top: 20px;
+    width: 100%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 30px;
+    background-color: white;
+    font-size: 14px;
+    outline: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.send-btn {
+    width: 40px;
+    height: 40px;
+    background-color: #a3a3b5;
+    border-radius: 50%;
+    margin-left: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
