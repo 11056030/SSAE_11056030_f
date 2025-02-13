@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>北商Rule - 揾團區</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/join.css' %}">
+    {% block head_js %}{% endblock %}
+</head>
+<body>
+    {% block header %}
+    <!-- <header>
+        <div class="header-container">
+            <div class="logo">北面rule書說</div>
+            <div class="nav-menu">
+                <a href="#">傳聲筒</a>
+                <a href="#">討論區</a>
+                <a href="#">二手書交換</a>
+                <a href="#">投稿查詢</a>
+            </div>
+            <div class="user-icon">
+                <i class="fa-solid fa-bell"></i>
+                <div class="user-circle">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </header> -->
+    {% endblock %}
+    
+    {% block content %}
+    
+    <div class="page-container">
+        <div class="page-header">
+            <div class="header-left">
+                <div class="page-icon">👥</div>
+                <h1 class="page-title">揪團區</h1>
+            </div>
+            <a href="揪團區（發起揪團）.html" class="create-group-btn"><span>+</span> 發起揪團</a>
+        </div>
+        
+        <div class="filter-section">
+            <select class="filter-dropdown">
+                <option>全部活動類型</option>
+                <option>美食</option>
+                <option>運動</option>
+                <option>讀書</option>
+                <option>旅遊</option>
+                <option>電影</option>
+                <option>其他</option>
+            </select>
+            <select class="filter-dropdown">
+                <option>全部地點</option>
+                <option>校內</option>
+                <option>校外</option>
+            </select>
+            <select class="filter-dropdown">
+                <option>全部時間</option>
+                <option>今天</option>
+                <option>本週</option>
+                <option>本月</option>
+            </select>
+            <input type="text" class="search-box" placeholder="搜尋活動...">
+        </div>
+        
+        <div class="activity-grid">
+            <div class="activity-card">
+                <div class="activity-image">
+                    <img src="/api/placeholder/400/180" alt="烤肉聚會">
+                    <div class="activity-tag">美食</div>
+                </div>
+                <div class="activity-content">
+                    <h3 class="activity-title">週末烤肉趴，一起來同樂！</h3>
+                    <div class="activity-info">
+                        <div class="activity-location">
+                            <span class="location-icon">📍</span>
+                            <span>大安森林公園</span>
+                        </div>
+                        <div class="activity-time">
+                            <span class="time-icon">🕒</span>
+                            <span>4/6 下午2:00</span>
+                        </div>
+                    </div>
+                    <p class="activity-description">週末一起來烤肉放鬆！我們會準備各種食材，飲料自備。歡迎大家參加，認識新朋友！</p>
+                    <div class="activity-footer">
+                        <div class="participants">
+                            <div class="participant-avatars">
+                                <div class="participant-avatar"></div>
+                                <div class="participant-avatar"></div>
+                                <div class="participant-avatar"></div>
+                            </div>
+                            <div class="participant-count">8/15人</div>
+                        </div>
+                        <a href="揪團區（揪團詳情）.html" class="join-btn">我要參加</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="activity-card">
+                <div class="activity-image">
+                    <img src="/api/placeholder/400/180" alt="期中考讀書會">
+                    <div class="activity-tag">讀書</div>
+                </div>
+                <div class="activity-content">
+                    <h3 class="activity-title">會計學期中考讀書會</h3>
+                    <div class="activity-info">
+                        <div class="activity-location">
+                            <span class="location-icon">📍</span>
+                            <span>圖書館3樓讀書室</span>
+                        </div>
+                        <div class="activity-time">
+                            <span class="time-icon">🕒</span>
+                            <span>4/5 晚上7:00</span>
+                        </div>
+                    </div>
+                    <p class="activity-description">期中考快到了，一起來複習會計學！我有整理好的重點筆記，可以一起討論難題。人數限制避免太吵雜，請有準備的同學參加。</p>
+                    <div class="activity-footer">
+                        <div class="participants">
+                            <div class="participant-avatars">
+                                <div class="participant-avatar"></div>
+                                <div class="participant-avatar"></div>
+                                <div class="participant-avatar"></div>
+                            </div>
+                            <div class="participant-count">5/8人</div>
+                        </div>
+                        <a href="#" class="join-btn">我要參加</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="activity-card">
+                <div class="activity-image">
+                    <img src="/api/placeholder/400/180" alt="籃球練習">
+                    <div class="activity-tag">運動</div>
+                </div>
+                <div class="activity-content">
+                    <h3 class="activity-title">週三籃球練習</h3>
+                    <div class="activity-info">
+                        <div class="activity-location">
+                            <span class="location-icon">📍</span>
+                            <span>校內籃球場</span>
+                        </div>
+                        <div class="activity-time">
+                            <span class="time-icon">🕒</span>
+                            <span>每週三晚上6:00</span>
+                        </div>
+                    </div>
+                    <p class="activity-description">固定每週三晚上的籃球練習，歡迎對籃球有興趣的同學參加！不限男女，有經驗或新手都可以，一起來動一動。</p>
+                    <div class="activity-footer">
+                        <div class="participants">
+                            <div class="participant-avatars">
+                                <div class="participant-avatar"></div>
+                                <div class="participant-avatar"></div>
+                                <div class="participant-avatar"></div>
+                            </div>
+                            <div class="participant-count">9/10人</div>
+                        </div>
+                        <a href="#" class="join-btn">我要參加</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="activity-card">
+                <div class="activity-image">
+                    <img src="/api/placeholder/400/180" alt="電影之夜">
+                    <div class="activity-tag">電影</div>
+                </div>
+                <div class="activity-content">
+                    <h3 class="activity-title">漫威電影馬拉松</h3>
+                    <div class="activity-info">
+                        <div class="activity-location">
+                            <span class="location-icon">📍</span>
+                            <span>市民大道電影院</span>
+                        </div>
+                        <div class="activity-time">
+                            <span class="time-icon">🕒</span>
+                            <span>4/10 下午1:00</span>
+                        </div>
+                    </div>
+                    <p class="activity-description">一起來看漫威電影馬拉松！連續播放三部復仇者系列電影，提供爆米花和飲料。喜歡漫威的朋友不要錯過！</p>
+                    <div class="activity-footer">
+                        <div class="participants">
+                            <div class="participant-avatars">
+                                <div class="participant-avatar"></div>
+                                <div class="participant-avatar"></div>
+                                <div class="participant-avatar"></div>
+                            </div>
+                            <div class="participant-count">12/20人</div>
+                        </div>
+                        <a href="#" class="join-btn">我要參加</a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    {% endblock %}
+    
+    {% block footer %}{% endblock %}
+    
+    {% block body_js %}
+    <script src="{% static 'js/join.js' %}"></script>
+    {% endblock %}
+</body>
+</html>
