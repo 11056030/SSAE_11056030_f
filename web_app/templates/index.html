@@ -4,32 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>這是首頁</title>
-    <!--{% load static %}-->
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="../static/css/index.css"
-    />
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/index.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.42.4/tsparticles.min.js"></script>
-    <script src="../static/js/index.js"></script>
+    <script src="{% static 'js/index.js' %}"></script>
 </head>
 
 <body>
-  <header>
-    <div class="logo">logooo</div>
-    <div class="nav-menu">
-        <a href="#">傳聲筒</a>
-        <a href="#">討論區</a>
-        <a href="#">二手書交換</a>
-        <a href="#">投稿查詢</a>
-    </div>
-    <div class="user-icon">
-      <i class="fa-solid fa-bell"></i>
-      <div class="user-circle">
-        <i class="fa-solid fa-user"></i>
-      </div>
-    </div>
-  </header>
+  {% include 'navbar.html' %}
 
 
 
@@ -185,4 +168,5 @@
   rel="stylesheet"
   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 />
+<script src="{% static 'js/navbar.js' %}"></script>
 </html>
