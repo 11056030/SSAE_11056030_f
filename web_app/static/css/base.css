@@ -122,3 +122,40 @@ header {
     border-radius: 50%;
     border: 1px solid #f9f5e7;
 }
+
+/* Dropdown menu styles */
+.user-dropdown {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 120px;
+    padding: 10px 0;
+    display: none; /* 使用 display 屬性更可靠 */
+    z-index: 1000;
+}
+
+/* 懸停時顯示下拉菜單 */
+.user-circle:hover .user-dropdown {
+    display: block;
+}
+
+.user-dropdown a {
+    display: block;
+    padding: 12px 15px;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.user-dropdown a:hover {
+    background-color: #f5f0f5;
+}
+
+.user-circle {
+    cursor: pointer;
+    position: relative;
+}

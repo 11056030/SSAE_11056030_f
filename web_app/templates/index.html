@@ -1,21 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>這是首頁</title>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/index.css' %}" />
-    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/tsparticles@1.42.4/tsparticles.min.js"></script>
-    <script src="{% static 'js/index.js' %}"></script>
-</head>
+{% extends 'base.html' %}
+{% load static %}
 
-<body>
-  {% include 'navbar.html' %}
+{% block lang %}zh-Hant{% endblock %}
 
+{% block title %}北商rule書說 - 首頁{% endblock %}
 
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
 
+{% block head_js %}
+<script src="https://cdn.jsdelivr.net/npm/tsparticles@1.42.4/tsparticles.min.js"></script>
+{% endblock %}
+
+{% block content %}
   <div class="main-container">
 
     <div class="blobs">
@@ -28,10 +26,10 @@
       <div class="blob"></div>
     </div>
     <div class="marquee-container">
-      <h2 class="floating-marquee">song's run horse light</h2>
+      <h2 class="floating-marquee">song's run horse light 快來使用校規查詢功能吧</h2>
     </div>
     <div class="marquee-container-2">
-      <h2 class="floating-marquee">倒數不知道幾天！菜一天！啊啊啊我要被吃掉了</h2>
+      <h2 class="floating-marquee">倒數不知道幾天！啊啊啊啊啊我要被吃掉了</h2>
     </div>
 
 
@@ -60,19 +58,53 @@
         <div class="circle-container">
 
           <div id="tsparticles" class="circle-particles"></div>
-          
             <svg id="circle-stroke" xmlns="http://www.w3.org/2000/svg" width="473" height="469" viewBox="0 0 473 469" fill="none">
               <path d="M427.865 405.544C410.058 421.083 380.198 429.826 357.722 434.987C301.632 447.867 232.721 466.041 176.376 452.745C26.0601 417.273 -22.8193 218.457 52.3417 102.333C108.542 15.5032 311.558 -38.1477 398 39.581C442.352 79.4615 459.733 135.248 468.572 191.564C477.526 248.617 461.694 304.862 427.865 354.745C355.396 461.605 201.869 497.381 85.061 440.17C9.97511 403.395 -3.66047 318.294 3.79737 243.815C13.2755 149.162 76.7975 70.1825 168.677 39.5812C234.178 17.7655 325.493 17.777 380.604 63.8405C436.493 110.555 456.578 184.407 460.584 252.109C464.454 317.491 444.047 373.363 387.02 411.35C350.992 435.348 318.935 447.396 278.383 431.669" stroke="#D1C5D1" stroke-width="3" stroke-linecap="round"/>
             </svg>
-            
+          </div>
+          <div class="lsection">
+            <svg class="section" xmlns="http://www.w3.org/2000/svg" width="1522" height="395" viewBox="0 0 1522 395" fill="none">
+              <g class="dialog-group-l">
+                <defs>
+                  <clipPath id="dialogClip">
+                    <path d="M41 0.5H392.233C392.509 0.500133 392.733 0.723942 392.733 1V33C392.733 52.0537 377.287 67.4999 358.233 67.5H7C6.72386 67.5 6.5 67.2761 6.5 67V35C6.5 15.9462 21.9462 0.500001 41 0.5Z" />
+                  </clipPath>
+                </defs>
+                <path class="path-outline" d="M35 10.5H386.233C386.509 10.5001 386.733 10.7239 386.733 11V43C386.733 62.0537 371.287 77.4999 352.233 77.5H1C0.723857 77.5 0.5 77.2761 0.5 77V45C0.500001 25.9462 15.9462 10.5 35 10.5Z" stroke="#9E8C9E"/>
+                <path class="path-fill" d="M41 0.5H392.233C392.509 0.500133 392.733 0.723942 392.733 1V33C392.733 52.0537 377.287 67.4999 358.233 67.5H7C6.72386 67.5 6.5 67.2761 6.5 67V35C6.5 15.9462 21.9462 0.500001 41 0.5Z" fill="#D1C5D1" stroke="#9E8C9E"/>
+                <g clip-path="url(#dialogClip)">
+                  <text class="dialog-text" x="20" y="40" fill="black">最新！課程評論：林志忠老師的資料科學課程</text>
+                </g>
+              </g>
+              <g class="dialog-group-l">
+                <path class="path-outline" d="M285 166.5H444.087C444.363 166.5 444.587 166.724 444.587 167V199C444.587 218.054 429.141 233.5 410.087 233.5H251C250.724 233.5 250.5 233.276 250.5 233V201C250.5 181.946 265.946 166.5 285 166.5Z" stroke="#9E8C9E"/>
+                <path class="path-fill" d="M291 156.5H450.087C450.363 156.5 450.587 156.724 450.587 157V189C450.587 208.054 435.141 223.5 416.087 223.5H257C256.724 223.5 256.5 223.276 256.5 223V191C256.5 171.946 271.946 156.5 291 156.5Z" fill="#D1C5D1" stroke="#9E8C9E"/>
+              </g>
+              <g class="dialog-group-l">
+                <path class="path-outline" d="M171 322.5H397.73C398.007 322.5 398.23 322.724 398.23 323V355C398.23 374.054 382.784 389.5 363.73 389.5H137C136.724 389.5 136.5 389.276 136.5 389V357C136.5 337.946 151.946 322.5 171 322.5Z" stroke="#9E8C9E"/>
+                <path class="path-fill" d="M177 312.5H403.73C404.007 312.5 404.23 312.724 404.23 313V345C404.23 364.054 388.784 379.5 369.73 379.5H143C142.724 379.5 142.5 379.276 142.5 379V347C142.5 327.946 157.946 312.5 177 312.5Z" fill="#D1C5D1" stroke="#9E8C9E"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="rsection">
+            <svg class="section" xmlns="http://www.w3.org/2000/svg" width="1522" height="395" viewBox="0 0 1522 395" fill="none">
+              <g class="dialog-group-r">
+                <path class="path-outline" d="M298 10.5H138.913C138.637 10.5 138.413 10.7239 138.413 11V43C138.413 62.0538 153.859 77.5 172.913 77.5H332C332.276 77.5 332.5 77.2761 332.5 77V45C332.5 25.9462 317.054 10.5 298 10.5Z" stroke="#9E8C9E"/>
+                <path class="path-fill" d="M292 0.5H132.913C132.637 0.5 132.413 0.723861 132.413 1V33C132.413 52.0538 147.859 67.5 166.913 67.5H326C326.276 67.5 326.5 67.2761 326.5 67V35C326.5 15.9462 311.054 0.5 292 0.5Z" fill="#D1C5D1" stroke="#9E8C9E"/>
+              </g>
+              <g class="dialog-group-r">
+                <path class="path-outline" d="M234 166.5H7.26953C6.99345 166.5 6.76953 166.724 6.76953 167V199C6.76953 218.054 22.2158 233.5 41.2695 233.5H268C268.276 233.5 268.5 233.276 268.5 233V201C268.5 181.946 253.054 166.5 234 166.5Z" stroke="#9E8C9E"/>
+                <path class="path-fill" d="M228 156.5H1.26953C0.993446 156.5 0.769531 156.724 0.769531 157V189C0.769532 208.054 16.2158 223.5 35.2695 223.5H262C262.276 223.5 262.5 223.276 262.5 223V191C262.5 171.946 247.054 156.5 228 156.5Z" fill="#D1C5D1" stroke="#9E8C9E"/>
+              </g>
+              <g class="dialog-group-r">
+                <path class="path-outline" d="M442 322.5H90.7666C90.4906 322.5 90.2666 322.724 90.2666 323V355C90.2666 374.054 105.713 389.5 124.767 389.5H476C476.276 389.5 476.5 389.276 476.5 389V357C476.5 337.946 461.054 322.5 442 322.5Z" stroke="#9E8C9E"/>
+                <path class="path-fill" d="M436 312.5H84.7666C84.4906 312.5 84.2666 312.724 84.2666 313V345C84.2666 364.054 99.7129 379.5 118.767 379.5H470C470.276 379.5 470.5 379.276 470.5 379V347C470.5 327.946 455.054 312.5 436 312.5Z" fill="#D1C5D1" stroke="#9E8C9E"/>
+              </g>
+            </svg>
+          </div>
         </div>
-        <div class="section01">/////////////////////////</div>
-        <div class="section02">???????</div>
-        <div class="section03">!!!!!!!!!!!!!!!</div>
-        <div class="section04">""""""""""""</div>
-        <div class="section05">###</div>
-        <div class="section06">)))))))))</div>
-      </div>
+
 
       <!-- Feature sections with curved path connections -->
       <div class="feature-container">
@@ -85,13 +117,6 @@
             <path d="M67.266 14.4791L43.6915 79.6489L112.59 67.7235L67.266 14.4791Z" stroke="#635C63" stroke-width="2"/>
           </g>
         </svg>
-        
-        <!--<svg id="triangle-1" xmlns="http://www.w3.org/2000/svg" width="188" height="143" viewBox="0 0 188 143" fill="none">
-          <path d="M152.521 102.905L104.945 47.015L80.1997 115.423L152.521 102.905Z" fill="#D1C5D1"/>
-          <path d="M125.569 35.5694L101.994 100.739L170.893 88.8138L125.569 35.5694Z" stroke="#635C63" stroke-width="2"/>
-          <path d="M94.2181 81.8137L46.6427 25.9242L21.897 94.3321L94.2181 81.8137Z" fill="#D1C5D1"/>
-          <path d="M67.266 14.4791L43.6915 79.6489L112.59 67.7235L67.266 14.4791Z" stroke="#635C63" stroke-width="2"/>
-        </svg>-->
 
         <svg id="animated-line" xmlns="http://www.w3.org/2000/svg" width="1826" height="1736" viewBox="0 0 1826 1736" fill="none">
           <path d="M182.717 1C182.717 1 788.061 316.164 570.5 336.5C-670.5 452.5 1231.5 612 1344 609C1404 603 1520 588 1533 545.5C1546.24 502.224 1488.91 477.05 1445 488C1393.78 500.772 1358 513.5 1344 609C1329 721.5 1461 1142.5 1736.5 1321.5C1840.79 1389.26 1881.45 1319.22 1696 1310.5C1451.5 1299 966.283 1193.5 793.783 1180C348.564 1145.16 -293.147 1268.99 151.5 1310.5C236.46 1318.43 438.783 1361 370 1310.5C345.197 1292.29 328.324 1283.72 298 1278.5C185.052 1259.07 306 1369.5 370 1467.5C655.429 1904.56 1508 1673 1508 1673" stroke="#635C63" stroke-width="2"/>
@@ -105,42 +130,11 @@
           <path d="M68.2753 53.2116L67.5312 122.51L128.633 88.513L68.2753 53.2116Z" stroke="#635C63" stroke-width="2"/>
           </g>
         </svg>
-
- 
-          <!---<div class="feature-section">
-              <div class="feature-title">傳聲筒</div>
-              <div class="feature-description">
-                  無論是和朋友一起吃午餐、參加復肉派對、還是漂亮外送免運，都可以在這裡揪團，邀請其他人一起參與，藉此認識志同道合的夥伴，讓每個活動都充滿樂趣與互動。
-              </div>
-              <div class="feature-tag">活動 × 朋友</div>
-          </div>
-
-          <div class="feature-section">
-              <div class="feature-title">討論區</div>
-              <div class="feature-description">
-                  無論是學術、生活、還是校園趣事，都能找到共同話題，互相交流心得、分享經驗，擴展視野並建立友誼。
-              </div>
-              <div class="feature-tag">話題 × 交流</div>
-          </div>
-
-          <div class="feature-section">
-              <div class="feature-title">舊書 × 新書</div>
-              <div class="feature-description">
-                  無論是麥當理書籍，還是尋找所需的教材，都能在這裡輕鬆達成，既能幫助環保，又能節省購書開支，讓書本的價值得以延續。
-              </div>
-              <div class="feature-tag">二手書交換</div>
-          </div>
-
-          <div class="feature-section">
-              <div class="feature-title">法規查詢</div>
-              <div class="feature-description">
-                  無論是想知道畢業需修滿多少學分，還是學校的其他規範，通通能輕鬆即時獲得準確的資訊。
-              </div>
-              <div class="feature-tag">法規 × 智能</div>
-          </div>-->
       </div>
   </div>
+{% endblock %}
 
+{% block footer %}
   <footer>
       <div>
           <div class="footer-logo">北面rule書說</div>
@@ -162,11 +156,9 @@
           </div>
       </div>
   </footer>
-    
-</body>
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-/>
-<script src="{% static 'js/navbar.js' %}"></script>
-</html>
+
+{% endblock %}
+
+{% block body_js %}
+<script src="{% static 'js/index.js' %}"></script>
+{% endblock %}

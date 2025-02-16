@@ -97,7 +97,7 @@ pointer-events: none;
 
 .marquee-container-2 {
     position: absolute;
-    top: 14%;
+    top: 16%;
     right: 350px;
     width: 300px; /* 控制你想要的寬度，例如 300px */
     height: 32px;  /* 可依照字體大小調整 */
@@ -342,7 +342,6 @@ to {
 
 
 
-
 .circle-particles {
     width: 320px;
     height: 320px;
@@ -353,95 +352,159 @@ to {
     transform: translate(-50%, -50%);
     z-index: 1;
     overflow: hidden;
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
-    background-color: rgba(209, 197, 209, 0.2);
+    /* box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+    background-color: rgba(209, 197, 209, 0.2); */
 }
 
 
 
 /* section */
-.section01 {
-    position: absolute;
-    top: 150px;
-    left: 10%;
-    background-color: #e0d3e0;
-    padding: 8px 15px;
-    border-radius: 15px;
-    z-index: 3;
-}
 
-.section02 {
+/* Left section */
+.lsection {
     position: absolute;
-    top: 250px;
-    left: 20%;
-    background-color: #e0d3e0;
-    padding: 8px 15px;
-    border-radius: 15px;
-    z-index: 3;
-}
+    left: 0;
+    top: 60px;
+    width: 50%;
+    z-index: 2;
+    animation: float-left 8s ease-in-out infinite;
+  }
+  
+  .lsection svg.section {
+    position: relative;
+    width: 150%;
+    left: 150px;
+    transform: rotate(-1deg);
+  }
+  
+  /* Right section */
+  .rsection {
+    position: absolute;
+    right: 0;
+    top: 60px;
+    width: 50%;
+    z-index: 2;
+    animation: float-right 7s ease-in-out infinite;
+  }
+  
+  .rsection svg.section {
+    position: relative;
+    width: 150%;
+    left: 250px;
+    transform: rotate(1deg);
+  }
+  
+  /* Floating animations */
+  @keyframes float-left {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-15px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+  
+  @keyframes float-right {
+    0% {
+      transform: translateY(-10px);
+    }
+    50% {
+      transform: translateY(5px);
+    }
+    100% {
+      transform: translateY(-10px);
+    }
+  }
 
-.section03 {
-    position: absolute;
-    top: 330px;
-    left: 15%;
-    background-color: #e0d3e0;
-    padding: 8px 15px;
-    border-radius: 15px;
+  /* Dialog groups - common styles */
+  .dialog-group-l, .dialog-group-r {
+    pointer-events: auto;
+    cursor: pointer;
+    position: relative;
     z-index: 3;
-}
-.section04 {
-    position: absolute;
-    top: 150px;
-    right: 20%;
-    background-color: #e0d3e0;
-    padding: 8px 15px;
-    border-radius: 15px;
-    z-index: 3;
-}
-.section05 {
-    position: absolute;
-    top: 220px;
-    right: 15%;
-    background-color: #e0d3e0;
-    padding: 8px 15px;
-    border-radius: 15px;
-    z-index: 3;
-}
+  }
+  
+  /* Left dialog group hover effects */
+  .dialog-group-l:hover .path-outline {
+    transform: translate(6px, -10px); 
+  }
 
-.section06 {
-    position: absolute;
-    top: 330px;
-    right: 25%;
-    background-color: #e0d3e0;
-    padding: 8px 15px;
-    border-radius: 15px;
-    z-index: 3;
-}
+  .dialog-group-l:hover .path-fill {
+    fill: #a383a3; /* 換你想要的顏色 */
+  }
 
-.section01,
-.section02,
-.section03,
-.section04,
-.section05,
-.section06 {
-  background-color: #D1C5D1; /* 白底更立體 */
-  border-radius: 15px;
-  padding: 10px 20px;
-  z-index: 3;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  transform: translateY(0px);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+  /* Right dialog group hover effects */
+  .dialog-group-r:hover .path-outline {
+    transform: translate(-6px, -10px); 
+  }
 
-.section01:hover,
-.section02:hover,
-.section03:hover,
-.section04:hover,
-.section05:hover,
-.section06:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
-}
+  .dialog-group-r:hover .path-fill {
+    fill: #a383a3; /* 換你想要的顏色 */
+  }
+
+  /* Path styles */
+  .dialog-group-l, .dialog-group-r {
+    transition: transform 0.3s ease-in-out;
+    filter: drop-shadow(0 15px 20px rgba(0, 0, 0, 0.15));
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+  
+  .dialog-text {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 24px;
+    font-weight: 350;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 320px; /* Reduced to ensure text stays within the bubble */
+    transition: all 0.3s ease;
+  }
+  
+  .dialog-group-l:hover .dialog-text {
+    animation: text-scroll 20s linear infinite;
+  }
+  
+  @keyframes text-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    40% {
+      transform: translateX(calc(-100% + 320px));
+    }
+    60% {
+      transform: translateX(calc(-100% + 320px));
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+  
+  .path-outline {
+    transition: transform 0.3s ease;
+    pointer-events: auto;
+  }
+  
+  .path-fill {
+    transition: fill 0.3s ease;
+    pointer-events: auto;
+  }
+  
+  /* Make SVG elements properly accessible for hover */
+  svg.section {
+    overflow: visible;
+    pointer-events: auto;
+  }
+  
+  /* Ensure dialog groups are clickable */
+  .dialog-group-l, .dialog-group-r {
+    cursor: pointer;
+  }
+    
+
+
 
 
 /* Feature sections */
