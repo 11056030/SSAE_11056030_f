@@ -20,7 +20,10 @@ from web_app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('base/' , views.base),
     path('login/' , views.login),
     path('index/' , views.index),
     path('chat/' , views.chat),
+    path('join/' , views.join),
+    path('join_create/' , views.join_create),
 ]
