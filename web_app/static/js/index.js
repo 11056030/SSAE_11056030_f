@@ -1,35 +1,18 @@
 //圓圈線條
-document.addEventListener("DOMContentLoaded", function() {
-    // 獲取圓形路徑元素
-    const path = document.querySelector("#circle-stroke path");
-    
-    // 獲取路徑的實際長度
-    const pathLength = path.getTotalLength();
-    console.log("圓形路徑長度:", pathLength);
-    
-    // 設置初始狀態 - 線條完全不可見
-    path.style.strokeDasharray = pathLength;
-    path.style.strokeDashoffset = pathLength;
-    
-    // 兩種方法實現動畫：
-    
-    // 方法1：使用CSS動畫（推薦，更平滑）
-    // 設置keyframe動畫的起始值
-    const styleSheet = document.styleSheets[0];
-    for (let i = 0; i < styleSheet.cssRules.length; i++) {
-        if (styleSheet.cssRules[i].name === 'drawCircle') {
-            // 找到drawCircle動畫規則
-            const keyframes = styleSheet.cssRules[i];
-            for (let j = 0; j < keyframes.cssRules.length; j++) {
-                if (keyframes.cssRules[j].keyText === 'from') {
-                    // 更新from關鍵幀的值為實際路徑長度
-                    keyframes.cssRules[j].style.strokeDashoffset = pathLength + 'px';
-                    break;
-                }
-            }
-            break;
-        }
-    }});
+document.addEventListener("DOMContentLoaded", function () {
+  const path = document.querySelector("#circle-stroke path");
+  const pathLength = path.getTotalLength();
+  console.log("圓形路徑長度:", pathLength);
+
+  // 使用 JavaScript 設定動畫的 dash 值
+  path.style.strokeDasharray = pathLength;
+  path.style.strokeDashoffset = pathLength;
+
+  // 觸發動畫（加上類名或強制重繪）
+  path.getBoundingClientRect(); // 強制重繪
+  path.style.animation = "drawCircle 3s ease-in-out forwards";
+});
+
 
 
 
@@ -145,13 +128,16 @@ function initBlobs() {
   });
 }
 
+
+
+// 粒子
 function initTechParticles() {
   const particleContainer = document.getElementById('tsparticles');
   if (!particleContainer) return;
   
   // 創建自定義流場函數 - 模擬流體動力學
   const customFlowField = {
-    resolution: 20, // 流場網格解析度
+    resolution: 35, // 流場網格解析度
     points: [],
     time: 0,
     
@@ -170,8 +156,8 @@ function initTechParticles() {
           const angle = this.simplex2(nx * 5, ny * 5 + this.time) * Math.PI * 2;
           
           // 均勻的微小流動，沒有整體向右的偏移
-          const vx = Math.cos(angle) * 0.3;
-          const vy = Math.sin(angle) * 0.3;
+          const vx = Math.cos(angle) * 0.8;
+          const vy = Math.sin(angle) * 0.8;
           
           this.points.push({ vx, vy });
         }
@@ -189,8 +175,8 @@ function initTechParticles() {
         
         const angle = this.simplex2(nx * 5, ny * 5 + this.time) * Math.PI * 2;
         
-        p.vx = Math.cos(angle) * 0.3;
-        p.vy = Math.sin(angle) * 0.3;
+        p.vx = Math.cos(angle) * 0.8;
+        p.vy = Math.sin(angle) * 0.8;
       }
     },
     
@@ -268,7 +254,7 @@ function initTechParticles() {
   const particleConfig = {
     particles: {
       number: {
-        value: 1500, // 大幅增加粒子數量使圓形充滿
+        value: 1800, // 大幅增加粒子數量使圓形充滿
         density: {
           enable: true,
           value_area: 400 // 降低面積使粒子更密集
@@ -278,20 +264,20 @@ function initTechParticles() {
         value: ["#D1C5D1", "#AA9DA9", "#e0d3e0", "#c8b8c8", "#d8d0d8", "#ffffff", "#f0e8f0"] // 紫色系粒子
       },
       shape: {
-        type: "circle"
+        type: "triangle", // 使用三角形形狀
       },
       opacity: {
-        value: 0.65, // 增加不透明度
+        value: 0.9, // 增加不透明度
         random: true,
         anim: {
           enable: true,
-          speed: 0.3,
-          opacity_min: 0.2,
+          speed: 0.9,
+          opacity_min: 0.4,
           sync: false
         }
       },
       size: {
-        value: 2.8, // 使粒子大小適中
+        value: 2.3, // 使粒子大小適中
         random: true,
         anim: {
           enable: true,
@@ -305,7 +291,7 @@ function initTechParticles() {
         distance: 40, // 增加連線距離以創建更多連接
         color: "#D1C5D1", // 紫色系連線
         opacity: 0.25, // 增加線條不透明度
-        width: 1.0 // 調整線條粗細
+        width: 1.5 // 調整線條粗細
       },
       move: {
         enable: true,
@@ -625,4 +611,3 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-
