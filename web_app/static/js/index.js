@@ -1,3 +1,37 @@
+//loading
+document.addEventListener("DOMContentLoaded", () => {
+  const loadingScreen = document.getElementById("loading-screen");
+  const finalText = document.getElementById("final-text");
+
+  // 開始翻轉：Welcome 顯示 0.8 秒後
+  setTimeout(() => {
+    document.querySelector('.cube').style.animation = 'flip-up 0.4s ease forwards';
+  }, 800);
+
+  // 顯示「智能校事專家」0.3 秒後縮小 + 移動
+  setTimeout(() => {
+    finalText.classList.add("shrink-and-move");
+  }, 1200); // 延遲讓動畫顯得更平滑
+
+  // 整個 loading 淡出
+  setTimeout(() => {
+    loadingScreen.style.transition = "opacity 0.3s ease";
+    loadingScreen.style.opacity = "0";
+
+    setTimeout(() => {
+      loadingScreen.style.display = "none";
+    }, 300);
+  }, 1500); // 1.5秒後開始淡出
+});
+
+
+
+
+
+
+
+
+
 //圓圈線條
 document.addEventListener("DOMContentLoaded", function () {
   const path = document.querySelector("#circle-stroke path");
