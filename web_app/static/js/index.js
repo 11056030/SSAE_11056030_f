@@ -47,87 +47,96 @@ document.addEventListener("DOMContentLoaded", function() {
   
 
 
-//背景
-const MIN_SPEED = 0.5
-const MAX_SPEED = 2
-
-function randomNumber(min, max) {
-  return Math.random() * (max - min) + min
-}
+  const MIN_SPEED = 0.5;
+  const MAX_SPEED = 2;
   
-class Blob {
-  constructor(el) {
-    this.el = el
-    const boundingRect = this.el.getBoundingClientRect()
-    this.size = boundingRect.width
-    // 隨機初始位置
-    this.initialX = randomNumber(0, window.innerWidth - this.size)
-    this.initialY = randomNumber(0, window.innerHeight - this.size)
-    this.el.style.top = `${this.initialY}px`
-    this.el.style.left = `${this.initialX}px`
-    // 速度
-    this.vx =
-      randomNumber(MIN_SPEED, MAX_SPEED) * (Math.random() > 0.5 ? 1 : -1)
-    this.vy =
-      randomNumber(MIN_SPEED, MAX_SPEED) * (Math.random() > 0.5 ? 1 : -1)
-    this.x = this.initialX
-    this.y = this.initialY
+  // Seeded random
+  function seededRandom(seed) {
+    let x = Math.sin(seed) * 980;
+    return x - Math.floor(x);
   }
-
-  update() {
-    this.x += this.vx
-    this.y += this.vy
-    if (this.x >= window.innerWidth - this.size) {
-      this.x = window.innerWidth - this.size
-      this.vx *= -1
-    }
-    if (this.y >= window.innerHeight - this.size) {
-      this.y = window.innerHeight - this.size
-      this.vy *= -1
-    }
-    if (this.x <= 0) {
-      this.x = 0
-      this.vx *= -1
-    }
-    if (this.y <= 0) {
-      this.y = 0
-      this.vy *= -1
-    }
-
-    this.el.style.transform =
-      `translate(${this.x - this.initialX}px, ${this.y - this.initialY
-      }px)`
-  }
-}
-
-function initBlobs() {
-  const blobs = document.querySelectorAll('.blob');
   
-  blobs.forEach((blob, index) => {
-    // 設置初始位置
-    const randomX = Math.random() * 100;
-    const randomY = Math.random() * 100;
-    blob.style.left = `${randomX}%`;
-    blob.style.top = `${randomY}%`;
-    
-    // 創建動畫
-    blob.animate(
-      [
-        { transform: `translate(${Math.random() * 50 - 25}%, ${Math.random() * 50 - 25}%)` },
-        { transform: `translate(${Math.random() * 50 - 25}%, ${Math.random() * 50 - 25}%)` },
-        { transform: `translate(${Math.random() * 50 - 25}%, ${Math.random() * 50 - 25}%)` },
-        { transform: `translate(${Math.random() * 50 - 25}%, ${Math.random() * 50 - 25}%)` }
-      ],
-      {
-        duration: 20000 + index * 2000,
+  function randomNumber(min, max, seed) {
+    return seededRandom(seed) * (max - min) + min;
+  }
+  
+  class Blob {
+    constructor(el, seed) {
+      this.el = el;
+      const boundingRect = this.el.getBoundingClientRect();
+      this.size = boundingRect.width;
+  
+      // 使用固定種子來生成穩定的初始位置
+      this.initialX = randomNumber(0, window.innerWidth - this.size, seed + 1);
+      this.initialY = randomNumber(0, window.innerHeight - this.size, seed + 2);
+      this.el.style.top = `${this.initialY}px`;
+      this.el.style.left = `${this.initialX}px`;
+  
+      // 固定速度與方向
+      const directionX = (seed % 2 === 0) ? 1 : -1;
+      const directionY = (seed % 3 === 0) ? 1 : -1;
+      this.vx = randomNumber(MIN_SPEED, MAX_SPEED, seed + 3) * directionX;
+      this.vy = randomNumber(MIN_SPEED, MAX_SPEED, seed + 4) * directionY;
+  
+      this.x = this.initialX;
+      this.y = this.initialY;
+    }
+  
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+  
+      if (this.x >= window.innerWidth - this.size || this.x <= 0) {
+        this.vx *= -1;
+      }
+      if (this.y >= window.innerHeight - this.size || this.y <= 0) {
+        this.vy *= -1;
+      }
+  
+      this.el.style.transform =
+        `translate(${this.x - this.initialX}px, ${this.y - this.initialY}px)`;
+    }
+  }
+  
+  function initBlobs() {
+    const blobs = document.querySelectorAll('.blob');
+  
+    blobs.forEach((blob, index) => {
+      const seed = index + 100; // 確保每個 blob 都有不同但固定的 seed
+  
+      const initialXPercent = randomNumber(0, 100, seed + 10);
+      const initialYPercent = randomNumber(0, 100, seed + 11);
+      blob.style.left = `${initialXPercent}%`;
+      blob.style.top = `${initialYPercent}%`;
+  
+      const keyframes = [
+        {
+          transform: `translate(${randomNumber(-25, 25, seed + 20)}%, ${randomNumber(-25, 25, seed + 21)}%)`
+        },
+        {
+          transform: `translate(${randomNumber(-25, 25, seed + 22)}%, ${randomNumber(-25, 25, seed + 23)}%)`
+        },
+        {
+          transform: `translate(${randomNumber(-25, 25, seed + 24)}%, ${randomNumber(-25, 25, seed + 25)}%)`
+        },
+        {
+          transform: `translate(${randomNumber(-25, 25, seed + 26)}%, ${randomNumber(-25, 25, seed + 27)}%)`
+        }
+      ];
+  
+      blob.animate(keyframes, {
+        duration: 2000 + index * 1000,
         iterations: Infinity,
         direction: 'alternate',
         easing: 'ease-in-out'
-      }
-    );
-  });
-}
-
+      });
+  
+      // 如有需要實體移動也可加入 Blob 實例與 update 循環
+      // const blobInstance = new Blob(blob, seed);
+      // 保存 blobInstance 到陣列中並在動畫循環中呼叫 update()
+    });
+  }
+  
 
 
 // 粒子
@@ -449,33 +458,31 @@ function initTechParticles() {
       const normalizedDist = distToCenter / radius;
       
       // 根據是否有滑鼠互動來調整粒子行為
-      if (isMouseInteracting) {
-        // 滑鼠互動時，讓粒子更分散
-        if (normalizedDist > 0.85) { // 提前在接觸邊緣前就開始反彈
-          // 從圓形外圈引導粒子回到中心
-          const angleToCenter = Math.atan2(centerY - particleScreenY, centerX - particleScreenX);
-          const pullStrength = Math.pow(Math.min(1, (normalizedDist - 0.85) / 0.15), 2) * 3.5;
-          vx += Math.cos(angleToCenter) * pullStrength;
-          vy += Math.sin(angleToCenter) * pullStrength;
-        }
-        
-        // 增加隨機性使粒子更分散，但保持在圓形內
+      const isParticleInteracting = distToMouse < 80; // 判斷該粒子是否與滑鼠互動
+
+      if (isParticleInteracting) {
+        // 滑鼠靠近該粒子，讓它逃離並加些隨機擾動
+        const angleFromMouse = Math.atan2(particleScreenY - mouseY, particleScreenX - mouseX);
+        const repulseFactor = Math.max(0, 1 - distToMouse / 80) * 6;
+        vx += Math.cos(angleFromMouse) * repulseFactor;
+        vy += Math.sin(angleFromMouse) * repulseFactor;
+
+        // 添加隨機擾動
         vx += (Math.random() - 0.5) * 0.6;
         vy += (Math.random() - 0.5) * 0.6;
       } else {
-        // 滑鼠沒有互動時，讓粒子回到初始圓形分布位置（且速度歸零）
+        // 滑鼠不再靠近此粒子，回歸原位（有晃動）
         if (!particle.basePosition) {
-          // 初始化 basePosition 為初始位置
           particle.basePosition = { x: particle.position.x, y: particle.position.y };
         }
-        // 讓 basePosition.x 隨時間小幅度左右晃動
         if (!particle.baseOrigin) {
           particle.baseOrigin = { x: particle.basePosition.x, y: particle.basePosition.y };
         }
-        const t = Date.now() * 0.002 + (particle.baseOrigin.x % 100); // 每個粒子 phase 不同
-        const swing = Math.sin(t) * 6; // 晃動幅度 6px
+
+        const t = Date.now() * 0.002 + (particle.baseOrigin.x % 100);
+        const swing = Math.sin(t) * 6;
         const swingX = particle.baseOrigin.x + swing;
-        // 計算回歸向量（x 軸晃動，y 軸靜止）
+
         const dx = swingX - particle.position.x;
         const dy = particle.baseOrigin.y - particle.position.y;
         const distToBase = Math.sqrt(dx * dx + dy * dy);
@@ -492,9 +499,11 @@ function initTechParticles() {
           vy = 0;
         }
       }
+
+      
       
       // 滑鼠互動 - 逃離效果，減少互動範圍
-      if (isMouseInteracting && distToMouse < 80) { // 減少影響半徑從 150 到 80
+      if (isMouseInteracting && distToMouse < 200) { // 減少影響半徑從 150 到 80
         const repulseFactor = Math.max(0, 1 - distToMouse / 80) * 6; // 增強逃離力度
         const angleFromMouse = Math.atan2(particleScreenY - mouseY, particleScreenX - mouseX);
         vx += Math.cos(angleFromMouse) * repulseFactor;
