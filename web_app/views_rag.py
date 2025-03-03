@@ -66,15 +66,19 @@ def test_basic_llm():
     return llm.invoke(messages)
 
 def load_pdf_documents():
-    """載入並處理 PDF 文件"""
+    """從專案中的 uploaded_files 資料夾載入 PDF 文件"""
     all_docs = []
-    for filename in os.listdir():
+    pdf_dir = os.path.join(os.path.dirname(__file__), "uploaded_files")  # 相對於當前 .py 檔案的 uploaded_files 資料夾
+
+    for filename in os.listdir(pdf_dir):
         if filename.endswith(".pdf"):
-            print(f"處理文件: {filename}")
-            loader = PyPDFLoader(filename)
+            full_path = os.path.join(pdf_dir, filename)
+            print(f"處理文件: {full_path}")
+            loader = PyPDFLoader(full_path)
             docs = loader.load()
             all_docs.extend(docs)
     return all_docs
+
 
 def split_documents(documents):
     """分割文件為較小的區塊"""
