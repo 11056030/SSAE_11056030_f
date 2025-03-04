@@ -27,11 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
-
-
-
-
 //圓圈線條
 document.addEventListener("DOMContentLoaded", function () {
   const path = document.querySelector("#circle-stroke path");
@@ -44,8 +39,39 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 觸發動畫（加上類名或強制重繪）
   path.getBoundingClientRect(); // 強制重繪
-  path.style.animation = "drawCircle 3s ease-in-out forwards";
+  setTimeout(() => {
+    path.style.animation = "drawCircle 3s ease-in-out forwards";
+  }, 3000);
 });
+
+
+
+
+
+//dialog
+window.addEventListener('DOMContentLoaded', () => {
+  const circle = document.querySelector('.circle-container');
+  const dialogs = document.querySelectorAll('.dialog-group-l, .dialog-group-r');
+
+  if (!circle) return;
+
+  const circleRect = circle.getBoundingClientRect();
+
+  dialogs.forEach((dialog, index) => {
+    const dialogRect = dialog.getBoundingClientRect();
+
+    // 計算中心點差距
+    const startX = circleRect.left + circleRect.width ;
+    const startY = circleRect.top + circleRect.height ;
+
+    // 設定 CSS 變數
+    dialog.style.setProperty('--start-x', `${startX}px`);
+    dialog.style.setProperty('--start-y', `${startY}px`);
+  });
+});
+
+
+
 
 
 
@@ -80,7 +106,7 @@ document.addEventListener("DOMContentLoaded", function() {
   });
   
 
-
+//背景
   const MIN_SPEED = 0.5;
   const MAX_SPEED = 2;
   
