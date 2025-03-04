@@ -66,10 +66,15 @@ def test_basic_llm():
     return llm.invoke(messages)
 
 def load_pdf_documents():
-    """從專案中的 uploaded_files 資料夾載入 PDF 文件"""
-    all_docs = []
-    pdf_dir = os.path.join(os.path.dirname(__file__), "uploaded_files")  # 相對於當前 .py 檔案的 uploaded_files 資料夾
+    """從 uploaded_files 資料夾（在上一層）載入 PDF 文件"""
+    current_dir = os.path.dirname(__file__)                  # 目前 .py 檔案所在目錄：web_app
+    parent_dir = os.path.dirname(current_dir)                # 上一層：Case114510
+    pdf_dir = os.path.join(parent_dir, "uploaded_files")     # 指定 uploaded_files 位置
 
+    if not os.path.exists(pdf_dir):
+        raise FileNotFoundError(f"找不到資料夾：{pdf_dir}")
+
+    all_docs = []
     for filename in os.listdir(pdf_dir):
         if filename.endswith(".pdf"):
             full_path = os.path.join(pdf_dir, filename)
@@ -78,7 +83,6 @@ def load_pdf_documents():
             docs = loader.load()
             all_docs.extend(docs)
     return all_docs
-
 
 def split_documents(documents):
     """分割文件為較小的區塊"""
