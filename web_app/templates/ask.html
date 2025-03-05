@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>北商rule是說 Chatbot</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #fdfdfd;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+    h1 {
+      font-size: 1.6em;
+      margin-bottom: 1em;
+      color: #444;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+    }
+    input {
+      width: 80%;
+      margin-right: 10px;
+    }
+    button {
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+    #answer {
+      margin-top: 20px;
+      background: #f0f0f0;
+      padding: 12px;
+      border-radius: 8px;
+      min-height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <h1>北商rule是說 Chatbot</h1>
+  <input id="question" type="text" placeholder="請輸入你的問題..." />
+  <button onclick="sendQuestion()">送出</button>
+
+  <div id="answer"></div>
+
+  <script>
+    async function sendQuestion() {
+      const question = document.getElementById("question").value;
+      const answerDiv = document.getElementById("answer");
+      answerDiv.innerText = "正在查詢中...";
+      try {
+        const res = await fetch("/ask/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ question })
+        });
+        const data = await res.json();
+        answerDiv.innerText = data.answer || data.error || "沒有收到回答。";
+      } catch (err) {
+        answerDiv.innerText = "錯誤：" + err;
+      }
+    }
+  </script>
+</body>
+</html>
