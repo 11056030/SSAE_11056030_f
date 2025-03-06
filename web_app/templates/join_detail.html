@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>烤肉活動詳情</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: white;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        
+        /* 删除hero grid布局，改为单列 */
+        .hero {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+            padding: 40px;
+            background-color: white;
+        }
+        
+        .event-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .event-title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            line-height: 1.2;
+            color: #222;
+        }
+        
+        .event-info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .info-card {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+        
+        .info-card:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 80%;
+            background-image: linear-gradient(45deg, rgba(200, 215, 225, 0.5) 25%, transparent 25%, transparent 50%, rgba(200, 215, 225, 0.5) 50%, rgba(200, 215, 225, 0.5) 75%, transparent 75%, transparent);
+            background-size: 10px 10px;
+            z-index: 1;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-icon-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9E5C94 0%, #7E3D76 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        
+        .info-icon {
+            font-size: 24px;
+            color: white;
+        }
+        
+        .info-content {
+            flex: 1;
+        }
+        
+        .info-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .event-cta {
+            background-color: #7E3D76;
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            align-self: flex-start;
+            box-shadow: 0 5px 15px rgba(126, 61, 118, 0.3);
+        }
+        
+        .event-cta:hover {
+            background-color: #7E3D76;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(126, 61, 118, 0.4);
+        }
+        
+        /* 固定在底部的按钮 */
+        .fixed-cta {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #7E3D76;
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+        
+        .fixed-cta:hover {
+            background-color: #7E3D76;
+            transform: translateX(-50%) translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section {
+            padding: 40px;
+            margin-bottom: 0;
+            width: 100%;
+        }
+        
+        .section:nth-child(odd) {
+            background-color: #f4f4f4;
+        }
+        
+        .section:nth-child(even) {
+            background-color: white;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #222;
+            position: relative;
+            padding-left: 15px;
+        }
+        
+        .section-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 5px;
+            height: 20px;
+            background-color: #7E3D76;
+            border-radius: 10px;
+        }
+        
+        /* 添加活动介绍红色标题样式 */
+        h2.section-title:first-of-type::before {
+            height: 24px;
+            width: 6px;
+            background-color: #7E3D76;
+        }
+        
+        .section-content {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        .section-content p {
+            margin-bottom: 20px;
+        }
+        
+        .section-content li {
+            margin-bottom: 10px;
+            list-style-position: inside;
+        }
+        
+        .map-container {
+            height: 300px;
+            background-color: #eee;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #999;
+        }
+        
+        .address {
+            display: flex;
+            align-items: center;
+            color: #666;
+        }
+        
+        .address-icon {
+            margin-right: 10px;
+            background-color: #7E3D76;
+        }
+        
+        .participants {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 20px;
+        }
+        
+        .participant {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #eee;
+            margin-bottom: 10px;
+        }
+        
+        .name {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .status {
+            background-color: #f4f4f4;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .status-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .comment-form {
+            display: flex;
+            margin: 30px 0;
+        }
+        
+        .comment-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #eee;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .comment-input {
+            flex: 1;
+            border: 1px solid #eee;
+            border-radius: 30px;
+            padding: 15px 20px;
+            font-size: 14px;
+            resize: none;
+            transition: border-color 0.3s;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: #7E3D76;
+        }
+        
+        .submit-btn {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 25px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background-color: #7E3D76;
+        }
+        
+        .related-title {
+            font-size: 28px;
+            font-weight: 700;
+            padding: 30px 40px;
+            background-color: #f4f4f4;
+            margin-bottom: 0;
+            color: #222;
+        }
+        
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            padding: 30px 40px;
+            background-color: #f4f4f4;
+        }
+        
+        .related-card {
+            background-color: white;
+            border-radius: 0;
+            overflow: hidden;
+            transition: transform 0.3s;
+            text-decoration: none;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .related-card:hover {
+            transform: translateY(-5px);
+            box-shadow: none;
+        }
+        
+        .related-image {
+            height: 180px;
+            background-color: #eee;
+            position: relative;
+        }
+        
+        .related-date {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background-color: #7E3D76;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .related-content {
+            padding: 20px;
+            background-color: white;
+            flex-grow: 1;
+        }
+        
+        .related-card-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .related-info {
+            display: flex;
+            justify-content: space-between;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero-image {
+                height: 300px;
+            }
+            
+            .related-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 固定在下方的报名按钮 -->
+    <button class="fixed-cta">立即報名</button>
+    
+    <div class="container">
+        <!-- 删除了导航部分 -->
+        
+        <div class="hero">
+            <!-- 删除了hero-image和event-tag -->
+            
+            <div class="event-details">
+                <!-- 删除了event-title -->
+                
+                <div class="event-info-cards">
+                    <div class="info-card">
+                        <div class="info-icon-circle">
+                            <span class="info-icon">📍</span>
+                        </div>
+                        <div class="info-content">
+                            <h3 class="info-title">活動地點</h3>
+                            <p class="info-value">大安森林公園</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-icon-circle">
+                            <span class="info-icon">🕒</span>
+                        </div>
+                        <div class="info-content">
+                            <h3 class="info-title">活動時間</h3>
+                            <p class="info-value">4/6（週六）下午2:00-6:00</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-icon-circle">
+                            <span class="info-icon">👥</span>
+                        </div>
+                        <div class="info-content">
+                            <h3 class="info-title">參加人數</h3>
+                            <p class="info-value">8/15人</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <div class="info-icon-circle">
+                            <span class="info-icon">💰</span>
+                        </div>
+                        <div class="info-content">
+                            <h3 class="info-title">活動費用</h3>
+                            <p class="info-value">每人250元（含食材）</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 原始按钮已移除 -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">活動介紹</h2>
+            <div class="section-content">
+                <p>週末一起來烤肉放鬆！我們會準備各種食材，飲料自備。歡迎大家參加，認識新朋友！</p>
+                <p>這次烤肉活動地點選在大安森林公園，交通便利，附近有捷運站。我們會準備豐富的食材，包括：牛肉、豬肉、雞肉、香腸、蔬菜、玉米、海鮮等。現場有烤肉設備和桌椅，大家只需帶上好心情來參加！</p>
+                <p>希望透過這次活動，讓大家能在忙碌的學校生活中，找到放鬆的機會，也能認識更多志同道合的朋友。</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">注意事項</h2>
+            <div class="section-content">
+                <ul>
+                    <li>請於4/5前繳交活動費用250元</li>
+                    <li>飲料請自行攜帶</li>
+                    <li>請自備餐具及碗筷</li>
+                    <li>請穿著方便活動的服裝</li>
+                    <li>活動當天若遇雨天，將改至室內場地，另行通知</li>
+                    <li>取消參加請至少提前兩天告知，可退還80%費用</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">活動地點</h2>
+            <div class="map-container">
+                <iframe
+                    width="100%"
+                    height="100%"
+                    frameborder="0"
+                    style="border:0"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBDaeWicvigtP9xPv919E-RNoxfvC-Hqik&q=大安森林公園,台北市"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="address">
+                <span class="address-icon">📍</span>
+                <span>台北市大安區新生南路二段1號（大安森林公園烤肉區）</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">參加者</h2>
+            <div class="participants">
+                <div class="participant">
+                    <div class="avatar"></div>
+                    <div class="name">烤肉達人</div>
+                </div>
+                <div class="participant">
+                    <div class="avatar"></div>
+                    <div class="name">小明</div>
+                </div>
+                <div class="participant">
+                    <div class="avatar"></div>
+                    <div class="name">阿華</div>
+                </div>
+                <div class="participant">
+                    <div class="avatar"></div>
+                    <div class="name">小芳</div>
+                </div>
+                <div class="participant">
+                    <div class="avatar"></div>
+                    <div class="name">大雄</div>
+                </div>
+                <div class="participant">
+                    <div class="avatar"></div>
+                    <div class="name">靜香</div>
+                </div>
+                <div class="participant">
+                    <div class="avatar"></div>
+                    <div class="name">胖虎</div>
+                </div>
+                <div class="participant">
+                    <div class="avatar"></div>
+                    <div class="name">小夫</div>
+                </div>
+            </div>
+            
+            <div class="status">
+                <div class="status-text">還有7個名額，趕快加入我們吧！</div>
+                <!-- 移除此按钮 -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">活動討論區</h2>
+            <div class="comment-form">
+                <div class="comment-avatar"></div>
+                <input type="text" class="comment-input" placeholder="發表留言...">
+                <button class="submit-btn">留言</button>
+            </div>
+        </div>
+        
+        <h2 class="related-title">相關活動推薦</h2>
+        <div class="related-grid">
+            <a href="#" class="related-card">
+                <div class="related-image">
+                    <div class="related-date">4/13 上午11:00</div>
+                </div>
+                <div class="related-content">
+                    <h3 class="related-card-title">春季戶外野餐日</h3>
+                    <div class="related-info">
+                        <span>大安森林公園</span>
+                        <span>12/20人</span>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="#" class="related-card">
+                <div class="related-image">
+                    <div class="related-date">4/20 下午1:00</div>
+                </div>
+                <div class="related-content">
+                    <h3 class="related-card-title">校園美食節</h3>
+                    <div class="related-info">
+                        <span>北商大校園</span>
+                        <span>25/50人</span>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="#" class="related-card">
+                <div class="related-image">
+                    <div class="related-date">4/15 晚上6:00</div>
+                </div>
+                <div class="related-content">
+                    <h3 class="related-card-title">士林夜市美食團</h3>
+                    <div class="related-info">
+                        <span>士林夜市</span>
+                        <span>8/15人</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        // 報名按鈕功能
+        const ctaButtons = document.querySelectorAll('.fixed-cta');
+        ctaButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                alert('報名成功！請於 4/5 前完成繳費，活動詳情將發送到您的個人儀表板。');
+            });
+        });
+        
+        // 留言功能
+        const commentForm = document.querySelector('.comment-form');
+        const commentInput = document.querySelector('.comment-input');
+        const submitBtn = document.querySelector('.submit-btn');
+        
+        submitBtn.addEventListener('click', function() {
+            if (commentInput.value.trim()) {
+                alert('留言已提交！');
+                commentInput.value = '';
+            }
+        });
+    </script>
+</body>
+</html>
