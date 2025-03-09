@@ -174,7 +174,7 @@
       <div class="wave" id="wave4"></div>
     </div>
 
-    <div class="footer-info">
+    {% comment %} <div class="footer-info">
       <div>
           <div class="footer-logo">北面rule書說</div>
           <div>(虛大概是logo)</div>
@@ -194,6 +194,34 @@
               <div class="social-icon">ig</div>
           </div>
       </div>
+    </div> {% endcomment %}
+    <div class="footer-info">
+      <div class="footer-title">
+          <div class="footer-logo">北面rule書說</div>
+          <div>(這大概是logo)</div>
+      </div>
+      <div class="footer-links">
+        <div class="name">簡介</div>
+        <div class="aaa">
+          <p>北面blackboard平台</p>
+          <p>北面Timetable平台</p>
+          <p>北美學生創新計劃系統</p>
+        </div>
+      </div>
+      <div class="footer-contact">
+        <div class="name">聯絡資訊</div>
+        <div>
+          <p>02 - 0000 - 0000</p>
+          <p>ntubuser1149@gmail.com</p>
+          <p class="social-icons">
+          <i class="fa-brands fa-square-facebook"></i>
+          <i class="fa-brands fa-instagram"></i>
+          </p>
+        </div>
+      </div>
+      <div class="footer-backup">
+        <img class="backupowl"  src="{% static 'image/backup.png' %}" alt="backup"  onclick="scrollToTop()">
+      </div>
     </div>
   </footer>
 
@@ -201,4 +229,5 @@
 
 {% block body_js %}
 <script src="{% static 'js/index.js' %}"></script>
+<script src="https://kit.fontawesome.com/9e4db15554.js" crossorigin="anonymous"></script>
 {% endblock %}

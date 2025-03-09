@@ -742,7 +742,7 @@ footer {
   background-repeat: no-repeat;
   position: absolute;
   left: 80px;
-  bottom: 120px;
+  bottom: 300px;
   transform: translateX(-50%);
   animation: float 3s ease-in-out infinite;
   z-index: 1200; /* 確保在 wave 上層 */
@@ -816,12 +816,13 @@ footer .wave#wave4{
   width: 100%;
   display: flex;
   justify-content: space-between; /* 三欄平均分散 */
-  padding: 40px 60px;
+  padding: 100px 60px;
 }
 
-.footer-info > div {
+.footer-info div {
   flex: 1;
   padding: 0 20px;
+  align-content: center;
 }
 
 .footer-logo {
@@ -831,8 +832,25 @@ footer .wave#wave4{
 
 }
 
+.footer-links{
+  border-left: 5px solid #877a87;
+  border-right: 3px solid #877a87;
+}
+
+
+.footer-links,
+.footer-contact {
+  display: flex;
+  /* flex-direction: row; */
+}
+
 .footer-links div,
 .footer-contact div {
+  width: 10%;
+  align-content: center;
+}
+
+.footer-info p{
   margin-bottom: 6px;
 }
 
@@ -846,4 +864,14 @@ footer .wave#wave4{
   background-color: #ccc;
   padding: 5px 10px;
   border-radius: 5px;
+}
+
+.footer-backup{
+  text-align: right;
+}
+
+.backupowl {
+  width: 150px;
+  height: 150px;
+  cursor: pointer;
 }
