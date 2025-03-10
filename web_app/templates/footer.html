@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  {% load static %}
   <link rel="stylesheet" href="{% static 'css/footer.css' %}">
 </head>
 <body>
+  {% block footer %}
   <footer>
     <div class="fowl"></div>
     <div class="waves">
@@ -15,28 +17,37 @@
       <div class="wave" id="wave3"></div>
       <div class="wave" id="wave4"></div>
     </div>
-  
+    
     <div class="footer-info">
-      <div>
+      <div class="footer-title">
           <div class="footer-logo">北面rule書說</div>
-          <div>(虛大概是logo)</div>
+          <div>(這大概是logo)</div>
       </div>
-      <div class="name">簡介</div>
       <div class="footer-links">
-          <div>北面blackboard平台</div>
-          <div>北面Timetable平台</div>
-          <div>北美學生創新計劃系統</div>
+        <div class="name">簡介</div>
+        <div class="aaa">
+          <p>北面blackboard平台</p>
+          <p>北面Timetable平台</p>
+          <p>北美學生創新計劃系統</p>
+        </div>
       </div>
-      <div class="name">聯絡資訊</div>
       <div class="footer-contact">
-          <div>02 - 0000 - 0000</div>
-          <div>ntubuser1149@gmail.com</div>
-          <div class="social-icons">
-              <div class="social-icon">f</div>
-              <div class="social-icon">ig</div>
-          </div>
+        <div class="name">聯絡資訊</div>
+        <div>
+          <p>02 - 0000 - 0000</p>
+          <p>ntubuser1149@gmail.com</p>
+          <p class="social-icons">
+          <i class="fa-brands fa-square-facebook"></i>
+          <i class="fa-brands fa-instagram"></i>
+          </p>
+        </div>
+      </div>
+      <div class="footer-backup">
+        <img class="backupowl"  src="{% static 'image/backup.png' %}" alt="backup"  onclick="scrollToTop()">
       </div>
     </div>
   </footer>
+  {% endblock %}
+  <script src="{% static 'js/footer.js' %}"></script>
 </body>
 </html>
