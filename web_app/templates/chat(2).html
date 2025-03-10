@@ -1,486 +1,13 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>北商rule事說 - 登入</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-    /* 基本樣式 */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: Arial, sans-serif;
-    }
-
-    body {
-        background-color: #f5f5f5;
-    }
-
-    /* 導航欄樣式 */
-    .navbar {
-        position: fixed;
-        top: 0;
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 40px;
-        transition: all 0.5s ease;
-        z-index: 1000;
-    }
-
-    .navbar-initial {
-        background-color: transparent;
-        height: 80px;
-    }
-
-    .navbar-scrolled {
-        background-color: white;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        height: 60px;
-    }
-
-    .logo {
-        font-weight: bold;
-        font-size: 18px;
-    }
-
-    .nav-links {
-        display: flex;
-        list-style: none;
-    }
-
-    .nav-links li {
-        margin-left: 20px;
-    }
-
-    .nav-links a {
-        text-decoration: none;
-        color: #333;
-        transition: all 0.3s ease;
-        padding: 8px 12px;
-        border-radius: 100px;
-        position: relative;
-    }
-
-    .nav-links a:hover {
-        color: #222;
-        background-color: rgba(200, 200, 200, 0.5);
-    }
-
-    .nav-links a::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        width: 0;
-        height: 2px;
-        background-color: #555;
-        transition: all 0.3s ease;
-        transform: translateX(-50%);
-    }
-
-    .nav-links a:hover::after {
-        width: 80%;
-    }
-
-    .user-circle {
-        width: 32px;
-        height: 32px;
-        background-color: #5a4a42;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        cursor: pointer;
-    }
-
-    .user-circle i {
-        font-size: 16px;
-    }
-
-    /* 聊天應用容器樣式 */
-    .app-container {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-    }
-
-    /* 主內容區樣式 */
-    .main-content {
-        display: flex;
-        flex: 1;
-        overflow: hidden;
-        position: relative;
-        justify-content: center;
-        margin-top: 80px; /* 為導航欄留出空間 */
-    }
-
-    /* 側邊欄樣式 */
-    .sidebar {
-        width: 250px;
-        background-color: white;
-        border-right: 1px solid #e0e0e0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        transition: transform 0.3s ease, width 0.3s ease, opacity 0.2s ease;
-    }
-
-    .sidebar.collapsed {
-        transform: translateX(-100%);
-        width: 0;
-        opacity: 0;
-    }
-
-    .sidebar-toggle {
-        position: absolute;
-        top: 20px;
-        left: 15px;
-        width: 36px;
-        height: 36px;
-        background-color: white;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        z-index: 50;
-        opacity: 0;
-        transform: translateX(-50px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-        color: #666;
-    }
-
-    .sidebar-toggle.visible {
-        opacity: 1;
-        transform: translateX(0);
-    }
-
-    .chat-history-header {
-        padding: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .history-title {
-        font-weight: bold;
-        color: #333;
-    }
-
-    .close-btn {
-        cursor: pointer;
-        color: #999;
-    }
-
-    .new-chat-btn {
-        margin: 15px;
-        padding: 10px;
-        background-color: #333;
-        color: white;
-        text-align: center;
-        border-radius: 5px;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .new-chat-btn span {
-        margin-right: 5px;
-    }
-
-    .upload-pdf-btn {
-        margin: 0 15px 15px;
-        padding: 10px;
-        background-color: #7676b3;
-        color: white;
-        text-align: center;
-        border-radius: 5px;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transition: background-color 0.2s ease;
-    }
-
-    .upload-pdf-btn:hover {
-        background-color: #6565a3;
-    }
-
-    .upload-pdf-btn span {
-        margin-right: 5px;
-        display: flex;
-        align-items: center;
-    }
-
-    .chat-list, .file-list {
-        flex: 1;
-        overflow-y: auto;
-    }
-
-    .file-list {
-        padding: 15px;
-    }
-
-    .file-item {
-        padding: 12px;
-        border-radius: 8px;
-        background-color: #f5f5f5;
-        margin-bottom: 10px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-
-    .file-item:hover {
-        background-color: #e8e8f0;
-    }
-
-    .file-item-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 5px;
-    }
-
-    .file-icon {
-        width: 24px;
-        height: 24px;
-        margin-right: 10px;
-        color: #7676b3;
-    }
-
-    .file-name {
-        font-weight: bold;
-        color: #333;
-        flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .file-info {
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-        color: #999;
-    }
-
-    .empty-files-message {
-        color: #999;
-        text-align: center;
-        padding: 20px;
-        font-style: italic;
-    }
-
-    .chat-tabs {
-        display: flex;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .chat-tab {
-        flex: 1;
-        padding: 10px;
-        text-align: center;
-        cursor: pointer;
-        font-size: 14px;
-        color: #666;
-    }
-
-    .chat-tab.active {
-        border-bottom: 2px solid #333;
-        color: #333;
-    }
-
-    .chat-item {
-        padding: 15px;
-        border-bottom: 1px solid #f0f0f0;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-
-    .chat-item:hover {
-        background-color: #f5f5f5;
-    }
-
-    .chat-item.selected {
-        background-color: #f0f0f5;
-        border-left: 3px solid #7676b3;
-    }
-
-    .chat-item-title {
-        font-weight: bold;
-        margin-bottom: 5px;
-        color: #333;
-    }
-
-    .chat-item-date {
-        font-size: 12px;
-        color: #999;
-    }
-
-    /* 確保側邊欄收起時主內容區仍然居中 */
-    .sidebar.collapsed ~ .chat-area {
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    /* 當側邊欄收起時的主內容區調整 */
-    .sidebar.collapsed + .chat-area {
-        margin-left: 0;
-    }
-
-    /* 主聊天區域樣式 */
-    .chat-area {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        background-color: transparent;
-        position: relative;
-        overflow: hidden;
-        padding: 20px;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        max-width: 1200px;
-        margin: 0 auto;
-        width: 100%;
-        text-align: center;
-    }
-
-    .frame-info {
-        color: #999;
-        font-size: 14px;
-        margin-right: 15px;
-    }
-
-    .header-actions {
-        display: flex;
-        align-items: center;
-    }
-
-    .header-action-btn {
-        width: 30px;
-        height: 30px;
-        background-color: #9999cc;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        color: white;
-        font-size: 12px;
-        font-weight: bold;
-    }
-
-    .messages-container {
-        flex: 1;
-        width: 100%;
-        max-width: 800px;
-        padding: 20px;
-        overflow-y: auto;
-        background-color: #f0f0f5;
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><defs><pattern id="pattern" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="20" fill="%23d9d9e6" opacity="0.3" /><line x1="0" y1="0" x2="100" y2="100" stroke="%23d9d9e6" stroke-width="1" opacity="0.2" /><line x1="100" y1="0" x2="0" y2="100" stroke="%23d9d9e6" stroke-width="1" opacity="0.2" /></pattern></defs><rect width="100%" height="100%" fill="url(%23pattern)" /></svg>');
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin: 0 auto;
-    }
-
-    .message {
-        margin-bottom: 20px;
-        max-width: 70%;
-        display: flex;
-    }
-
-    .message.received {
-        align-self: flex-start;
-    }
-
-    .message.sent {
-        align-self: flex-end;
-        margin-left: auto;
-    }
-
-    .message-bubble {
-        padding: 12px 18px;
-        border-radius: 20px;
-        font-size: 14px;
-        line-height: 1.4;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    .received .message-bubble {
-        background-color: #b8b8c6;
-        color: white;
-        border-top-left-radius: 4px;
-    }
-
-    .sent .message-bubble {
-        background-color: #e6e6e6;
-        color: #333;
-        border-bottom-right-radius: 4px;
-    }
-
-    .chat-input-container {
-        padding: 10px 15px;
-        background-color: transparent;
-        display: flex;
-        align-items: center;
-        position: relative;
-        z-index: 10;
-        margin-top: 20px;
-        width: 100%;
-        max-width: 800px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .chat-input {
-        flex: 1;
-        padding: 12px 15px;
-        border: none;
-        border-radius: 30px;
-        background-color: white;
-        font-size: 14px;
-        outline: none;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .send-btn {
-        width: 40px;
-        height: 40px;
-        background-color: #a3a3b5;
-        border-radius: 50%;
-        margin-left: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        color: white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-    </style>
-</head>
-
-<body>
     <!-- 導航欄 -->
     <nav class="navbar navbar-initial" id="navbar">
-        <div class="logo">logo</div>
+        <div class="logo">北商rule事說</div>
         <ul class="nav-links">
-            <li><a href="#">校規查詢</a></li>
-            <li><a href="#">傳聲筒</a></li>
-            <li><a href="#">揪團區</a></li>
-            <li><a href="#">哈哈哈哈</a></li>
+            <li><a href="#" class="slide-in-right" style="animation-delay: 0.1s;">校規查詢</a></li>
+            <li><a href="#" class="slide-in-right" style="animation-delay: 0.2s;">傳聲筒</a></li>
+            <li><a href="#" class="slide-in-right" style="animation-delay: 0.3s;">揪團區</a></li>
+            <li><a href="#" class="slide-in-right" style="animation-delay: 0.4s;">哈哈哈哈</a></li>
         </ul>
-        <div class="user-circle">
+        <div class="user-circle scale-in" style="animation-delay: 0.5s;">
             <i class="fa-solid fa-user"></i>
         </div>
     </nav>
@@ -498,17 +25,17 @@
             </div>
             
             <!-- 側邊欄 -->
-            <div class="sidebar" id="sidebar">
+            <div class="sidebar slide-in-left" id="sidebar">
                 <div class="chat-history-header">
                     <div class="history-title">聊天歷史</div>
                     <div class="close-btn" id="sidebar-close">×</div>
                 </div>
                 
-                <div class="new-chat-btn" id="new-chat-btn">
+                <div class="new-chat-btn bounce-in" style="animation-delay: 0.1s;" id="new-chat-btn">
                     <span>+</span> 新對話
                 </div>
                 
-                <div class="upload-pdf-btn">
+                <div class="upload-pdf-btn bounce-in" style="animation-delay: 0.2s;">
                     <span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -522,32 +49,32 @@
                 </div>
                 
                 <div class="chat-tabs">
-                    <div class="chat-tab active" data-tab="chat-records">對話記錄</div>
-                    <div class="chat-tab" data-tab="uploaded-files">已上傳文件</div>
+                    <div class="chat-tab active fade-in" style="animation-delay: 0.3s;" data-tab="chat-records">對話記錄</div>
+                    <div class="chat-tab fade-in" style="animation-delay: 0.4s;" data-tab="uploaded-files">已上傳文件</div>
                 </div>
                 
                 <div class="chat-list" id="chat-records-list">
-                    <div class="chat-item">
+                    <div class="chat-item fade-in" style="animation-delay: 0.5s;">
                         <div class="chat-item-title">新對話</div>
                         <div class="chat-item-date">今天</div>
                     </div>
                     
-                    <div class="chat-item">
+                    <div class="chat-item fade-in" style="animation-delay: 0.6s;">
                         <div class="chat-item-title">技術討論</div>
                         <div class="chat-item-date">昨天</div>
                     </div>
                     
-                    <div class="chat-item">
+                    <div class="chat-item fade-in" style="animation-delay: 0.7s;">
                         <div class="chat-item-title">問題解答</div>
                         <div class="chat-item-date">3月15日</div>
                     </div>
                     
-                    <div class="chat-item">
+                    <div class="chat-item fade-in" style="animation-delay: 0.8s;">
                         <div class="chat-item-title">功能建議</div>
                         <div class="chat-item-date">3月10日</div>
                     </div>
                     
-                    <div class="chat-item">
+                    <div class="chat-item fade-in" style="animation-delay: 0.9s;">
                         <div class="chat-item-title">設計討論</div>
                         <div class="chat-item-date">3月5日</div>
                     </div>
@@ -555,27 +82,27 @@
                 
                 <div class="file-list" id="uploaded-files-list" style="display: none;">
                     <!-- 已上傳的PDF檔案會顯示在這裡 -->
-                    <div class="empty-files-message">尚無上傳的PDF檔案</div>
+                    <div class="empty-files-message fade-in">尚無上傳的PDF檔案</div>
                 </div>
             </div>
             
             <!-- 主聊天區域 -->
             <div class="chat-area">
-                <div class="messages-container">
-                    <div class="message received">
+                <div class="messages-container scale-in">
+                    <div class="message received" style="animation-delay: 0.5s;">
                         <div class="message-bubble">您好！歡迎使用這個對話介面。</div>
                     </div>
                     
-                    <div class="message received">
+                    <div class="message received" style="animation-delay: 0.8s;">
                         <div class="message-bubble">謝謝！這是由不規則幾何形狀的動態背景組成，對話內容會直接顯示在背景上。</div>
                     </div>
                     
-                    <div class="message sent">
+                    <div class="message sent" style="animation-delay: 1.1s;">
                         <div class="message-bubble">這個界面設計得真有趣！</div>
                     </div>
                 </div>
                 
-                <div class="chat-input-container">
+                <div class="chat-input-container fade-in" style="animation-delay: 1.3s;">
                     <input type="text" class="chat-input" placeholder="輸入訊息...">
                     <div class="send-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -590,6 +117,56 @@
 
     <!-- JavaScript 腳本 -->
     <script>
+    // 創建漂浮物品
+    function createFloatingItems() {
+        const container = document.getElementById('floating-items-container');
+        const shapes = ['float-circle', 'float-square', 'float-triangle'];
+        
+        for (let i = 0; i < 15; i++) {
+            const item = document.createElement('div');
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            
+            item.className = `floating-item ${shape}`;
+            item.style.left = `${Math.random() * 100}vw`;
+            item.style.top = `${Math.random() * 100}vh`;
+            item.style.opacity = `${Math.random() * 0.15 + 0.05}`;
+            item.style.transform = `scale(${Math.random() * 0.6 + 0.4}) rotate(${Math.random() * 360}deg)`;
+            
+            // 隨機動畫
+            const duration = Math.random() * 50 + 30;
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            
+            item.style.animation = `floatAnimation${i} ${duration}s linear infinite`;
+            
+            // 創建隨機漂浮動畫
+            const keyframes = `
+                @keyframes floatAnimation${i} {
+                    0% {
+                        transform: translate(0, 0) scale(${Math.random() * 0.6 + 0.4}) rotate(0deg);
+                    }
+                    25% {
+                        transform: translate(${Math.random() * 50 * direction}px, ${Math.random() * 50}px) scale(${Math.random() * 0.6 + 0.4}) rotate(${Math.random() * 180}deg);
+                    }
+                    50% {
+                        transform: translate(${Math.random() * 100 * direction}px, ${Math.random() * 100}px) scale(${Math.random() * 0.6 + 0.4}) rotate(${Math.random() * 360}deg);
+                    }
+                    75% {
+                        transform: translate(${Math.random() * 50 * direction}px, ${Math.random() * 50}px) scale(${Math.random() * 0.6 + 0.4}) rotate(${Math.random() * 540}deg);
+                    }
+                    100% {
+                        transform: translate(0, 0) scale(${Math.random() * 0.6 + 0.4}) rotate(720deg);
+                    }
+                }
+            `;
+            
+            const styleElement = document.createElement('style');
+            styleElement.innerHTML = keyframes;
+            document.head.appendChild(styleElement);
+            
+            container.appendChild(item);
+        }
+    }
+    
     // 完全靜默的localStorage包裝器
     const safeStorage = {
         setItem: function(key, value) {
@@ -623,8 +200,35 @@
         }
     });
 
+    // 模擬打字效果
+    function simulateTyping(element, text, speed) {
+        return new Promise(resolve => {
+            let i = 0;
+            element.textContent = '';
+            
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+            element.parentNode.insertBefore(typingIndicator, element.nextSibling);
+            
+            const interval = setInterval(() => {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(interval);
+                    typingIndicator.remove();
+                    resolve();
+                }
+            }, speed);
+        });
+    }
+
     // 頁面載入完成後執行
     document.addEventListener('DOMContentLoaded', function() {
+        // 創建漂浮物品
+        createFloatingItems();
+        
         // 聊天功能相關元素
         const sendBtn = document.querySelector('.send-btn');
         const input = document.querySelector('.chat-input');
@@ -644,16 +248,51 @@
             const message = input.value.trim();
             
             if (message) {
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message sent';
-                messageElement.innerHTML = `<div class="message-bubble">${message}</div>`;
-                messagesContainer.appendChild(messageElement);
+                // 用戶發送的訊息
+                const userMessageElement = document.createElement('div');
+                userMessageElement.className = 'message sent';
+                userMessageElement.innerHTML = `<div class="message-bubble">${message}</div>`;
+                userMessageElement.style.animationDelay = '0s';
+                messagesContainer.appendChild(userMessageElement);
                 
                 // 清空輸入框
                 input.value = '';
                 
                 // 滾動到底部
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                // 模擬機器人回應
+                setTimeout(() => {
+                    const botMessageElement = document.createElement('div');
+                    botMessageElement.className = 'message received';
+                    
+                    const botBubble = document.createElement('div');
+                    botBubble.className = 'message-bubble';
+                    botMessageElement.appendChild(botBubble);
+                    
+                    messagesContainer.appendChild(botMessageElement);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    
+                    // 根據用戶的訊息模擬不同的回應
+                    let botResponse = "";
+                    if (message.includes('你好') || message.includes('嗨') || message.includes('hi') || message.includes('hello')) {
+                        botResponse = "您好！有什麼我可以幫助您的嗎？";
+                    } else if (message.includes('謝謝') || message.includes('感謝')) {
+                        botResponse = "不客氣！如果還有其他問題，隨時都可以問我。";
+                    } else if (message.includes('校規') || message.includes('規定')) {
+                        botResponse = "關於校規的問題，您可以點選上方的「校規查詢」選項，或者直接告訴我您想了解哪方面的規定。";
+                    } else if (message.includes('問題') || message.includes('幫忙')) {
+                        botResponse = "當然可以幫忙！請告訴我您遇到了什麼問題，我會盡力協助您。";
+                    } else {
+                        botResponse = "我已收到您的訊息。請問還有什麼我可以協助的嗎？";
+                    }
+                    
+                    // 使用打字效果
+                    simulateTyping(botBubble, botResponse, 30).then(() => {
+                        // 完成打字效果後滾動到底部
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    });
+                }, 800);
             }
         });
         
@@ -716,8 +355,16 @@
             // 添加歡迎訊息
             const welcomeMessage = document.createElement('div');
             welcomeMessage.className = 'message received';
-            welcomeMessage.innerHTML = `<div class="message-bubble">您好！歡迎開始新的對話。有什麼可以幫助您的嗎？</div>`;
+            welcomeMessage.style.animationDelay = '0.3s';
+            
+            const welcomeBubble = document.createElement('div');
+            welcomeBubble.className = 'message-bubble';
+            welcomeMessage.appendChild(welcomeBubble);
+            
             messagesContainer.appendChild(welcomeMessage);
+            
+            // 使用打字效果顯示歡迎訊息
+            simulateTyping(welcomeBubble, "您好！歡迎開始新的對話。有什麼可以幫助您的嗎？", 30);
             
             // 切換到對話記錄標籤
             chatTabs.forEach(tab => tab.classList.remove('active'));
@@ -728,7 +375,7 @@
             // 創建新的對話項目並添加到對話列表頂部
             const currentDate = new Date().toLocaleTimeString();
             const newChatItem = document.createElement('div');
-            newChatItem.className = 'chat-item';
+            newChatItem.className = 'chat-item fade-in';
             newChatItem.innerHTML = `
                 <div class="chat-item-title">新對話</div>
                 <div class="chat-item-date">剛剛 - ${currentDate}</div>
@@ -775,7 +422,7 @@
                 
                 // 創建新的檔案項目
                 const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
+                fileItem.className = 'file-item scale-in';
                 fileItem.innerHTML = `
                     <div class="file-item-header">
                         <div class="file-icon">
@@ -805,9 +452,17 @@
                 // 顯示上傳成功訊息
                 const messageElement = document.createElement('div');
                 messageElement.className = 'message received';
-                messageElement.innerHTML = `<div class="message-bubble">PDF檔案 "${fileName}" 已成功上傳。</div>`;
+                
+                const messageBubble = document.createElement('div');
+                messageBubble.className = 'message-bubble';
+                messageElement.appendChild(messageBubble);
+                
                 messagesContainer.appendChild(messageElement);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                // 使用打字效果顯示上傳成功訊息
+                simulateTyping(messageBubble, `PDF檔案 "${fileName}" 已成功上傳。`, 30).then(() => {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
                 
                 // 清空檔案選擇，允許再次選擇相同檔案
                 pdfUploadInput.value = '';
@@ -822,9 +477,34 @@
                 // 顯示檔案選擇訊息
                 const messageElement = document.createElement('div');
                 messageElement.className = 'message received';
-                messageElement.innerHTML = `<div class="message-bubble">已選擇PDF檔案: "${fileName}"。正在處理...</div>`;
+                
+                const messageBubble = document.createElement('div');
+                messageBubble.className = 'message-bubble';
+                messageElement.appendChild(messageBubble);
+                
                 messagesContainer.appendChild(messageElement);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                // 使用打字效果顯示檔案選擇訊息
+                simulateTyping(messageBubble, `已選擇PDF檔案: "${fileName}"。正在處理...`, 30).then(() => {
+                    // 模擬處理中動畫
+                    setTimeout(() => {
+                        const processElement = document.createElement('div');
+                        processElement.className = 'message received';
+                        
+                        const processBubble = document.createElement('div');
+                        processBubble.className = 'message-bubble';
+                        processElement.appendChild(processBubble);
+                        
+                        messagesContainer.appendChild(processElement);
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        
+                        simulateTyping(processBubble, `PDF檔案處理完成！您現在可以查詢檔案內容或提出相關問題。`, 30).then(() => {
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        });
+                    }, 1500);
+                    
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
             }
         });
         
@@ -842,39 +522,1018 @@
                 // 取得對話標題
                 const chatTitle = this.querySelector('.chat-item-title').textContent;
                 
-                // 清空訊息容器
-                messagesContainer.innerHTML = '';
+                // 清空訊息容器並添加過渡效果
+                messagesContainer.classList.add('fade-out');
                 
-                // 根據對話標題顯示不同的訊息
-                if (chatTitle === '新對話') {
-                    const welcomeMessage = document.createElement('div');
-                    welcomeMessage.className = 'message received';
-                    welcomeMessage.innerHTML = `<div class="message-bubble">您好！歡迎開始新的對話。有什麼可以幫助您的嗎？</div>`;
-                    messagesContainer.appendChild(welcomeMessage);
-                } else if (chatTitle === '技術討論') {
-                    const techMessage = document.createElement('div');
-                    techMessage.className = 'message received';
-                    techMessage.innerHTML = `<div class="message-bubble">歡迎回到技術討論。我們上次討論到哪裡了？</div>`;
-                    messagesContainer.appendChild(techMessage);
-                } else if (chatTitle === '問題解答') {
-                    const helpMessage = document.createElement('div');
-                    helpMessage.className = 'message received';
-                    helpMessage.innerHTML = `<div class="message-bubble">歡迎回到問題解答。需要繼續解決上次的問題嗎？</div>`;
-                    messagesContainer.appendChild(helpMessage);
-                } else if (chatTitle === '功能建議') {
-                    const featureMessage = document.createElement('div');
-                    featureMessage.className = 'message received';
-                    featureMessage.innerHTML = `<div class="message-bubble">歡迎回到功能建議。您有更多的建議嗎？</div>`;
-                    messagesContainer.appendChild(featureMessage);
-                } else if (chatTitle === '設計討論') {
-                    const designMessage = document.createElement('div');
-                    designMessage.className = 'message received';
-                    designMessage.innerHTML = `<div class="message-bubble">歡迎回到設計討論。我們繼續討論介面設計的問題吧。</div>`;
-                    messagesContainer.appendChild(designMessage);
+                setTimeout(() => {
+                    messagesContainer.innerHTML = '';
+                    messagesContainer.classList.remove('fade-out');
+                    
+                    // 根據對話標題顯示不同的訊息
+                    const messageElement = document.createElement('div');
+                    messageElement.className = 'message received';
+                    
+                    const messageBubble = document.createElement('div');
+                    messageBubble.className = 'message-bubble';
+                    messageElement.appendChild(messageBubble);
+                    
+                    messagesContainer.appendChild(messageElement);
+                    
+                    let welcomeMessage = '';
+                    if (chatTitle === '新對話') {
+                        welcomeMessage = '您好！歡迎開始新的對話。有什麼可以幫助您的嗎？';
+                    } else if (chatTitle === '技術討論') {
+                        welcomeMessage = '歡迎回到技術討論。我們上次討論到哪裡了？';
+                    } else if (chatTitle === '問題解答') {
+                        welcomeMessage = '歡迎回到問題解答。需要繼續解決上次的問題嗎？';
+                    } else if (chatTitle === '功能建議') {
+                        welcomeMessage = '歡迎回到功能建議。您有更多的建議嗎？';
+                    } else if (chatTitle === '設計討論') {
+                        welcomeMessage = '歡迎回到設計討論。我們繼續討論介面設計的問題吧。';
+                    }
+                    
+                    // 使用打字效果
+                    simulateTyping(messageBubble, welcomeMessage, 30);
+                }, 300);
+            });
+        });
+        
+        // 消息氣泡點擊效果
+        document.addEventListener('click', function(event) {
+            if (event.target.closest('.message-bubble')) {
+                const bubble = event.target.closest('.message-bubble');
+                bubble.style.transform = 'scale(1.03)';
+                setTimeout(() => {
+                    bubble.style.transform = 'scale(1)';
+                }, 200);
+            }
+        });
+        
+        // 焦點動畫
+        input.addEventListener('focus', function() {
+            this.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.classList.remove('focused');
+        });
+        
+        // 導航項目動畫
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('mouseover', function() {
+                this.classList.add('pulse');
+            });
+            
+            link.addEventListener('mouseout', function() {
+                this.classList.remove('pulse');
+            });
+        });
+        
+        // 添加一些額外的互動動畫
+        // 懸浮卡片效果
+        document.addEventListener('mousemove', function(e) {
+            const messageContainers = document.querySelectorAll('.message-bubble');
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            messageContainers.forEach(container => {
+                const rect = container.getBoundingClientRect();
+                const containerCenterX = rect.left + rect.width / 2;
+                const containerCenterY = rect.top + rect.height / 2;
+                
+                const distanceX = mouseX - containerCenterX;
+                const distanceY = mouseY - containerCenterY;
+                
+                // 只有當鼠標靠近時才應用效果
+                const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+                if (distance < 300) {
+                    const strength = 5; // 傾斜效果的強度
+                    const maxTilt = 3; // 最大傾斜角度（度）
+                    
+                    // 計算傾斜角度（度）
+                    const tiltX = Math.min(maxTilt, (distanceY / 300) * strength);
+                    const tiltY = Math.min(maxTilt, -(distanceX / 300) * strength);
+                    
+                    // 應用傾斜效果
+                    container.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.02)`;
+                } else {
+                    container.style.transform = '';
                 }
             });
         });
+        
+        // 自動波紋效果
+        function createRipple() {
+            const ripple = document.createElement('div');
+            ripple.style.position = 'fixed';
+            ripple.style.width = '20px';
+            ripple.style.height = '20px';
+            ripple.style.borderRadius = '50%';
+            ripple.style.backgroundColor = 'rgba(118, 118, 179, 0.3)';
+            ripple.style.pointerEvents = 'none';
+            ripple.style.transform = 'translate(-50%, -50%)';
+            ripple.style.zIndex = '-1';
+            
+            // 隨機位置
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            
+            // 動畫
+            ripple.animate([
+                { opacity: 0.7, width: '20px', height: '20px' },
+                { opacity: 0, width: '200px', height: '200px' }
+            ], {
+                duration: 2000,
+                easing: 'ease-out'
+            });
+            
+            document.body.appendChild(ripple);
+            
+            // 動畫結束後移除
+            setTimeout(() => {
+                ripple.remove();
+            }, 2000);
+        }
+        
+        // 定期產生波紋
+        setInterval(createRipple, 3000);
     });
     </script>
 </body>
-</html>
+</html><!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>北商rule事說 - 登入</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+    /* 基本樣式 */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        min-height: 100vh;
+        /* 動態背景效果 */
+        animation: gradientBackground 15s ease infinite;
+        background: linear-gradient(315deg, #f0f0f5 0%, #e8e8f0 25%, #d9d9e6 50%, #e8e8f0 75%, #f0f0f5 100%);
+        background-size: 400% 400%;
+        overflow-x: hidden;
+    }
+    
+    /* 動態背景動畫 */
+    @keyframes gradientBackground {
+        0% {
+            background-position: 0% 0%;
+        }
+        50% {
+            background-position: 100% 100%;
+        }
+        100% {
+            background-position: 0% 0%;
+        }
+    }
+
+    /* 漂浮物品 */
+    .floating-item {
+        position: absolute;
+        opacity: 0.1;
+        z-index: -1;
+        pointer-events: none;
+        filter: blur(1px);
+    }
+
+    .float-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9999cc, #6565a3);
+    }
+
+    .float-square {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #a3a3b5, #8282a7);
+        transform: rotate(45deg);
+    }
+
+    .float-triangle {
+        width: 0;
+        height: 0;
+        border-left: 30px solid transparent;
+        border-right: 30px solid transparent;
+        border-bottom: 52px solid #b8b8c6;
+    }
+
+    /* 導航欄樣式 */
+    .navbar {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 40px;
+        transition: all 0.5s ease;
+        z-index: 1000;
+    }
+
+    .navbar-initial {
+        background-color: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        height: 80px;
+    }
+
+    .navbar-scrolled {
+        background-color: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        height: 60px;
+    }
+
+    .logo {
+        font-weight: bold;
+        font-size: 18px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .logo::before {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 2px;
+        bottom: -5px;
+        left: 0;
+        background-color: #7676b3;
+        transition: all 0.3s ease;
+    }
+
+    .logo:hover::before {
+        width: 100%;
+    }
+
+    .nav-links {
+        display: flex;
+        list-style: none;
+    }
+
+    .nav-links li {
+        margin-left: 20px;
+    }
+
+    .nav-links a {
+        text-decoration: none;
+        color: #333;
+        transition: all 0.3s ease;
+        padding: 8px 12px;
+        border-radius: 100px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-links a::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(200, 200, 200, 0.3);
+        transition: all 0.4s ease;
+        z-index: -1;
+        border-radius: 100px;
+    }
+
+    .nav-links a:hover::before {
+        left: 0;
+    }
+
+    .nav-links a::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background-color: #7676b3;
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+    }
+
+    .nav-links a:hover::after {
+        width: 80%;
+    }
+
+    .user-circle {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #7676b3, #5a4a42);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .user-circle::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #9999cc, #7676b3);
+        top: 100%;
+        left: 0;
+        transition: all 0.3s ease;
+    }
+
+    .user-circle:hover::before {
+        top: 0;
+    }
+
+    .user-circle i {
+        font-size: 16px;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* 聊天應用容器樣式 */
+    .app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    /* 主內容區樣式 - 修正版 */
+    .main-content {
+        display: flex;
+        flex-direction: row; /* 確保水平排列 */
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+        justify-content: flex-start; /* 從左側開始排列 */
+        align-items: stretch; /* 子元素延伸到相同高度 */
+        margin-top: 80px; /* 為導航欄留出空間 */
+        width: 100%;
+        max-width: 100%;
+        height: calc(100vh - 80px); /* 固定高度 */
+    }
+
+    /* 側邊欄樣式 - 修正版 */
+    .sidebar {
+        width: 250px;
+        height: auto; /* 自動延伸到父元素高度 */
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(224, 224, 224, 0.5);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), width 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease;
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.05);
+        flex-shrink: 0; /* 防止側邊欄被壓縮 */
+    }
+
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+        width: 0;
+        opacity: 0;
+    }
+
+    .sidebar-toggle {
+        position: absolute;
+        top: 20px;
+        left: 15px;
+        width: 36px;
+        height: 36px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        z-index: 50;
+        opacity: 0;
+        transform: translateX(-50px) rotate(-360deg);
+        transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        color: #666;
+    }
+
+    .sidebar-toggle.visible {
+        opacity: 1;
+        transform: translateX(0) rotate(0deg);
+    }
+
+    .sidebar-toggle:hover {
+        background-color: #7676b3;
+        color: white;
+        transform: translateX(0) scale(1.1);
+    }
+
+    .chat-history-header {
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .history-title {
+        font-weight: bold;
+        color: #333;
+        position: relative;
+    }
+
+    .history-title::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 30px;
+        height: 2px;
+        background-color: #7676b3;
+    }
+
+    .close-btn {
+        cursor: pointer;
+        color: #999;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .close-btn:hover {
+        background-color: #f0f0f0;
+        color: #333;
+        transform: rotate(90deg);
+    }
+
+    .new-chat-btn {
+        margin: 15px;
+        padding: 10px;
+        background: linear-gradient(135deg, #333, #555);
+        color: white;
+        text-align: center;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .new-chat-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: all 0.4s ease;
+    }
+
+    .new-chat-btn:hover::before {
+        left: 100%;
+    }
+
+    .new-chat-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .new-chat-btn span {
+        margin-right: 5px;
+    }
+
+    .upload-pdf-btn {
+        margin: 0 15px 15px;
+        padding: 10px;
+        background: linear-gradient(135deg, #7676b3, #6565a3);
+        color: white;
+        text-align: center;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-pdf-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: all 0.4s ease;
+    }
+
+    .upload-pdf-btn:hover::before {
+        left: 100%;
+    }
+
+    .upload-pdf-btn:hover {
+        background: linear-gradient(135deg, #6565a3, #7676b3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .upload-pdf-btn span {
+        margin-right: 5px;
+        display: flex;
+        align-items: center;
+    }
+
+    .chat-list, .file-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .file-list {
+        padding: 15px;
+    }
+
+    .file-item {
+        padding: 12px;
+        border-radius: 8px;
+        background-color: #f5f5f5;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .file-item:hover {
+        background-color: #e8e8f0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .file-item-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .file-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 10px;
+        color: #7676b3;
+        transition: all 0.3s ease;
+    }
+
+    .file-item:hover .file-icon {
+        transform: scale(1.1);
+    }
+
+    .file-name {
+        font-weight: bold;
+        color: #333;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .file-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #999;
+    }
+
+    .empty-files-message {
+        color: #999;
+        text-align: center;
+        padding: 20px;
+        font-style: italic;
+    }
+
+    .chat-tabs {
+        display: flex;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .chat-tab {
+        flex: 1;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 14px;
+        color: #666;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .chat-tab::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 0;
+        bottom: 0;
+        left: 0;
+        background-color: rgba(118, 118, 179, 0.2);
+        transition: all 0.3s ease;
+        z-index: -1;
+    }
+
+    .chat-tab:hover::before {
+        height: 100%;
+    }
+
+    .chat-tab.active {
+        border-bottom: 2px solid #7676b3;
+        color: #333;
+    }
+
+    .chat-tab.active::before {
+        height: 100%;
+    }
+
+    .chat-item {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .chat-item:hover {
+        background-color: #f5f5f5;
+        transform: translateX(5px);
+    }
+
+    .chat-item.selected {
+        background-color: #f0f0f5;
+        border-left: 3px solid #7676b3;
+    }
+
+    .chat-item-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .chat-item-date {
+        font-size: 12px;
+        color: #999;
+    }
+
+    /* 確保側邊欄收起時聊天區域正確顯示 */
+    .sidebar.collapsed ~ .chat-area {
+        width: 100%; /* 側邊欄收起時佔滿全寬 */
+    }
+
+    /* 當側邊欄收起時的主內容區調整 */
+    .sidebar.collapsed + .chat-area {
+        width: 100%; /* 側邊欄收起時佔滿全寬 */
+    }
+
+    /* 聊天區域樣式 - 修正版 */
+    .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: transparent;
+        position: relative;
+        overflow: hidden;
+        padding: 15px;
+        align-items: center;
+        justify-content: flex-start;
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        max-width: none; /* 移除最大寬度限制 */
+        margin: 0; /* 移除自動邊距 */
+        width: calc(100% - 250px); /* 計算寬度時減去側邊欄寬度，但這不是必要的，因為flex佈局已處理 */
+        text-align: center;
+        height: auto; /* 自動延伸高度 */
+    }
+
+    .frame-info {
+        color: #999;
+        font-size: 14px;
+        margin-right: 15px;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .header-action-btn {
+        width: 30px;
+        height: 30px;
+        background-color: #9999cc;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .messages-container {
+        flex: 1;
+        width: 100%;
+        max-width: 1000px;
+        padding: 10px;
+        overflow-y: auto;
+        background-color: rgba(245, 245, 250, 0.8);
+        backdrop-filter: blur(10px);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+        scroll-behavior: smooth;
+        transition: all 0.3s ease;
+    }
+    
+    .messages-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 800 800"><defs><filter id="blur" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur in="SourceGraphic" stdDeviation="3" /></filter></defs><g filter="url(%23blur)" opacity="0.35"><circle cx="150" cy="150" r="50" fill="%23d1d1d8" /><circle cx="350" cy="220" r="70" fill="%23d1d1d8" /><circle cx="520" cy="120" r="40" fill="%23d1d1d8" /><circle cx="220" cy="350" r="60" fill="%23d1d1d8" /><circle cx="450" cy="380" r="90" fill="%23d1d1d8" /><circle cx="650" cy="320" r="30" fill="%23d1d1d8" /><circle cx="180" cy="550" r="45" fill="%23d1d1d8" /><circle cx="370" cy="600" r="70" fill="%23d1d1d8" /><circle cx="550" cy="520" r="55" fill="%23d1d1d8" /><circle cx="650" cy="680" r="35" fill="%23d1d1d8" /><line x1="0" y1="0" x2="200" y2="300" stroke="%23c8c8d0" stroke-width="1" /><line x1="300" y1="0" x2="500" y2="400" stroke="%23c8c8d0" stroke-width="1" /><line x1="700" y1="0" x2="600" y2="300" stroke="%23c8c8d0" stroke-width="1" /><line x1="0" y1="400" x2="300" y2="300" stroke="%23c8c8d0" stroke-width="1" /><line x1="400" y1="200" x2="600" y2="500" stroke="%23c8c8d0" stroke-width="1" /><line x1="700" y1="400" x2="500" y2="600" stroke="%23c8c8d0" stroke-width="1" /><line x1="0" y1="600" x2="200" y2="500" stroke="%23c8c8d0" stroke-width="1" /><line x1="300" y1="700" x2="400" y2="500" stroke="%23c8c8d0" stroke-width="1" /><line x1="700" y1="700" x2="600" y2="550" stroke="%23c8c8d0" stroke-width="1" /></g></svg>');
+        background-size: cover;
+        background-position: center;
+        border-radius: 12px;
+        opacity: 1;
+        z-index: -1;
+    }
+
+    .message {
+        margin-bottom: 15px;
+        max-width: 85%;
+        display: flex;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.5s forwards;
+    }
+
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message.received {
+        align-self: flex-start;
+    }
+
+    .message.sent {
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    .message-bubble {
+        padding: 12px 18px;
+        border-radius: 20px;
+        font-size: 14px;
+        line-height: 1.4;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .message-bubble::before {
+        content: '';
+        position: absolute;
+        top: -100%;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.5s ease;
+    }
+
+    .message:hover .message-bubble::before {
+        top: 0;
+    }
+
+    .received .message-bubble {
+        background: linear-gradient(135deg, #b8b8c6, #9999cc);
+        color: white;
+        border-top-left-radius: 4px;
+    }
+
+    .sent .message-bubble {
+        background: linear-gradient(135deg, #f0f0f0, #e6e6e6);
+        color: #333;
+        border-bottom-right-radius: 4px;
+    }
+
+    .chat-input-container {
+        padding: 10px 15px;
+        background-color: transparent;
+        display: flex;
+        align-items: center;
+        position: relative;
+        z-index: 10;
+        margin-top: 15px;
+        width: 100%;
+        max-width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 12px 15px;
+        border: none;
+        border-radius: 30px;
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+        font-size: 14px;
+        outline: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .chat-input:focus {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        background-color: rgba(255, 255, 255, 0.95);
+        transform: translateY(-2px);
+    }
+
+    .send-btn {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #a3a3b5, #8282a7);
+        border-radius: 50%;
+        margin-left: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        color: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .send-btn::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #9999cc, #7676b3);
+        top: 100%;
+        left: 0;
+        transition: all 0.3s ease;
+    }
+
+    .send-btn:hover::before {
+        top: 0;
+    }
+
+    .send-btn:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+
+    .send-btn svg {
+        position: relative;
+        z-index: 2;
+    }
+
+    /* 動畫類 */
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .slide-in-right {
+        animation: slideInRight 0.5s ease forwards;
+    }
+
+    @keyframes slideInRight {
+        from { transform: translateX(50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    .slide-in-left {
+        animation: slideInLeft 0.5s ease forwards;
+    }
+
+    @keyframes slideInLeft {
+        from { transform: translateX(-50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    .scale-in {
+        animation: scaleIn 0.5s ease forwards;
+    }
+
+    @keyframes scaleIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .bounce-in {
+        animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    }
+
+    @keyframes bounceIn {
+        0% { transform: scale(0.8); opacity: 0; }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+    }
+
+    .typing-indicator span {
+        width: 8px;
+        height: 8px;
+        margin: 0 2px;
+        background-color: #b8b8c6;
+        border-radius: 50%;
+        display: inline-block;
+        opacity: 0.7;
+    }
+
+    .typing-indicator span:nth-child(1) {
+        animation: typingBounce 1s infinite 0.1s;
+    }
+
+    .typing-indicator span:nth-child(2) {
+        animation: typingBounce 1s infinite 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+        animation: typingBounce 1s infinite 0.3s;
+    }
+
+    @keyframes typingBounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    /* 淡出動畫，用於對話切換 */
+    .fade-out {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    </style>
+</head>
+
+<body>
+    <!-- 漂浮物品 -->
+    <div id="floating-items-container"></div>
+
+    <!-- 導航欄 -->
+    <nav class="navbar navbar-initial" id="navbar">
+        <div class="logo">北商rule事說</div>
+        <ul class="nav-links">
+            <li><a href="#" class="slide-in-right" style="animation-delay: 0.1s;">校規查詢</a></li>
+            <li><a href="#" class="slide-in-right" style="animation-delay: 0.2s;">傳聲筒</a></li>
+            <li><a href="#" class="slide-in-right" style="animation-delay: 0.3s;">揪團區</a></li>
+            <li><a href="#" class="slide-in-right" style="animation-delay: 0.4s;">哈哈哈哈</a></li>
+        </ul>
+        <div class="user-circle scale-in" style="animation-delay: 0.5s;">
+            <i class="fa-solid fa-user"></i>
+        </div>
+    </nav>
