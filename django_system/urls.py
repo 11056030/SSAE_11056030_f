@@ -30,4 +30,6 @@ urlpatterns = [
     path('join_create/' , views.join_create),
     path("test", views.ask_page, name="ask_page"),
     path("ask/", views.ask_view, name="ask_api"),
+    path("upload_zip/", views.upload_zip, name="upload_zip"),
+
 ]

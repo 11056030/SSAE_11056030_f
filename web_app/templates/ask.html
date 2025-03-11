@@ -12,6 +12,7 @@
       background: #fdfdfd;
       border: 1px solid #ddd;
       border-radius: 12px;
+      position: relative;
     }
     h1 {
       font-size: 1.6em;
@@ -22,7 +23,7 @@
       padding: 10px;
       font-size: 1em;
     }
-    input {
+    input[type="text"] {
       width: 80%;
       margin-right: 10px;
     }
@@ -40,14 +41,74 @@
       border-radius: 8px;
       min-height: 50px;
     }
+    /* 懸浮上傳圖示 */
+    .upload-icon {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      font-size: 22px;
+      text-align: center;
+      line-height: 44px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    /* 懸浮進度條 */
+    #floating-progress {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      width: 200px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      display: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 999;
+    }
+    #progressBar {
+      width: 0;
+      height: 12px;
+      background-color: #4CAF50;
+      border-radius: 6px;
+      transition: width 0.3s;
+    }
+    #progressText {
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: #333;
+    }
   </style>
 </head>
 <body>
   <h1>北商rule是說 Chatbot</h1>
-  <input id="question" type="text" placeholder="請輸入你的問題..." />
-  <button onclick="sendQuestion()">送出</button>
+
+  <div>
+    <input id="question" type="text" placeholder="請輸入你的問題..." />
+    <button onclick="sendQuestion()">送出</button>
+  </div>
 
   <div id="answer"></div>
+
+  <!-- 懸浮上傳圖示與檔案選擇 -->
+  <button class="upload-icon" onclick="document.getElementById('zipInput').click()">📁</button>
+  <input type="file" id="zipInput" accept=".zip" onchange="uploadZip(this.files[0])" />
+
+  <!-- 懸浮進度條 -->
+  <div id="floating-progress">
+    <div id="progressBar"></div>
+    <div id="progressText">上傳中...</div>
+  </div>
 
   <script>
     async function sendQuestion() {
@@ -68,6 +129,63 @@
         answerDiv.innerText = "錯誤：" + err;
       }
     }
+
+    function uploadZip(file) {
+      if (!file || !file.name.endsWith('.zip')) {
+        alert("請選擇 zip 檔！");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("zip_file", file);
+
+      const progressBox = document.getElementById("floating-progress");
+      const progressBar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
+
+      progressBox.style.display = "block";
+      progressBar.style.width = "0%";
+      progressText.innerText = "上傳中...";
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/upload_zip/", true);
+
+      xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = percent + "%";
+        }
+      };
+
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          const res = JSON.parse(xhr.responseText);
+          if (res.message) {
+            progressText.innerText = "✅ 上傳完成";
+          } else {
+            progressText.innerText = "❌ 錯誤：" + (res.error || "未知錯誤");
+          }
+        } else {
+          progressText.innerText = "❌ 上傳失敗";
+        }
+
+        // ⏳ 10 秒後隱藏進度框
+        setTimeout(() => {
+          progressBox.style.display = "none";
+        }, 10000);
+      };
+
+      xhr.onerror = function () {
+        progressText.innerText = "❌ 上傳錯誤";
+
+        setTimeout(() => {
+          progressBox.style.display = "none";
+        }, 10000);
+      };
+
+      xhr.send(formData);
+    }
+
   </script>
 </body>
 </html>
