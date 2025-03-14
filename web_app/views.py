@@ -24,6 +24,10 @@ def login(request):
 def chat(request):
   return render(request, 'chat.html')
 
+
+def navbar2(request):
+  return render(request, 'navbar(2).html')
+
 def join(request):
   return render(request, 'join.html')
 
