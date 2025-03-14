@@ -65,7 +65,7 @@ def create_advanced_rag_chain(retriever):
         "Use three sentences maximum and keep the answer concise.\n\n{context}"
     )
 
-    prompt = ChatPromptTemplate.from_messages([
+    prompt = ChatPromptTemplate.from_messages([ 
         ("system", system_prompt),
         ("human", "{input}"),
     ])
