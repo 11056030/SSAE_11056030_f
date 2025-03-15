@@ -4,188 +4,244 @@
   <meta charset="UTF-8" />
   <title>北商rule是說 Chatbot</title>
   <style>
-    body {
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
       font-family: sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: #f1f1f1;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 60px);
+    }
+
+    #sidebar {
+      width: 280px;
+      background-color: #fafafa;
+      border-right: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    #chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       padding: 20px;
-      background: #fdfdfd;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      position: relative;
+      overflow-y: auto;
     }
-    h1 {
-      font-size: 1.6em;
-      margin-bottom: 1em;
-      color: #444;
+
+    .message {
+      max-width: 70%;
+      margin: 10px 0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background-color: #e0e0e0;
+      display: flex;
+      align-items: flex-end;
     }
-    input, button {
+
+    .user {
+      align-self: flex-end;
+      justify-content: flex-end;
+    }
+
+    .bot {
+      align-self: flex-start;
+    }
+
+    .avatar {
+      margin: 0 8px;
+    }
+
+    .input-area {
+      position: absolute;
+      bottom: 0;
+      left: 280px;
+      right: 0;
+      background-color: #f9f9f9;
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-top: 1px solid #ccc;
+    }
+
+    .input-area input {
+      width: 33%;
       padding: 10px;
       font-size: 1em;
-    }
-    input[type="text"] {
-      width: 80%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
       margin-right: 10px;
     }
-    button {
-      cursor: pointer;
+
+    .input-area button {
+      padding: 10px 16px;
       background-color: #4CAF50;
       color: white;
       border: none;
       border-radius: 6px;
-    }
-    #answer {
-      margin-top: 20px;
-      background: #f0f0f0;
-      padding: 12px;
-      border-radius: 8px;
-      min-height: 50px;
-    }
-    /* 懸浮上傳圖示 */
-    .upload-icon {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      font-size: 22px;
-      text-align: center;
-      line-height: 44px;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      z-index: 1000;
     }
-    input[type="file"] {
-      display: none;
-    }
-    /* 懸浮進度條 */
-    #floating-progress {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      width: 200px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 10px;
-      display: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      z-index: 999;
-    }
-    #progressBar {
-      width: 0;
-      height: 12px;
-      background-color: #4CAF50;
+
+    .conversation-title {
+      background: #eee;
+      margin-bottom: 5px;
+      padding: 8px;
       border-radius: 6px;
-      transition: width 0.3s;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    #progressText {
-      margin-top: 8px;
+
+    .conversation-title input {
+      width: 100px;
+      border: none;
+      background: transparent;
       font-size: 0.9em;
-      color: #333;
     }
   </style>
 </head>
 <body>
-  <h1>北商rule是說 Chatbot</h1>
+  <header>
+    <div>北商rule是說 Chatbot</div>
+  </header>
 
-  <div>
-    <input id="question" type="text" placeholder="請輸入你的問題..." />
-    <button onclick="sendQuestion()">送出</button>
+  <div class="main-container">
+    <div id="sidebar">
+      <button onclick="startNewConversation()">➕ 開啟新對話</button>
+      <h2>對話紀錄</h2>
+      <div id="conversation-list"></div>
+    </div>
+
+    <div id="chat-area">
+      <div id="chat-messages"></div>
+    </div>
   </div>
 
-  <div id="answer"></div>
-
-  <!-- 懸浮上傳圖示與檔案選擇 -->
-  <button class="upload-icon" onclick="document.getElementById('zipInput').click()">📁</button>
-  <input type="file" id="zipInput" accept=".zip" onchange="uploadZip(this.files[0])" />
-
-  <!-- 懸浮進度條 -->
-  <div id="floating-progress">
-    <div id="progressBar"></div>
-    <div id="progressText">上傳中...</div>
+  <div class="input-area">
+    <input id="input" type="text" placeholder="輸入問題..." onkeydown="handleKeyDown(event)" />
+    <button onclick="send()">送出</button>
   </div>
 
   <script>
-    async function sendQuestion() {
-      const question = document.getElementById("question").value;
-      const answerDiv = document.getElementById("answer");
-      answerDiv.innerText = "正在查詢中...";
-      try {
-        const res = await fetch("/ask/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ question })
-        });
-        const data = await res.json();
-        answerDiv.innerText = data.answer || data.error || "沒有收到回答。";
-      } catch (err) {
-        answerDiv.innerText = "錯誤：" + err;
+    let allConversations = [{ title: "新對話1", messages: [] }];
+    let currentConversation = allConversations[0];
+
+    function renderConversationList() {
+      const list = document.getElementById("conversation-list");
+      list.innerHTML = "";
+      allConversations.forEach((conv, idx) => {
+        const div = document.createElement("div");
+        div.className = "conversation-title";
+        div.innerHTML = `
+          <input value="${conv.title}" onchange="renameTitle(${idx}, this.value)" />
+          <div>
+            <button onclick="loadConversation(${idx})">📂</button>
+            <button onclick="exportConversation(${idx})">💾</button>
+            <button onclick="deleteConversation(${idx})">❌</button>
+          </div>`;
+        list.appendChild(div);
+      });
+    }
+
+    function renameTitle(index, newTitle) {
+      allConversations[index].title = newTitle;
+      renderConversationList();
+    }
+
+    function deleteConversation(index) {
+      allConversations.splice(index, 1);
+      renderConversationList();
+    }
+
+    function exportConversation(index) {
+      const conv = allConversations[index];
+      const text = conv.messages.map(m => (m.role === "user" ? "😀 " : "🦉 ") + m.text).join("\n");
+      const blob = new Blob([text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = conv.title + ".txt";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function loadConversation(index) {
+      currentConversation = allConversations[index];
+      renderMessages();
+    }
+
+    function startNewConversation() {
+      const newTitle = `新對話${allConversations.length + 1}`;
+      currentConversation = { title: newTitle, messages: [] };
+      allConversations.unshift(currentConversation);  // Add to the top of the list
+      renderConversationList();
+      renderMessages();
+    }
+
+    function renderMessages() {
+      const area = document.getElementById("chat-messages");
+      area.innerHTML = "";
+      currentConversation.messages.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "message " + (m.role === "user" ? "user" : "bot");
+        div.innerHTML = `
+          ${m.role === "bot" ? '<div class="avatar">🦉</div>' : ""}
+          <div style="max-width: fit-content; display: inline-block;">${m.text}</div>
+          ${m.role === "user" ? '<div class="avatar">😀</div>' : ""}`;
+        area.appendChild(div);
+      });
+      area.scrollTop = area.scrollHeight;
+    }
+
+    async function send() {
+      const input = document.getElementById("input");
+      const question = input.value.trim();
+      if (!question) return;
+
+      currentConversation.messages.push({ role: "user", text: question });
+      renderMessages();
+      input.value = "";
+
+      const res = await fetch("/ask/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+
+      const data = await res.json();
+      const reply = data.answer || "（無回應）";
+      currentConversation.messages.push({ role: "bot", text: reply });
+      renderMessages();
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Enter") {
+        send();
       }
     }
 
-    function uploadZip(file) {
-      if (!file || !file.name.endsWith('.zip')) {
-        alert("請選擇 zip 檔！");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("zip_file", file);
-
-      const progressBox = document.getElementById("floating-progress");
-      const progressBar = document.getElementById("progressBar");
-      const progressText = document.getElementById("progressText");
-
-      progressBox.style.display = "block";
-      progressBar.style.width = "0%";
-      progressText.innerText = "上傳中...";
-
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/upload_zip/", true);
-
-      xhr.upload.onprogress = function (e) {
-        if (e.lengthComputable) {
-          const percent = Math.round((e.loaded / e.total) * 100);
-          progressBar.style.width = percent + "%";
-        }
-      };
-
-      xhr.onload = function () {
-        if (xhr.status === 200) {
-          const res = JSON.parse(xhr.responseText);
-          if (res.message) {
-            progressText.innerText = "✅ 上傳完成";
-          } else {
-            progressText.innerText = "❌ 錯誤：" + (res.error || "未知錯誤");
-          }
-        } else {
-          progressText.innerText = "❌ 上傳失敗";
-        }
-
-        // ⏳ 10 秒後隱藏進度框
-        setTimeout(() => {
-          progressBox.style.display = "none";
-        }, 10000);
-      };
-
-      xhr.onerror = function () {
-        progressText.innerText = "❌ 上傳錯誤";
-
-        setTimeout(() => {
-          progressBox.style.display = "none";
-        }, 10000);
-      };
-
-      xhr.send(formData);
-    }
-
+    renderConversationList();
+    renderMessages();
   </script>
 </body>
 </html>
