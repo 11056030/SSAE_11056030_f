@@ -32,8 +32,4 @@ urlpatterns = [
     path("ask/", views.ask_view, name="ask_api"),
     path('navbar2/' , views.navbar2),
     path("upload_zip/", views.upload_zip, name="upload_zip"),
-
-=========
-    path('navbar2/' , views.navbar2),
->>>>>>>>> Temporary merge branch 2
 ]
