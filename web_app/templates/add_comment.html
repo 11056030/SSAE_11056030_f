@@ -1,11 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新增評論</title>
-</head>
-<body>
+{% extends 'navbar.html' %}
+
+{% block title %}新增評論{% endblock %}
+
+{% block lang %}zh{% endblock %}
+
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/add_comment.css' %}">
+{% endblock %}
+
+{% block content %}
+<div style="margin-top: 80px;"></div>
+<div class="comment-container">
+
+    <div class="back-button">
+        <a href="#">返回</a>
+    </div>
     
-</body>
-</html>
+    <form class="comment-form" method="post" action="">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-col-left">
+                <div class="form-group">
+                    <label for="school_year">學年度</label>
+                    <select id="school_year" name="school_year" class="form-control">
+                        <option value="">選擇學年度</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">分類</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="">分類</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="class_info">選擇班級</label>
+                    <select id="class_info" name="class_info" class="form-control">
+                        <option value="">選擇班級</option>
+                        <option value="進四技資管一甲班">進四技資管一甲班</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teacher">課程</label>
+                    <select id="teacher" name="teacher" class="form-control">
+                        <option value="">計算機概論(上)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-col">
+                <div class="display-mode-container">
+                    <label>顯示方式</label>
+                    <div class="user-info-container">
+                        <div class="user-info">
+                            <img src="{% static 'image/user_avatar.png' %}" alt="User Avatar" class="avatar">
+                            <span class="username">可愛男</span>
+                        </div>
+                        <div class="anonymous-options">
+                            <input type="radio" id="anonymous_no" name="anonymous" value="no" checked>
+                            <label for="anonymous_no">匿名</label>
+                            <input type="radio" id="anonymous_yes" name="anonymous" value="yes">
+                            <label for="anonymous_yes">實名</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="top-row-container">
+            <div class="course-info-container">
+                <div class="comment-header">
+                    <h3>112年進五專資管系四年甲班資料科 任課教師:林志忠</h3>
+                </div>
+            </div>
+        </div>
+        
+        <div class="comment-content">
+            <div class="comment-text-area">
+                <textarea id="comment_text" name="comment_text" rows="10" placeholder="輸入評論內容...">幹，「資料科學」這門課真的超級爆，林志忠老師上課就是狂講課科，PPT照念，基本超乾。四年甲班的我們每次上這堂課，感覺簡終都快爆掉，請一堆理論又一堆名詞，根本記不起來，媽的超爆。問問題有時老師他回答得很隨便，整個超扣折。作業更扣，給一堆超硬的題目，自己Google還不一定找得到答案，真的靠北。拜託學弟妹如果真之後遇到這門，真的要自求多福，自己先課外好好料處理，不然直接死一片。老實說，我覺得這門課根本就可以不用開，不然就換個老師。</textarea>
+            </div>
+            
+            <div class="arrows-container">
+                <div class="arrow">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+                <button type="button" id="convert_btn" class="btn-convert">轉換</button>
+                <div class="arrow">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+            
+            <div class="comment-preview">
+                <div class="preview-content">
+                    <textarea id="preview_text" placeholder="可以在這裡直接編輯或使用轉換按鈕..."></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">送出</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block body_js %}
+<script src="{% static 'js/add_comment.js' %}"></script>
+{% endblock %}

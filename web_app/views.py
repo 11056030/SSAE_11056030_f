@@ -36,6 +36,9 @@ def join_create(request):
 def ask_page(request):
     return render(request, "ask.html")
 
+def add_comment(request):
+    return render(request, "add_comment.html")
+
 @csrf_exempt
 def ask_view(request):
     if request.method == "POST":
