@@ -1,0 +1,173 @@
+{% extends 'navbar.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block lang %}zh-Hant{% endblock %}
+
+{% block title %}北商rule事說 - 課程評論{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/comment_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<body>
+    <!-- Fixed Add Comment Button -->
+    <a href="{% url 'add_comment' %}" class="fixed-add-comment-btn">＋ 新增評論</a>
+    
+    <!-- Background text -->
+    <div class="bg-text">COURSE REVIEWS</div>
+    
+    <!-- Cloud decorations -->
+    <div class="cloud-shape" style="width: 200px; height: 200px; top: 150px; left: 10%; opacity: 0.2;"></div>
+    <div class="cloud-shape" style="width: 150px; height: 150px; top: 400px; right: 15%; opacity: 0.2;"></div>
+    <div class="cloud-shape" style="width: 250px; height: 250px; top: 800px; left: 20%; opacity: 0.2;"></div>
+    
+    <div class="main-container">
+        <!-- 課程資訊區塊 -->
+        <div class="course-info">
+            <div class="course-header">
+                <h1 class="course-title">計算機概論</h1>
+                <div class="course-rating">
+                    <div class="stars" data-rating="4.5">
+                        <i class="fa-regular fa-star"></i>
+                        <i class="fa-regular fa-star"></i>
+                        <i class="fa-regular fa-star"></i>
+                        <i class="fa-regular fa-star"></i>
+                        <i class="fa-regular fa-star"></i>
+                        <span class="rating-text">4.5/5.0 (24則評論)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="course-meta">
+                <span class="course-semester">112 學年度 第 2 學期</span>
+                <span class="course-department">資訊管理系</span>
+                <span class="course-teacher">授課教師：王大明 教授</span>
+            </div>
+        </div>
+        
+        <!-- 評論區塊 -->
+        <section class="comments-section">
+            <h2 class="section-title">課程評論 <span class="comment-count">(24則評論)</span></h2>
+            
+            <!-- 評論 1 -->
+            <article class="comment-card">
+                <div class="comment-header">
+                    <div class="user-avatar">
+                        <img src="{% static 'images/default-avatar.png' %}" alt="使用者頭像">
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">匿名學生</span>
+                        <div class="comment-meta">
+                            <div class="stars" data-rating="4.5">
+                                <i class="fa-regular fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                                <i class="fa-regular fa-star"></i>
+                            </div>
+                            <span class="comment-date">2024/04/10</span>
+                        </div>
+                    </div>
+                    <button class="like-btn small">
+                        <span class="like-icon"><i class="fa-solid fa-thumbs-up"></i></span>
+                        <span class="like-count">12</span>
+                    </button>
+                </div>
+                <div class="comment-content">
+                    <p>老師上課很認真，教材準備充分，會用很多生活化的例子來解釋計算機科學的概念，讓非本科系的學生也能輕鬆理解。</p>
+                </div>
+                <div class="comment-actions">
+                    <button class="reply-btn">回覆</button>
+                </div>
+                
+                <!-- 回覆表單 (預設隱藏) -->
+                <div class="reply-form" style="display: none;">
+                    <div class="form-group">
+                        <textarea class="form-control" rows="3" placeholder="撰寫回覆..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button class="cancel-reply-btn">取消</button>
+                        <button class="submit-reply-btn">發送</button>
+                    </div>
+                </div>
+                
+                <!-- 回覆區塊 -->
+                <div class="replies-container">
+                    <div class="reply">
+                        <div class="user-avatar small">
+                            <img src="{% static 'images/default-avatar.png' %}" alt="使用者頭像">
+                        </div>
+                        <div class="reply-content">
+                            <div class="reply-header">
+                                <span class="user-name">助教小幫手</span>
+                                <span class="reply-date">2024/04/11</span>
+                            </div>
+                            <p>謝謝您的回饋！老師確實很用心準備教材，有任何問題也歡迎隨時在課堂上發問喔！</p>
+                            <div class="reply-actions">
+                                <button class="reply-to-reply">回覆</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 評論 2 -->
+            <article class="comment-card">
+                <div class="comment-header">
+                    <div class="user-avatar">
+                        <img src="{% static 'images/default-avatar.png' %}" alt="使用者頭像">
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">資管系學生</span>
+                        <span class="comment-date">2024/04/05</span>
+                    </div>
+                    <button class="like-btn small">
+                        <span class="like-icon"><i class="fa-solid fa-thumbs-up"></i></span>
+                        <span class="like-count">8</span>
+                    </button>
+                </div>
+                <div class="comment-content">
+                    <p>課程內容豐富，但節奏有點快，建議可以多一點實作時間。老師很親切，下課後問問題都會耐心解答。</p>
+                </div>
+                <div class="comment-actions">
+                    <button class="reply-btn">回覆</button>
+                </div>
+            </article>
+
+            <!-- 評論 3 -->
+            <article class="comment-card">
+                <div class="comment-header">
+                    <div class="user-avatar">
+                        <img src="{% static 'images/default-avatar.png' %}" alt="使用者頭像">
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">匿名</span>
+                        <span class="comment-date">2024/03/28</span>
+                    </div>
+                    <button class="like-btn small">
+                        <span class="like-icon"><i class="fa-solid fa-thumbs-up"></i></span>
+                        <span class="like-count">15</span>
+                    </button>
+                </div>
+                <div class="comment-content">
+                    <p>作業量適中，但考試難度較高，建議要認真聽講並複習課本內容。老師上課會補充很多實用的業界知識，收穫很多！</p>
+                </div>
+                <div class="comment-actions">
+                    <button class="reply-btn">回覆</button>
+                </div>
+            </article>
+        </section>
+    </div>
+    
+    <div class="deco-line"></div>
+</body>
+{% endblock %}
+
+{% block body_js %}
+<script src="https://kit.fontawesome.com/9e4db15554.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/comment_detail.js' %}"></script>
+{% endblock %}

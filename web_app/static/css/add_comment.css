@@ -152,6 +152,102 @@ label {
     background-color: rgba(245, 245, 255, 1);
 }
 
+/* Display mode container */
+.display-mode-container {
+    margin-bottom: 20px;
+}
+
+/* Rating container */
+.rating-container {
+    margin-top: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.rating-container label {
+    display: block;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 1.1em;
+}
+
+.rating-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Stars styling */
+.stars {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    position: relative;
+    padding: 5px 0;
+}
+
+.stars i {
+    font-size: 1.8rem;
+    color: #e0e0e0; /* Default empty star color */
+    cursor: pointer;
+    transition: transform 0.15s ease, color 0.15s ease;
+    position: relative;
+    width: 28px;
+    text-align: center;
+}
+
+.stars i.fa-star,
+.stars i.fa-star-half-stroke {
+    color: #ffc107; /* Filled and half-filled star color */
+}
+
+.stars i:hover {
+    transform: scale(1.2);
+}
+
+.rating-text {
+    margin-left: 12px;
+    font-size: 1.1rem;
+    color: var(--text-color);
+    font-weight: 600;
+    min-width: 60px;
+    display: inline-block;
+}
+
+/* Manual rating input */
+.manual-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    padding-top: 12px;
+    border-top: 1px solid var(--medium-gray);
+}
+
+.manual-rating input[type="number"] {
+    width: 70px !important;
+    padding: 8px 10px !important;
+    border: 1px solid var(--medium-gray) !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 0.95rem !important;
+    text-align: center;
+    transition: var(--transition) !important;
+}
+
+.manual-rating input[type="number"]:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 2px rgba(171, 190, 249, 0.3) !important;
+    outline: none !important;
+}
+
+.manual-rating span {
+    font-size: 0.9rem;
+    color: var(--dark-gray);
+}
+
 /* Top row container */
 .top-row-container {
     display: flex;

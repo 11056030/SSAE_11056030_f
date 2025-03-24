@@ -7,6 +7,7 @@
 {% load static %}
 
 {% block css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="{% static 'css/add_comment.css' %}">
 {% endblock %}
 
@@ -18,7 +19,7 @@
         <a href="#">返回</a>
     </div>
     
-    <form class="comment-form" method="post" action="">
+    <form method="POST" class="comment-form" id="commentForm" onsubmit="return confirmSubmission()"> 
         {% csrf_token %}
         <div class="form-row">
             <div class="form-col-left">
@@ -30,9 +31,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="category">分類</label>
+                    <label for="category">學制</label>
                     <select id="category" name="category" class="form-control">
-                        <option value="">分類</option>
+                        <option value="">學制</option>
                     </select>
                 </div>
                 
@@ -45,10 +46,20 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="teacher">課程</label>
-                    <select id="teacher" name="teacher" class="form-control">
-                        <option value="">計算機概論(上)</option>
-                    </select>
+                    <label for="course">課程</label>
+                    <input list="course-options" id="course" name="course" class="form-control" placeholder="請選擇或輸入課程名稱" autocomplete="off">
+                    <datalist id="course-options">
+                        <option value="計算機概論(上)">
+                        <option value="程式設計(一)">
+                        <option value="資料庫管理">
+                        <option value="網頁程式設計">
+                        <option value="系統分析與設計">
+                        <option value="專題製作">
+                        <option value="網路概論">
+                        <option value="作業系統">
+                        <option value="資料結構">
+                        <option value="演算法">
+                    </datalist>
                 </div>
             </div>
             <div class="form-col">
@@ -64,6 +75,26 @@
                             <label for="anonymous_no">匿名</label>
                             <input type="radio" id="anonymous_yes" name="anonymous" value="yes">
                             <label for="anonymous_yes">實名</label>
+                        </div>
+                    </div>
+                    
+                    <div class="rating-container">
+                        <label>課程評分</label>
+                        <div class="rating-controls">
+                            <div class="stars editable" id="rating-stars" data-rating="1">
+                                <i class="fa-regular fa-star" data-rating="0.5"></i>
+                                <i class="fa-regular fa-star" data-rating="1.5"></i>
+                                <i class="fa-regular fa-star" data-rating="2.5"></i>
+                                <i class="fa-regular fa-star" data-rating="3.5"></i>
+                                <i class="fa-regular fa-star" data-rating="4.5"></i>
+                                <input type="hidden" name="rating" id="rating-input" value="1">
+                                <span class="rating-text">1.0/5.0</span>
+                            </div>
+                            <div class="manual-rating">
+                                <span>或輸入分數：</span>
+                                <input type="number" id="manual-rating" min="0" max="5" step="0.5" value="1.0" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                                <span>/5.0</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -109,4 +140,153 @@
 
 {% block body_js %}
 <script src="{% static 'js/add_comment.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const starsContainer = document.getElementById('rating-stars');
+    const stars = Array.from(starsContainer.querySelectorAll('i'));
+    const ratingInput = document.getElementById('rating-input');
+    const manualRatingInput = document.getElementById('manual-rating');
+    const ratingText = starsContainer.querySelector('.rating-text');
+    
+    // Set initial rating to 1 by default
+    let currentRating = 1.0;
+    ratingInput.value = '1.0';
+    manualRatingInput.value = '1.0';
+    updateStars(currentRating, true);
+    
+    // Add hover effect for stars
+    starsContainer.addEventListener('mousemove', (e) => {
+        if (e.target.matches('i')) {
+            const star = e.target;
+            const rect = star.getBoundingClientRect();
+            const isHalf = (e.clientX - rect.left) / rect.width < 0.5;
+            const baseRating = parseFloat(star.getAttribute('data-rating'));
+            const rating = isHalf ? (baseRating - 0.5) : baseRating;
+            updateStars(rating, false);
+        }
+    });
+    
+    starsContainer.addEventListener('mouseleave', () => {
+        updateStars(currentRating, false);
+    });
+    
+    // Click to set rating
+    starsContainer.addEventListener('click', (e) => {
+        if (e.target.matches('i')) {
+            const star = e.target;
+            const rect = star.getBoundingClientRect();
+            const isHalf = (e.clientX - rect.left) / rect.width < 0.5;
+            const baseRating = parseFloat(star.getAttribute('data-rating'));
+            const newRating = isHalf ? (baseRating - 0.5) : baseRating;
+            
+            // Toggle if clicking the same rating
+            if (Math.abs(newRating - currentRating) < 0.1) {
+                currentRating = 0;
+            } else {
+                currentRating = Math.min(5, Math.max(0, newRating));
+            }
+            
+            updateStars(currentRating, true);
+            manualRatingInput.value = currentRating.toFixed(1);
+        }
+    });
+    
+    // Manual input handling
+    manualRatingInput.addEventListener('change', (e) => {
+        let value = parseFloat(e.target.value);
+        if (isNaN(value)) {
+            value = 1.0; // Default to 1.0 if invalid input
+        }
+        value = Math.min(5, Math.max(0, value));
+        currentRating = Math.round(value * 2) / 2; // Round to nearest 0.5
+        if (currentRating === 0) currentRating = 1.0; // Ensure minimum 1.0
+        updateStars(currentRating, true);
+        e.target.value = currentRating.toFixed(1);
+    });
+    
+    function updateStars(rating, updateInput = true) {
+        // Ensure rating is at least 1.0
+        if (rating === 0) rating = 1.0;
+        
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = (rating % 1) >= 0.25 && (rating % 1) <= 0.75;
+        
+        stars.forEach((star, index) => {
+            const starBaseRating = 0.5 + index; // 0.5, 1.5, 2.5, 3.5, 4.5
+            const starFullRating = Math.ceil(starBaseRating); // 1, 2, 3, 4, 5
+            
+            if (rating >= starFullRating) {
+                // Full star
+                star.className = 'fa-solid fa-star';
+            } else if (rating >= starBaseRating - 0.25 && rating < starBaseRating + 0.25) {
+                // Half star
+                star.className = 'fa-solid fa-star-half-stroke';
+            } else {
+                // Empty star
+                star.className = 'fa-regular fa-star';
+            }
+        });
+        
+        if (updateInput) {
+            ratingInput.value = rating.toFixed(1);
+            ratingText.textContent = rating.toFixed(1) + '/5.0';
+        }
+    }
+    
+    // 表單提交確認
+    function confirmSubmission() {
+        const form = document.getElementById('commentForm');
+        const comment = form.querySelector('textarea[name="comment_text"]').value.trim();
+        const rating = parseFloat(document.getElementById('rating-input').value);
+        const teacherSelect = form.querySelector('select[name="teacher"]');
+        const classSelect = form.querySelector('select[name="class_info"]');
+        const schoolYearSelect = form.querySelector('select[name="school_year"]');
+        
+        // 驗證必填欄位
+        if (!teacherSelect.value) {
+            alert('請選擇課程');
+            return false;
+        }
+        
+        if (!classSelect.value) {
+            alert('請選擇班級');
+            return false;
+        }
+        
+        if (!schoolYearSelect.value) {
+            alert('請選擇學年度');
+            return false;
+        }
+        
+        if (!comment) {
+            alert('請輸入評論內容');
+            return false;
+        }
+        
+        if (isNaN(rating) || rating < 1 || rating > 5) {
+            alert('請給出有效的評分 (1-5分)');
+            return false;
+        }
+        
+        // 顯示確認對話框
+        const confirmation = confirm('確定要送出評論嗎？\n\n' +
+            '課程: ' + teacherSelect.options[teacherSelect.selectedIndex].text + '\n' +
+            '班級: ' + classSelect.options[classSelect.selectedIndex].text + '\n' +
+            '學年度: ' + schoolYearSelect.options[schoolYearSelect.selectedIndex].text + '\n' +
+            '評分: ' + rating + '分\n\n' +
+            '評論將公開顯示，送出後無法修改。');
+            
+        if (confirmation) {
+            // 顯示載入中或禁用按鈕等處理
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 提交中...';
+            }
+        }
+        
+        return confirmation;
+    }
+});
+</script>
 {% endblock %}

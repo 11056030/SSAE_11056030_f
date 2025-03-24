@@ -39,6 +39,9 @@ def join_detail(request):
 def ask_page(request):
     return render(request, "ask.html")
 
+def comment_detail(request):
+    return render(request, "comment_detail.html")
+
 def add_comment(request):
     return render(request, "add_comment.html")
 
