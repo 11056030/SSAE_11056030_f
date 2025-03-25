@@ -33,5 +33,6 @@ urlpatterns = [
     path("ask/", views.ask_view, name="ask_api"),
     path('navbar2/' , views.navbar2),
     path("upload_zip/", views.upload_zip, name="upload_zip"),
+    path("comment_detail/", views.comment_detail, name="comment_detail"),   
     path("add_comment/", views.add_comment, name="add_comment"),
     ]
