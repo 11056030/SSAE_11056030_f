@@ -7,6 +7,7 @@
 {% load static %}
 
 {% block css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="{% static 'css/add_comment.css' %}">
 {% endblock %}
 
@@ -14,11 +15,11 @@
 <div style="margin-top: 80px;"></div>
 <div class="comment-container">
 
-    <div class="back-button">
+    <div class="back-button" onclick="history.back()">
         <a href="#">返回</a>
     </div>
     
-    <form class="comment-form" method="post" action="">
+    <form method="POST" class="comment-form" id="commentForm" onsubmit="return confirmSubmission()"> 
         {% csrf_token %}
         <div class="form-row">
             <div class="form-col-left">
@@ -30,9 +31,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="category">分類</label>
+                    <label for="category">學制</label>
                     <select id="category" name="category" class="form-control">
-                        <option value="">分類</option>
+                        <option value="">學制</option>
                     </select>
                 </div>
                 
@@ -45,9 +46,19 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="teacher">課程</label>
-                    <select id="teacher" name="teacher" class="form-control">
-                        <option value="">計算機概論(上)</option>
+                    <label for="course">課程</label>
+                    <select id="course" name="course" class="form-control">
+                        <option value="">選擇課程</option>
+                        <option value="計算機概論(上)">計算機概論(上)</option>
+                        <option value="程式設計(一)">程式設計(一)</option>
+                        <option value="資料庫管理">資料庫管理</option>
+                        <option value="網頁程式設計">網頁程式設計</option>
+                        <option value="系統分析與設計">系統分析與設計</option>
+                        <option value="專題製作">專題製作</option>
+                        <option value="網路概論">網路概論</option>
+                        <option value="作業系統">作業系統</option>
+                        <option value="資料結構">資料結構</option>
+                        <option value="演算法">演算法</option>
                     </select>
                 </div>
             </div>
@@ -66,7 +77,23 @@
                             <label for="anonymous_yes">實名</label>
                         </div>
                     </div>
+                </div>    
+                <div class="rating-container">
+                    <label>課程評分</label>
+                    <div class="rating-controls">
+                        <div class="stars editable" id="rating-stars" data-rating="1">
+                            <i class="fa-regular fa-star" data-rating="1"></i>
+                            <i class="fa-regular fa-star" data-rating="2"></i>
+                            <i class="fa-regular fa-star" data-rating="3"></i>
+                            <i class="fa-regular fa-star" data-rating="4"></i>
+                            <i class="fa-regular fa-star" data-rating="5"></i>
+                            <input type="hidden" name="rating" id="rating-input" value="1">
+                            <span class="rating-text">1.0 / 5.0</span>
+                        </div>
+
+                    </div>
                 </div>
+                
             </div>
         </div>
         
@@ -109,4 +136,113 @@
 
 {% block body_js %}
 <script src="{% static 'js/add_comment.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const starsContainer = document.getElementById('rating-stars');
+    const stars = Array.from(starsContainer.querySelectorAll('i'));
+    const ratingInput = document.getElementById('rating-input');
+    // Manual rating input removed
+    const ratingText = starsContainer.querySelector('.rating-text');
+    
+    // Set initial rating to 1 by default
+    let currentRating = 1;
+    ratingInput.value = '1';
+    updateStars(currentRating, true);
+    
+    // Hover effect removed for better usability
+    
+    // Click to set rating
+    starsContainer.addEventListener('click', (e) => {
+        if (e.target.matches('i')) {
+            const star = e.target;
+            const newRating = parseInt(star.getAttribute('data-rating'));
+            
+            // 設置為新的評分值
+            currentRating = Math.min(5, Math.max(1, newRating)); // 確保最小評分為1
+            
+            updateStars(currentRating, true);
+        }
+    });
+    
+
+    
+    function updateStars(rating, updateInput = true) {
+        // Ensure rating is at least 1
+        if (rating < 1) rating = 1;
+        
+        stars.forEach((star, index) => {
+            const starRating = index + 1; // 1, 2, 3, 4, 5
+            
+            if (rating >= starRating) {
+                // Full star
+                star.className = 'fa-solid fa-star';
+            } else {
+                // Empty star
+                star.className = 'fa-regular fa-star';
+            }
+        });
+        
+        // Update rating text and hidden input
+        ratingText.textContent = `${rating}/5.0`;
+        if (updateInput) {
+            ratingInput.value = rating;
+        }
+    }
+    
+    // 表單提交確認
+    function confirmSubmission() {
+        const form = document.getElementById('commentForm');
+        const comment = form.querySelector('textarea[name="comment_text"]').value.trim();
+        const rating = parseFloat(document.getElementById('rating-input').value);
+        const teacherSelect = form.querySelector('select[name="teacher"]');
+        const classSelect = form.querySelector('select[name="class_info"]');
+        const schoolYearSelect = form.querySelector('select[name="school_year"]');
+        
+        // 驗證必填欄位
+        if (!teacherSelect.value) {
+            alert('請選擇課程');
+            return false;
+        }
+        
+        if (!classSelect.value) {
+            alert('請選擇班級');
+            return false;
+        }
+        
+        if (!schoolYearSelect.value) {
+            alert('請選擇學年度');
+            return false;
+        }
+        
+        if (!comment) {
+            alert('請輸入評論內容');
+            return false;
+        }
+        
+        if (isNaN(rating) || rating < 1 || rating > 5) {
+            alert('請給出有效的評分 (1-5分)');
+            return false;
+        }
+        
+        // 顯示確認對話框
+        const confirmation = confirm('確定要送出評論嗎？\n\n' +
+            '課程: ' + teacherSelect.options[teacherSelect.selectedIndex].text + '\n' +
+            '班級: ' + classSelect.options[classSelect.selectedIndex].text + '\n' +
+            '學年度: ' + schoolYearSelect.options[schoolYearSelect.selectedIndex].text + '\n' +
+            '評分: ' + rating + '分\n\n' +
+            '評論將公開顯示，送出後無法修改。');
+            
+        if (confirmation) {
+            // 顯示載入中或禁用按鈕等處理
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 提交中...';
+            }
+        }
+        
+        return confirmation;
+    }
+});
+</script>
 {% endblock %}

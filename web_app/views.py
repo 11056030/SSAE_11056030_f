@@ -33,8 +33,14 @@ def join(request):
 def join_create(request):
     return render(request, 'join_create.html')
 
+def join_detail(request):
+    return render(request, 'join_detail.html')
+
 def ask_page(request):
     return render(request, "ask.html")
+
+def comment_detail(request):
+    return render(request, "comment_detail.html")
 
 def add_comment(request):
     return render(request, "add_comment.html")
