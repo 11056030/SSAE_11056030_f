@@ -53,160 +53,120 @@
         <input type="text" class="search-box" placeholder="搜尋課程或教師...">
     </div>
     
-    <!-- 統計資訊
-    <div class="stats-container">
-        <div class="stat-item">
-            <div class="stat-icon"><i class="fas fa-book"></i></div>
-            <div class="stat-content">
-                <div class="stat-value">374</div>
-                <div class="stat-label">課程總數</div>
-            </div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-icon"><i class="fas fa-comment"></i></div>
-            <div class="stat-content">
-                <div class="stat-value">1,253</div>
-                <div class="stat-label">評論總數</div>
-            </div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
-            <div class="stat-content">
-                <div class="stat-value">128</div>
-                <div class="stat-label">教師總數</div>
-            </div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-icon"><i class="fas fa-star"></i></div>
-            <div class="stat-content">
-                <div class="stat-value">4.2</div>
-                <div class="stat-label">平均評分</div>
-            </div>
-        </div>
-    </div> -->
-    
     <!-- 課程列表和分頁 -->
     <section class="activities-container">
         <div class="activity-grid">
             <!-- 課程項目 -->
-        <div class="activity-card">
-            <div class="activity-header">計算機概論</div>
-            <div class="course-content">
-                <div class="course-top">
-                    <div class="course-meta">
-                        <span class="course-teacher"><i class="fas fa-user-tie"></i> 王大明 教授</span>
-                        <span class="course-department"><i class="fas fa-building"></i> 資訊管理系</span>
+            <div class="course-item" data-department="國際商務系" data-year="111" data-semester="1" data-course-id="1">
+                    <div class="course-top">
+                        <div>
+                            <h3 class="course-name">國際貿易實務</h3>
+                            <div class="course-meta">
+                                <span class="course-teacher"><i class="fas fa-user-tie"></i> 劉世芳 教授</span>
+                                <span class="course-department"><i class="fas fa-building"></i> 國際商務系</span>
+                            </div>
+                        </div>
+                        
+                        <div class="course-rating">
+                            <div class="stars" data-rating="4.6">
+                                <span class="rating-text">4.6</span>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="rating-count">(28則評論)</div>
+                        </div>
+                        
                     </div>
-                </div>
-                <div class="course-bottom">
+                    <div class="course-bottom">
+                        <p class="last-date">最新評論: 2023/01/12</p>
+                        <div class="course-summary">
+                            <div class="user-info">
+                                <img src="{% static 'image/anonymous.png' %}" alt="User Avatar" class="avatar">
+                                <span class="username">匿名</span>
+                            </div>
+                            <p>老師有豐富的實務經驗，課程包含許多真實案例分析。期中報告要完成一份國際貿易流程文件，期末有小組模擬談判，非常實用...</p>
+                        </div>
+                        <div class="buttons-container">
+                            <a href="#" class="create-btn">新增評論</a>
+                            <a href="/comment_detail/" class="join-btn">查看所有評論</a>
+                        </div>
+                    </div>
+            </div>
+
+            <div class="course-item" data-department="資訊管理系" data-year="112" data-semester="2" data-course-id="2">
+                <div class="course-top">
+                    <div>
+                        <h3 class="course-name">計算機概論</h3>
+                        <div class="course-meta">
+                            <span class="course-teacher"><i class="fas fa-user-tie"></i> 王大明 教授</span>
+                            <span class="course-department"><i class="fas fa-building"></i> 資訊管理系</span>
+                        </div>
+                    </div>
+                    
                     <div class="course-rating">
                         <div class="stars" data-rating="4.5">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
                             <span class="rating-text">4.5</span>
+                            <i class="fas fa-star"></i>
                         </div>
                         <div class="rating-count">(24則評論)</div>
                     </div>
-                    <div class="course-date">
-                        <span class="semester"><i class="far fa-calendar-alt"></i> 112學年 第2學期</span>
-                        <span class="last-date">最新評論: 2024/04/10</span>
-                    </div>
-                    <div class="course-summary">
-                        <p>教材準備充分，會用很多生活化的例子來解釋計算機科學的概念，讓非本科系的學生也能輕鬆理解。作業量適中，但考試難度較高...</p>
-                    </div>
-                </div>
-                <a href="" class="join-btn">查看評論</a>
-            </div>
-        </div>
-        
-        <div class="course-item" data-department="國際商務系" data-year="111" data-semester="1">
-                <div class="course-top">
-                    <div>
-                        <h3 class="course-name">國際貿易實務</h3>
-                        <div class="course-meta">
-                            <span class="course-teacher"><i class="fas fa-user-tie"></i> 劉世芳 教授</span>
-                            <span class="course-department"><i class="fas fa-building"></i> 國際商務系</span>
-                        </div>
-                    </div>
-                    
-                    <div class="course-rating">
-                        <div class="stars" data-rating="4.6">
-                            <span class="rating-text">4.6</span>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="rating-count">(28則評論)</div>
-                    </div>
                     
                 </div>
                 <div class="course-bottom">
-                    <p class="last-date">最新評論: 2023/01/12</p>
+                    <p class="last-date">最新評論: 2024/04/10</p>
                     <div class="course-summary">
                         <div class="user-info">
                             <img src="{% static 'image/anonymous.png' %}" alt="User Avatar" class="avatar">
                             <span class="username">匿名</span>
                         </div>
-                        <p>老師有豐富的實務經驗，課程包含許多真實案例分析。期中報告要完成一份國際貿易流程文件，期末有小組模擬談判，非常實用...</p>
+                        <p>教材準備充分，會用很多生活化的例子來解釋計算機科學的概念，讓非本科系的學生也能輕鬆理解。作業量適中，但考試難度較高...</p>
                     </div>
                     <div class="buttons-container">
-                        <a href="" class="create-btn">新增評論</a>
+                        <a href="#" class="create-btn">新增評論</a>
+                        <a href="/comment_detail/" class="join-btn">查看所有評論</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="course-item" data-department="企業管理系" data-year="112" data-semester="2" data-course-id="3">
+                <div class="course-top">
+                    <div>
+                        <h3 class="course-name">行銷管理</h3>
+                    <div class="course-meta">
+                        <span class="course-teacher"><i class="fas fa-user-tie"></i> 林美玲 教授</span>
+                        <span class="course-department"><i class="fas fa-building"></i> 企業管理系</span>
+                    </div>
+                </div>
+                
+                <div class="course-rating">
+                    <div class="stars" data-rating="4.8">
+                        <span class="rating-text">4.8</span>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="rating-count">(32則評論)</div>
+                </div>
+                
+                </div>
+                <div class="course-bottom">
+                    <p class="last-date">最新評論: 2024/04/05</p>
+                    <div class="course-summary">
+                        <div class="user-info">
+                            <img src="{% static 'image/anonymous.png' %}" alt="User Avatar" class="avatar">
+                            <span class="username">匿名</span>
+                        </div>
+                        <p>課程結合理論與實務，講師擁有豐富業界經驗。小組作業能夠實際應用所學知識，期末專案需設計完整行銷計畫，收穫很多...</p>
+                    </div>
+                    <div class="buttons-container">
+                        <a href="#" class="create-btn">新增評論</a>
                         <a href="/comment_detail/" class="join-btn">查看所有評論</a>
                     </div>
                 </div>
         </div>
-        <div class="course-item" data-department="國際商務系" data-year="111" data-semester="1">
-            {% comment %} <a href="{% url 'comment_detail' course_id=6 %}" class="course-link"> {% endcomment %}
-                <div class="course-top">
-                    <h3 class="course-name">國際貿易實務</h3>
-                    <div class="course-meta">
-                        <span class="course-teacher"><i class="fas fa-user-tie"></i> 劉世芳 教授</span>
-                        <span class="course-department"><i class="fas fa-building"></i> 國際商務系</span>
-                    </div>
-                </div>
-                <div class="course-bottom">
-                    <div class="course-rating">
-                        <div class="stars" data-rating="4.6">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
-                            <span class="rating-text">4.6</span>
-                        </div>
-                        <div class="rating-count">(28則評論)</div>
-                    </div>
-                    <div class="course-date">
-                        <span class="semester"><i class="far fa-calendar-alt"></i> 111學年 第1學期</span>
-                        <span class="last-date">最新評論: 2023/01/12</span>
-                    </div>
-                    <div class="course-summary">
-                        <p>老師有豐富的實務經驗，課程包含許多真實案例分析。期中報告要完成一份國際貿易流程文件，期末有小組模擬談判，非常實用...</p>
-                    </div>
-                    <a href="" class="join-btn">查看評論</a>
-                </div>
-            </a>
-        </div>
+        
         </div>
         
-        <!-- 分頁 -->
-        <div class="pagination">
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">3</button>
-            <button class="page-btn">4</button>
-            <button class="page-btn">5</button>
-            <span class="page-dots">...</span>
-            <button class="page-btn">10</button>
-            <button class="page-next"><i class="fas fa-angle-right"></i></button>
-        </div>
-    </section>
-    
     <div class="deco-line"></div>
 </div>
 {% endblock %}
-
 {% block body_js %}
-<script src="{% static 'js/course_list.js' %}"></script>
+    <script src="{% static 'js/comment.js' %}"></script>
 {% endblock %}
