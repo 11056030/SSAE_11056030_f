@@ -3,6 +3,7 @@
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 {% endblock %}
 
 
@@ -21,13 +22,17 @@
     <!-- 側邊欄 -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-title">對話歷史</div>
         </div>
         <button class="new-chat-btn" id="newChatBtn">
             <i>+</i> <span>新增對話</span>
         </button>
+
+        <div class="sidebar-record">
+            <div>對話歷史</div> 
+        </div>
+
         <div class="chat-history" id="chatHistory">
-            <!-- 歷史記錄將通過 JavaScript 動態加載 -->
+            <!-- 歷史記錄由 JavaScript 動態加載 -->
         </div>
     </div>
 
@@ -40,7 +45,7 @@
             <div class="no-messages" id="noMessages">
                 開始一個新對話或從側邊欄選擇歷史對話
             </div>
-            <!-- 消息將通過 JavaScript 動態加載 -->
+            <!-- 消息由 JavaScript 動態加載 -->
         </div>
         <div class="input-container">
             <textarea class="message-input" id="messageInput" placeholder="輸入訊息..." rows="1"></textarea>
