@@ -1,3 +1,5 @@
+//------------------------------------------------------------------------------------------------------------------------------------
+
 // 當前活動的聊天 ID
 let currentChatId = null;
 
@@ -58,18 +60,19 @@ function loadChatHistory() {
         const chatItem = document.createElement('div');
         chatItem.className = 'chat-item';
         chatItem.innerHTML = `
-            <div class="chat-title">${chat.title}</div>
-            <div class="chat-actions">
-                <button class="action-btn download-btn" data-id="${chat.id}">
-                    <i class="icon">⤓</i>
-                    <span class="tooltip">下載對話</span>
-                </button>
-                <button class="action-btn delete-btn" data-id="${chat.id}">
-                    <i class="icon">✕</i>
-                    <span class="tooltip">刪除對話</span>
-                </button>
-            </div>
-        `;
+        <div class="chat-title">${chat.title}</div>
+        <div class="chat-actions">
+            <button class="action-btn download-btn" data-id="${chat.id}">
+                <i class="fa-solid fa-download"></i>
+                <span class="tooltip">下載對話</span>
+            </button>
+            <button class="action-btn delete-btn" data-id="${chat.id}">
+                <i class="fa-solid fa-trash"></i>
+                <span class="tooltip">刪除對話</span>
+            </button>
+        </div>
+    `;
+    
         chatItem.addEventListener('click', (e) => {
             // 如果點擊的是操作按鈕，不要切換對話
             if (!e.target.closest('.action-btn')) {
@@ -211,6 +214,7 @@ function addMessageToUI(sender, content) {
     const avatar = document.createElement('div');
     avatar.className = `avatar ${sender}-avatar`;
     avatar.innerText = sender === 'user' ? '你' : 'AI';
+
     
     const messageContent = document.createElement('div');
     messageContent.className = `message-content ${sender}-content`;
@@ -296,3 +300,4 @@ window.addEventListener('resize', () => {
         sidebarOpen = false;
     }
 });
+//------------------------------------------------------------------------------------------------------------------------------------
