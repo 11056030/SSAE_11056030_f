@@ -1,435 +1,12 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>二手書必區</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: sans-serif;
-        }
-        
-        body {
-            background-color: #f5f3ef;
-            color: #443730;
-            padding: 0;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* 頁首設計 */
-        header {
-            padding: 40px 0 30px;
-            position: relative;
-        }
-        
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo-section {
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-        
-        .circular-logo {
-            width: 100px;
-            height: 100px;
-            position: relative;
-        }
-        
-        .circular-text {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            animation: rotate 20s linear infinite;
-            transform-origin: center center;
-        }
-        
-        @keyframes rotate {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-        
-        .logo-icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20px;
-        }
-        
-        .logo-text {
-            text-align: center;
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        
-        .site-title {
-            font-size: 60px;
-            font-weight: 700;
-            text-align: center;
-            margin: 0 auto;
-            color: #443730;
-            letter-spacing: 2px;
-        }
-        
-        /* 篩選導航 */
-        .nav-filters {
-            display: flex;
-            justify-content: center;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 50px;
-        }
-        
-        .filter-item {
-            padding: 10px 30px;
-            margin: 0 10px;
-            font-size: 16px;
-            font-weight: 400;
-            color: #443730;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .filter-item.active {
-            font-weight: 500;
-        }
-        
-        .filter-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: #443730;
-        }
-        
-        /* 書籍卡片網格 */
-        .books-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            margin-bottom: 80px;
-        }
-        
-        .book-card {
-            display: flex;
-            flex-direction: column;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-        
-        .book-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .book-image {
-            width: 100%;
-            height: 260px;
-            background-color: #e9e5e0;
-            overflow: hidden;
-            margin-bottom: 15px;
-            position: relative;
-        }
-        
-        .book-gradient {
-            width: 100%;
-            height: 100%;
-            transition: transform 0.5s ease;
-        }
-        
-        .book-cover {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-        
-        .book-card:hover .book-gradient,
-        .book-card:hover .book-cover {
-            transform: scale(1.05);
-        }
-        
-        /* 上傳按鈕和功能 */
-        .upload-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background-color: #443730;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
-            z-index: 100;
-        }
-        
-        .upload-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
-        }
-        
-        #imageUpload {
-            display: none;
-        }
-        
-        .upload-form {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 200;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .upload-container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .upload-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .upload-title {
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .close-btn {
-            font-size: 24px;
-            cursor: pointer;
-            background: none;
-            border: none;
-        }
-        
-        .upload-preview {
-            width: 100%;
-            height: 200px;
-            background-color: #f0ede9;
-            border: 2px dashed #ddd;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        
-        .preview-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        
-        .upload-form-fields {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .form-group label {
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
-        .tag-selection {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        
-        .tag-checkbox {
-            display: none;
-        }
-        
-        .tag-label {
-            display: inline-block;
-            padding: 6px 12px;
-            background-color: #f0ede9;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .tag-checkbox:checked + .tag-label {
-            background-color: #443730;
-            color: white;
-            border-color: #443730;
-        }
-        
-        .submit-btn {
-            padding: 12px;
-            background-color: #443730;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-        
-        .submit-btn:hover {
-            background-color: #5a4a40;
-        }
-        
-        .book-title {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        
-        .book-description {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        
-        .tag-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: auto;
-        }
-        
-        .tag {
-            display: inline-block;
-            padding: 6px 12px;
-            background-color: #f0ede9;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #666;
-            transition: all 0.3s ease;
-        }
-        
-        .tag:hover {
-            background-color: #e6e2dd;
-        }
-        
-        /* 頁腳設計 */
-        footer {
-            padding: 30px 0;
-            text-align: center;
-            font-size: 12px;
-            color: #999;
-            margin-top: 50px;
-        }
-        
-        footer a {
-            color: #666;
-            text-decoration: none;
-        }
-        
-        footer a:hover {
-            text-decoration: underline;
-        }
-        
-        /* 響應式設計 */
-        @media (max-width: 900px) {
-            .books-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .site-title {
-                font-size: 40px;
-            }
-        }
-        
-        @media (max-width: 600px) {
-            .books-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .circular-logo {
-                width: 80px;
-                height: 80px;
-            }
-            
-            .site-title {
-                font-size: 32px;
-            }
-            
-            .filter-item {
-                padding: 10px 15px;
-                font-size: 14px;
-            }
-            
-            .upload-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-            }
-        }
-    </style>
-</head>
+
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/book.css' %}">
+{% endblock %}
+
+
+{% block content %}
 <body>
     <header>
         <div class="container header-container">
@@ -449,18 +26,80 @@
                 </div>
             </div>
             
-            <h1 class="site-title">二手書必區</h1>
+            <div>
+                <h1 class="site-title">二手書必區</h1>
+            </div>
+
             
             <div style="width: 100px;"></div> <!-- 空白平衡元素 -->
         </div>
     </header>
+
+    <div>
+        <div class="filter-card">
+            <div class="filter-options">
+                <div class="filter-group">
+                    <label class="filter-label">系所</label>
+                    <select class="filter-select">
+                        <option>全部系所</option>
+                        <option>資訊工程學系</option>
+                        <option>電機工程學系</option>
+                        <option>企業管理學系</option>
+                        <option>外國語文學系</option>
+                        <option>經濟學系</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">年級</label>
+                    <select class="filter-select">
+                        <option>全部年級</option>
+                        <option>大一</option>
+                        <option>大二</option>
+                        <option>大三</option>
+                        <option>大四</option>
+                        <option>研究所</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">類型</label>
+                    <select class="filter-select">
+                        <option>全部類型</option>
+                        <option>教科書</option>
+                        <option>參考書</option>
+                        <option>課外讀物</option>
+                        <option>考試用書</option>
+                        <option>小說文學</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">價格</label>
+                    <select class="filter-select">
+                        <option>全部價格</option>
+                        <option>$100以下</option>
+                        <option>$100-$300</option>
+                        <option>$300-$500</option>
+                        <option>$500以上</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">關鍵字搜尋</label>
+                    <input type="text" class="filter-input" placeholder="輸入書名、作者...">
+                </div>
+            </div>
+        </div>
+        
+    </div>
     
     <main class="container">
-        <nav class="nav-filters">
+        <!-- <nav class="nav-filters">
             <div class="filter-item active">全て</div>
             <div class="filter-item">教科書</div>
             <div class="filter-item">小說文學</div>
-        </nav>
+        </nav> -->
         
         <div class="books-grid">
             <!-- 書籍卡片 1 -->
@@ -471,10 +110,6 @@
                 </div>
                 <h3 class="book-title">Python 程式設計：AI與資料科學應用</h3>
                 <p class="book-description">完整介紹Python在人工智能與資料科學領域的應用，適合初學者</p>
-                <div class="tag-container">
-                    <span class="tag">#教科書</span>
-                    <span class="tag">#IT</span>
-                </div>
             </div>
             
             <!-- 書籍卡片 2 -->
@@ -484,10 +119,6 @@
                 </div>
                 <h3 class="book-title">我沒事</h3>
                 <p class="book-description">青春小說，講述大學生活中的友情與成長</p>
-                <div class="tag-container">
-                    <span class="tag">#小說</span>
-                    <span class="tag">#文學</span>
-                </div>
             </div>
             
             <!-- 書籍卡片 3 -->
@@ -497,10 +128,7 @@
                 </div>
                 <h3 class="book-title">資料科學與機器學習實務</h3>
                 <p class="book-description">從理論到實踐的機器學習指南，包含多個實際案例</p>
-                <div class="tag-container">
-                    <span class="tag">#教科書</span>
-                    <span class="tag">#AI</span>
-                </div>
+
             </div>
             
             <!-- 書籍卡片 4 -->
@@ -510,10 +138,7 @@
                 </div>
                 <h3 class="book-title">微積分與工程數學</h3>
                 <p class="book-description">工程與科學相關專業必備的數學基礎教材</p>
-                <div class="tag-container">
-                    <span class="tag">#教科書</span>
-                    <span class="tag">#數學</span>
-                </div>
+
             </div>
             
             <!-- 書籍卡片 5 -->
@@ -523,10 +148,7 @@
                 </div>
                 <h3 class="book-title">行銷管理學</h3>
                 <p class="book-description">現代行銷管理理論與實踐的全面介紹</p>
-                <div class="tag-container">
-                    <span class="tag">#教科書</span>
-                    <span class="tag">#商業</span>
-                </div>
+
             </div>
             
             <!-- 書籍卡片 6 -->
@@ -536,10 +158,7 @@
                 </div>
                 <h3 class="book-title">經濟學原理</h3>
                 <p class="book-description">深入淺出地介紹經濟學基本原理與應用</p>
-                <div class="tag-container">
-                    <span class="tag">#教科書</span>
-                    <span class="tag">#經濟</span>
-                </div>
+
             </div>
         </div>
     </main>
@@ -582,31 +201,7 @@
                     </select>
                 </div>
                 
-                <div class="form-group">
-                    <label>標籤</label>
-                    <div class="tag-selection">
-                        <input type="checkbox" id="tag1" class="tag-checkbox">
-                        <label for="tag1" class="tag-label">#IT</label>
-                        
-                        <input type="checkbox" id="tag2" class="tag-checkbox">
-                        <label for="tag2" class="tag-label">#文學</label>
-                        
-                        <input type="checkbox" id="tag3" class="tag-checkbox">
-                        <label for="tag3" class="tag-label">#AI</label>
-                        
-                        <input type="checkbox" id="tag4" class="tag-checkbox">
-                        <label for="tag4" class="tag-label">#數學</label>
-                        
-                        <input type="checkbox" id="tag5" class="tag-checkbox">
-                        <label for="tag5" class="tag-label">#商業</label>
-                        
-                        <input type="checkbox" id="tag6" class="tag-checkbox">
-                        <label for="tag6" class="tag-label">#經濟</label>
-                        
-                        <input type="checkbox" id="tag7" class="tag-checkbox">
-                        <label for="tag7" class="tag-label">#小說</label>
-                    </div>
-                </div>
+                
                 
                 <button type="button" class="submit-btn" id="submitBtn">發布</button>
             </div>
@@ -618,142 +213,9 @@
             <p>© 2025 二手書必區 - 版權所有 | <a href="#">使用條款</a> · <a href="#">隱私政策</a></p>
         </div>
     </footer>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 篩選標籤點擊效果
-            const filterItems = document.querySelectorAll('.filter-item');
-            
-            filterItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    // 移除所有active類
-                    filterItems.forEach(i => i.classList.remove('active'));
-                    // 添加當前點擊項目的active類
-                    this.classList.add('active');
-                    
-                    // 這裡可以添加實際篩選功能
-                    const filterType = this.textContent;
-                    console.log('篩選類型:', filterType);
-                    
-                    // 模擬篩選效果
-                    const bookCards = document.querySelectorAll('.book-card');
-                    bookCards.forEach(card => {
-                        card.style.opacity = '0.6';
-                        card.style.transform = 'scale(0.98)';
-                        
-                        setTimeout(() => {
-                            card.style.opacity = '1';
-                            card.style.transform = 'scale(1)';
-                        }, 300);
-                    });
-                });
-            });
-            
-            // 書籍卡片點擊效果
-            const bookCards = document.querySelectorAll('.book-card');
-            bookCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    this.style.transform = 'scale(0.98)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                        // 這裡可以添加點擊後的導航邏輯
-                        console.log('查看書籍:', this.querySelector('.book-title').textContent);
-                    }, 150);
-                });
-            });
-            
-            // 上傳功能相關
-            const uploadBtn = document.getElementById('uploadBtn');
-            const uploadForm = document.getElementById('uploadForm');
-            const closeFormBtn = document.getElementById('closeFormBtn');
-            const imagePreview = document.getElementById('imagePreview');
-            const imageUpload = document.getElementById('imageUpload');
-            const previewImage = document.getElementById('previewImage');
-            const previewPlaceholder = document.getElementById('previewPlaceholder');
-            const submitBtn = document.getElementById('submitBtn');
-            
-            // 打開上傳表單
-            uploadBtn.addEventListener('click', function() {
-                uploadForm.style.display = 'flex';
-            });
-            
-            // 關閉上傳表單
-            closeFormBtn.addEventListener('click', function() {
-                uploadForm.style.display = 'none';
-            });
-            
-            // 點擊預覽區域觸發文件選擇
-            imagePreview.addEventListener('click', function() {
-                imageUpload.click();
-            });
-            
-            // 文件選擇後預覽
-            imageUpload.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        previewImage.src = e.target.result;
-                        previewImage.style.display = 'block';
-                        previewPlaceholder.style.display = 'none';
-                    }
-                    
-                    reader.readAsDataURL(this.files[0]);
-                }
-            });
-            
-            // 提交表單
-            submitBtn.addEventListener('click', function() {
-                const bookTitle = document.getElementById('bookTitle').value;
-                const bookDescription = document.getElementById('bookDescription').value;
-                const bookCategory = document.getElementById('bookCategory').value;
-                
-                if (!bookTitle) {
-                    alert('請輸入書名');
-                    return;
-                }
-                
-                if (!imageUpload.files || !imageUpload.files[0]) {
-                    alert('請選擇書籍圖片');
-                    return;
-                }
-                
-                // 這裡可以添加實際的表單提交邏輯
-                console.log('提交書籍:', {
-                    title: bookTitle,
-                    description: bookDescription,
-                    category: bookCategory,
-                    // 實際應用中，這裡會有圖片上傳邏輯
-                });
-                
-                alert('書籍已成功發布！');
-                uploadForm.style.display = 'none';
-                
-                // 重置表單
-                document.getElementById('bookTitle').value = '';
-                document.getElementById('bookDescription').value = '';
-                imageUpload.value = '';
-                previewImage.src = '';
-                previewImage.style.display = 'none';
-                previewPlaceholder.style.display = 'block';
-                
-                // 模擬添加新卡片
-                const booksGrid = document.querySelector('.books-grid');
-                const newCard = document.createElement('div');
-                newCard.classList.add('book-card');
-                newCard.innerHTML = `
-                    <div class="book-image">
-                        <img src="/api/placeholder/400/320" alt="${bookTitle}" class="book-cover">
-                    </div>
-                    <h3 class="book-title">${bookTitle}</h3>
-                    <p class="book-description">${bookDescription}</p>
-                    <div class="tag-container">
-                        <span class="tag">#${bookCategory === 'textbook' ? '教科書' : bookCategory === 'novel' ? '小說文學' : '其他'}</span>
-                    </div>
-                `;
-                booksGrid.prepend(newCard);
-            });
-        });
-    </script>
 </body>
-</html>
+{% endblock %}
+
+{% block body_js %}
+<script src="{% static 'js/book.js' %}"></script>
+{% endblock %}
