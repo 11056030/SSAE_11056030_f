@@ -29,6 +29,7 @@ urlpatterns = [
     path('join/' , views.join),
     path('join_create/' , views.join_create),
     path('join_detail/' , views.join_detail),
+    path('book/' , views.book),
     path("test", views.ask_page, name="ask_page"),
     path("ask/", views.ask_view, name="ask_api"),
     path('navbar2/' , views.navbar2),
