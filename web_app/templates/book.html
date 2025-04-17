@@ -1,0 +1,221 @@
+
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/book.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<body>
+    <header>
+        <div class="container header-container">
+            <div class="logo-section">
+                <div class="circular-logo">
+                    <div class="circular-text">
+                        <svg viewBox="0 0 100 100">
+                            <path id="curve" d="M 50 50 m -40 0 a 40 40 0 1 1 80 0 a 40 40 0 1 1 -80 0" fill="transparent"/>
+                            <text>
+                                <textPath href="#curve" textLength="250">
+                                    search by life classification • 
+                                </textPath>
+                            </text>
+                        </svg>
+                    </div>
+                    <div class="logo-icon">🔍</div>
+                </div>
+            </div>
+            
+            <div>
+                <h1 class="site-title">二手書必區</h1>
+            </div>
+
+            
+            <div style="width: 100px;"></div> <!-- 空白平衡元素 -->
+        </div>
+    </header>
+
+    <div>
+        <div class="filter-card">
+            <div class="filter-options">
+                <div class="filter-group">
+                    <label class="filter-label">系所</label>
+                    <select class="filter-select">
+                        <option>全部系所</option>
+                        <option>資訊工程學系</option>
+                        <option>電機工程學系</option>
+                        <option>企業管理學系</option>
+                        <option>外國語文學系</option>
+                        <option>經濟學系</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">年級</label>
+                    <select class="filter-select">
+                        <option>全部年級</option>
+                        <option>大一</option>
+                        <option>大二</option>
+                        <option>大三</option>
+                        <option>大四</option>
+                        <option>研究所</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">類型</label>
+                    <select class="filter-select">
+                        <option>全部類型</option>
+                        <option>教科書</option>
+                        <option>參考書</option>
+                        <option>課外讀物</option>
+                        <option>考試用書</option>
+                        <option>小說文學</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">價格</label>
+                    <select class="filter-select">
+                        <option>全部價格</option>
+                        <option>$100以下</option>
+                        <option>$100-$300</option>
+                        <option>$300-$500</option>
+                        <option>$500以上</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">關鍵字搜尋</label>
+                    <input type="text" class="filter-input" placeholder="輸入書名、作者...">
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <main class="container">
+        <!-- <nav class="nav-filters">
+            <div class="filter-item active">全て</div>
+            <div class="filter-item">教科書</div>
+            <div class="filter-item">小說文學</div>
+        </nav> -->
+        
+        <div class="books-grid">
+            <!-- 書籍卡片 1 -->
+            <div class="book-card">
+                <div class="book-image">
+                    <!-- 支持兩種方式：漸變色背景或圖片 -->
+                    <img src="/api/placeholder/400/320" alt="Python 程式設計" class="book-cover">
+                </div>
+                <h3 class="book-title">Python 程式設計：AI與資料科學應用</h3>
+                <p class="book-description">完整介紹Python在人工智能與資料科學領域的應用，適合初學者</p>
+            </div>
+            
+            <!-- 書籍卡片 2 -->
+            <div class="book-card">
+                <div class="book-image">
+                    <img src="/api/placeholder/400/320" alt="我沒事" class="book-cover">
+                </div>
+                <h3 class="book-title">我沒事</h3>
+                <p class="book-description">青春小說，講述大學生活中的友情與成長</p>
+            </div>
+            
+            <!-- 書籍卡片 3 -->
+            <div class="book-card">
+                <div class="book-image">
+                    <img src="/api/placeholder/400/320" alt="資料科學與機器學習實務" class="book-cover">
+                </div>
+                <h3 class="book-title">資料科學與機器學習實務</h3>
+                <p class="book-description">從理論到實踐的機器學習指南，包含多個實際案例</p>
+
+            </div>
+            
+            <!-- 書籍卡片 4 -->
+            <div class="book-card">
+                <div class="book-image">
+                    <img src="/api/placeholder/400/320" alt="微積分與工程數學" class="book-cover">
+                </div>
+                <h3 class="book-title">微積分與工程數學</h3>
+                <p class="book-description">工程與科學相關專業必備的數學基礎教材</p>
+
+            </div>
+            
+            <!-- 書籍卡片 5 -->
+            <div class="book-card">
+                <div class="book-image">
+                    <img src="/api/placeholder/400/320" alt="行銷管理學" class="book-cover">
+                </div>
+                <h3 class="book-title">行銷管理學</h3>
+                <p class="book-description">現代行銷管理理論與實踐的全面介紹</p>
+
+            </div>
+            
+            <!-- 書籍卡片 6 -->
+            <div class="book-card">
+                <div class="book-image">
+                    <img src="/api/placeholder/400/320" alt="經濟學原理" class="book-cover">
+                </div>
+                <h3 class="book-title">經濟學原理</h3>
+                <p class="book-description">深入淺出地介紹經濟學基本原理與應用</p>
+
+            </div>
+        </div>
+    </main>
+    
+    <!-- 上傳按鈕 -->
+    <div class="upload-btn" id="uploadBtn">+</div>
+    
+    <!-- 上傳表單 -->
+    <div class="upload-form" id="uploadForm">
+        <div class="upload-container">
+            <div class="upload-header">
+                <h2 class="upload-title">上傳二手書</h2>
+                <button class="close-btn" id="closeFormBtn">&times;</button>
+            </div>
+            
+            <div class="upload-preview" id="imagePreview">
+                <p id="previewPlaceholder">點擊選擇圖片</p>
+                <img src="" class="preview-image" id="previewImage" style="display: none;">
+            </div>
+            
+            <input type="file" id="imageUpload" accept="image/*">
+            
+            <div class="upload-form-fields">
+                <div class="form-group">
+                    <label for="bookTitle">書名</label>
+                    <input type="text" id="bookTitle" placeholder="請輸入書名">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bookDescription">描述</label>
+                    <textarea id="bookDescription" placeholder="請簡單描述書的狀況、內容等"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bookCategory">分類</label>
+                    <select id="bookCategory">
+                        <option value="textbook">教科書</option>
+                        <option value="novel">小說文學</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                
+                
+                
+                <button type="button" class="submit-btn" id="submitBtn">發布</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>© 2025 二手書必區 - 版權所有 | <a href="#">使用條款</a> · <a href="#">隱私政策</a></p>
+        </div>
+    </footer>
+</body>
+{% endblock %}
+
+{% block body_js %}
+<script src="{% static 'js/book.js' %}"></script>
+{% endblock %}

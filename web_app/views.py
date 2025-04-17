@@ -36,6 +36,9 @@ def join_create(request):
 def join_detail(request):
     return render(request, 'join_detail.html')
 
+def book(request):
+    return render(request, 'book.html')
+
 def ask_page(request):
     return render(request, "ask.html")
 
