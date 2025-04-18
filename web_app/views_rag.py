@@ -1,5 +1,7 @@
 import os
 from dotenv import load_dotenv
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -10,8 +12,24 @@ from langchain.chat_models import AzureChatOpenAI
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
 
+
 # 載入 .env
 load_dotenv()
+
+def test_mongo_connection():
+    MONGO_URI = os.getenv("MONGO_URI")
+
+    if not MONGO_URI:
+        print("❌ 找不到 MONGODB_URI 環境變數")
+        return
+    try:
+        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=3000)
+        client.admin.command('ping')
+        print("✅ MongoDB 連線成功。")
+    except ConnectionFailure:
+        print("❌ MongoDB 連線失敗")
+    except Exception as e:
+        print(f"❌ MongoDB 連線錯誤: {e}")
 
 # 初始化 LLM
 llm = AzureChatOpenAI(
@@ -64,16 +82,18 @@ def create_advanced_rag_chain(retriever):
         "the question. If you don't know the answer, say that you don't know. "
         "Use three sentences maximum and keep the answer concise.\n\n{context}"
     )
-
-    prompt = ChatPromptTemplate.from_messages([ 
+    prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("human", "{input}"),
     ])
-
     qa_chain = create_stuff_documents_chain(llm, prompt)
     return create_retrieval_chain(retriever, qa_chain)
 
-# 初始化系統
+# 先測試 MongoDB 連線
+print("🚀 測試 MongoDB 連線...")
+test_mongo_connection()
+
+# 初始化 RAG 系統
 print("🚀 初始化進階 RAG 系統...")
 docs = load_pdf_documents()
 splits = split_documents(docs)
@@ -82,7 +102,7 @@ retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k
 advanced_rag_chain = create_advanced_rag_chain(retriever)
 print("✅ 進階 RAG 系統初始化完成。")
 
-# 查詢用的函式
+# 查詢函式
 def ask_question(question: str) -> str:
     response = advanced_rag_chain.invoke({"input": question})
     return response["answer"].strip()
