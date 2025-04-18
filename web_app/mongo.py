@@ -1,40 +1,52 @@
+# web_app/mongo.py
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from datetime import datetime
 import os
 
-# Get Mongo URI from environment variables or defaults to localhost
-MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://<your-mongo-credentials>@cluster0.mongodb.net/chatbot_db?retryWrites=true&w=majority")
-
+MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 db = client["chatbot_db"]
-collection = db["chat_history"]
+col = db["conversations"]
 
-def save_chat(user_id, question, answer):
-    """
-    Save chat history to MongoDB.
-    """
-    collection.insert_one({
+def create_conversation(user_id, title="新對話"):
+    doc = {
         "user_id": user_id,
-        "question": question,
-        "answer": answer,
-        "timestamp": datetime.utcnow()
-    })
+        "title": title,
+        "messages": [],
+        "created_at": datetime.utcnow()
+    }
+    result = col.insert_one(doc)
+    return str(result.inserted_id)
 
-def get_chat_history(user_id):
-    """
-    Retrieve chat history for a specific user.
-    """
-    return list(collection.find({"user_id": user_id}).sort("timestamp", -1))
+def add_message(conversation_id, question, answer):
+    col.update_one(
+        {"_id": ObjectId(conversation_id)},
+        {"$push": {"messages": {
+            "question": question,
+            "answer": answer,
+            "timestamp": datetime.utcnow()
+        }}}
+    )
 
-def delete_chat(chat_id):
-    """
-    Delete a specific chat history entry by its ID.
-    """
-    collection.delete_one({"_id": ObjectId(chat_id)})
+def get_conversations(user_id):
+    docs = col.find({"user_id": user_id}).sort("created_at", -1)
+    return [
+        {"id": str(d["_id"]), "title": d["title"]}
+        for d in docs
+    ]
 
-def export_chat(user_id):
-    """
-    Export chat history for a specific user as a list.
-    """
-    return list(collection.find({"user_id": user_id}))
+def get_messages(conversation_id):
+    doc = col.find_one({"_id": ObjectId(conversation_id)})
+    if not doc: return []
+    # sort by timestamp in ascending
+    return sorted(doc["messages"], key=lambda m: m["timestamp"])
+
+def update_conversation_title(conversation_id, new_title):
+    col.update_one(
+        {"_id": ObjectId(conversation_id)},
+        {"$set": {"title": new_title}}
+    )
+
+def delete_conversation(conversation_id):
+    col.delete_one({"_id": ObjectId(conversation_id)})

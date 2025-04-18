@@ -5,9 +5,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .views_rag import ask_question, create_vector_store, load_pdf_documents, split_documents
-from .mongo import get_chat_history, save_chat  # ✅ 新增：匯入儲存函式
 
-# 各畫面
 def base(request):
     return render(request, 'base.html')
 
@@ -23,9 +21,8 @@ def login(request):
 def chat(request):
     return render(request, 'chat.html')
 
-
 def navbar2(request):
-  return render(request, 'navbar(2).html')
+    return render(request, 'navbar(2).html')
 
 def join(request):
     return render(request, 'join.html')
@@ -50,19 +47,68 @@ def comment_detail(request):
 
 def add_comment(request):
     return render(request, "add_comment.html")
+# web_app/views.py
+import json
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponseNotAllowed
+from django.views.decorators.csrf import csrf_exempt
+from .mongo import (
+    create_conversation,
+    add_message,
+    get_conversations,
+    get_messages
+)
+from .views_rag import ask_question
+
+USER_ID = "guest"  # 可改為 session 或 request.user.id
+
+def chat_page(request):
+    # 首次載入時不帶任何對話，前端會自動建立
+    return render(request, "ask.html")
+
 @csrf_exempt
-def ask_view(request):
+def api_conversations(request):
+    if request.method == "GET":
+        convos = get_conversations(USER_ID)
+        return JsonResponse({"conversations": convos})
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            question = data.get("question", "")
-            if not question:
-                return JsonResponse({"answer": "請輸入問題。"})
-            answer = ask_question(question)
-            return JsonResponse({"answer": answer})
-        except Exception as e:
-            return JsonResponse({"error": str(e)})
-    return JsonResponse({"error": "僅支援 POST 請求"})
+        data = json.loads(request.body)
+        title = data.get("title", "新對話")
+        convo_id = create_conversation(USER_ID, title)
+        return JsonResponse({"id": convo_id, "title": title})
+    return HttpResponseNotAllowed(["GET", "POST"])
+
+@csrf_exempt
+def api_messages(request, convo_id):
+    if request.method == "GET":
+        msgs = get_messages(convo_id)
+        # format timestamp
+        out = []
+        for m in msgs:
+            out.append({
+                "question": m["question"],
+                "answer": m["answer"],
+                "timestamp": m["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+            })
+        return JsonResponse({"messages": out})
+    return HttpResponseNotAllowed(["GET"])
+
+@csrf_exempt
+def api_ask(request):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    data = json.loads(request.body)
+    question = data.get("question", "").strip()
+    convo_id = data.get("conversation_id")
+    if not question or not convo_id:
+        return JsonResponse({"error": "缺少 question 或 conversation_id"}, status=400)
+
+    # 呼叫現有 RAG 邏輯
+    answer = ask_question(question)
+    # 存入 MongoDB
+    add_message(convo_id, question, answer)
+    return JsonResponse({"answer": answer})
+
 @csrf_exempt
 def upload_zip(request):
     if request.method == "POST":
@@ -71,35 +117,29 @@ def upload_zip(request):
             return JsonResponse({"error": "請上傳 zip 檔"})
 
         try:
-            # 建立 upload 目錄
             current_dir = os.path.dirname(os.path.abspath(__file__))
             upload_dir = os.path.abspath(os.path.join(current_dir, "..", "uploaded_files"))
             os.makedirs(upload_dir, exist_ok=True)
             temp_zip_path = os.path.join(upload_dir, "temp_upload.zip")
 
-            # 儲存 zip 檔案
             with open(temp_zip_path, "wb") as f:
                 for chunk in zip_file.chunks():
                     f.write(chunk)
 
-            # 解壓縮
             with zipfile.ZipFile(temp_zip_path, "r") as zip_ref:
                 for member in zip_ref.infolist():
                     if member.filename.endswith(".pdf") and not member.is_dir():
                         filename = os.path.basename(member.filename)
                         if filename:
-                            # 一次性讀取並寫入，避免長時間開檔
                             data = zip_ref.read(member.filename)
                             with open(os.path.join(upload_dir, filename), "wb") as out_file:
                                 out_file.write(data)
 
-            # 解壓完成後再刪除 zip
             os.remove(temp_zip_path)
 
         except Exception as e:
             return JsonResponse({"error": f"解壓縮失敗：{str(e)}"})
 
-        # 建立向量資料庫
         try:
             docs = load_pdf_documents()
             splits = split_documents(docs)
@@ -109,3 +149,24 @@ def upload_zip(request):
             return JsonResponse({"error": f"建立向量資料庫失敗：{str(e)}"})
 
     return JsonResponse({"error": "僅支援 POST 請求"})
+
+
+# web_app/views.py
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponseNotAllowed
+from .mongo import delete_conversation, update_conversation_title
+
+@csrf_exempt
+def api_conversation_detail(request, convo_id):
+    if request.method == "PATCH":
+        data = json.loads(request.body)
+        new_title = data.get("title")
+        if not new_title:
+            return JsonResponse({"error": "缺少 title"}, status=400)
+        update_conversation_title(convo_id, new_title)
+        return JsonResponse({"message": "更新成功"})
+    elif request.method == "DELETE":
+        delete_conversation(convo_id)
+        return JsonResponse({"message": "刪除成功"})
+    else:
+        return HttpResponseNotAllowed(["PATCH", "DELETE"])
