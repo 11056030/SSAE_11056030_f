@@ -170,3 +170,31 @@ def api_conversation_detail(request, convo_id):
         return JsonResponse({"message": "刪除成功"})
     else:
         return HttpResponseNotAllowed(["PATCH", "DELETE"])
+    
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+import openpyxl
+from io import BytesIO
+from .mongo import get_messages
+
+@csrf_exempt
+def api_export_conversation(request, convo_id):
+    if request.method != "GET":
+        return HttpResponse(status=405)
+    msgs = get_messages(convo_id)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "對話紀錄"
+    ws.append(["問題", "回答"])
+    for m in msgs:
+        ws.append([m["question"], m["answer"]])
+    out = BytesIO()
+    wb.save(out)
+    out.seek(0)
+    resp = HttpResponse(
+        out.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    resp["Content-Disposition"] = f'attachment; filename="conversation_{convo_id}.xlsx"'
+    return resp
+

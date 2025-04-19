@@ -15,18 +15,34 @@
     #sidebar h3 { margin:0; padding:12px; background:#0078d4; color:#fff; }
     #convoList { flex:1; overflow-y:auto; list-style:none; margin:0; padding:0;}
     #convoList li {
-      display:flex; align-items:center; justify-content:space-between;
+      position:relative;
+      display:flex; align-items:center;
       padding:8px 12px; border-bottom:1px solid #ddd; cursor:pointer;
     }
     #convoList li.active { background:#e1f0ff; font-weight:bold; }
-    #convoList li input {
-      flex:1; border:none; background:transparent; font-size:14px;
-      outline:none;
+
+    /* 標題與按鈕區 */
+    #convoList li .title {
+      flex:1; margin-right:8px;
+      font-size:14px;
+      line-height:1.2;
     }
-    #convoList li button {
-      margin-left:8px; background:#e74c3c; border:none; color:#fff;
-      padding:2px 6px; border-radius:4px; cursor:pointer;
+    #convoList li input.title {
+      flex:1; margin-right:8px;
+      font-size:14px; line-height:1.2;
+      padding:2px 4px; height:auto;
+      border:1px solid #ccc; border-radius:4px;
+      box-sizing:border-box;
     }
+    #convoList li .action-btns {
+      display:flex; align-items:center;
+    }
+    #convoList li .edit-btn,
+    #convoList li .delete-btn {
+      background:transparent; border:none; cursor:pointer; font-size:16px;
+      margin-left:4px;
+    }
+    #convoList li .delete-btn { color:#e74c3c; }
     #newConvo { padding:10px; border:none; background:#0078d4; color:#fff; cursor:pointer; }
 
     /* 主聊天區 */
@@ -55,22 +71,11 @@
       border:1px solid #ccc; border-radius:6px; height:60px;
       line-height:1.4;
     }
-    button { margin-left:10px; padding:10px 16px; font-size:1em;
-      cursor:pointer; background:#4CAF50; color:#fff; border:none;
-      border-radius:6px;
+    #sendBtn {
+      margin-left:10px; padding:10px 16px; font-size:1em;
+      cursor:pointer; background:#4CAF50; color:#fff;
+      border:none; border-radius:6px;
     }
-
-    /* 保留上傳區 */
-    .upload-icon{position:fixed;top:20px;right:20px;
-      background:#4CAF50;color:#fff;border:none;border-radius:50%;
-      width:44px;height:44px;font-size:22px;text-align:center;
-      line-height:44px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);z-index:1000;}
-    input[type="file"]{display:none;}
-    #floating-progress{position:fixed;top:80px;right:20px;width:200px;
-      background:#fff;border:1px solid #ccc;border-radius:8px;padding:10px;
-      display:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);z-index:999;}
-    #progressBar{width:0;height:12px;background:#4CAF50;border-radius:6px;transition:width .3s;}
-    #progressText{margin-top:8px;font-size:.9em;color:#333;}
   </style>
 </head>
 <body>
@@ -92,55 +97,93 @@
     </div>
   </div>
 
-  <!-- 上傳 ZIP 保留 -->
-  <button class="upload-icon" onclick="document.getElementById('zipInput').click()">📁</button>
-  <input type="file" id="zipInput" accept=".zip" onchange="uploadZip(this.files[0])" />
-  <div id="floating-progress">
-    <div id="progressBar"></div>
-    <div id="progressText">上傳中...</div>
-  </div>
-
   <script>
     let conversations = [];
     let currentId = null;
     let nextSeq = 1;
 
-    async function loadConvos(){
-      const res = await fetch("/api/conversations/");
+    async function loadConvos() {
+      const res = await fetch('/api/conversations/');
       conversations = (await res.json()).conversations;
       nextSeq = conversations.length + 1;
-      const ul = document.getElementById("convoList");
-      ul.innerHTML = "";
-      conversations.forEach(c=>{
-        const li = document.createElement("li");
+      renderConvos();
+    }
+
+    function renderConvos() {
+      const ul = document.getElementById('convoList');
+      ul.innerHTML = '';
+      conversations.forEach(c => {
+        const li = document.createElement('li');
         li.dataset.id = c.id;
-        if(c.id===currentId) li.classList.add("active");
+        if(c.id === currentId) li.classList.add('active');
 
-        const inp = document.createElement("input");
-        inp.value = c.title;
-        inp.onblur = async () => {
-          const newTitle = inp.value.trim() || "無標題";
-          await fetch(`/api/conversations/${c.id}/`, {
-            method:"PATCH",
-            headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({title:newTitle})
-          });
-          c.title = newTitle;
-        };
-        li.appendChild(inp);
+        // 標題區
+        const span = document.createElement('span');
+        span.className = 'title';
+        span.textContent = c.title;
+        li.appendChild(span);
 
-        const btn = document.createElement("button");
-        btn.textContent = "刪除";
-        btn.onclick = async e => {
+        // 按鈕區
+        const actions = document.createElement('div');
+        actions.className = 'action-btns';
+
+        // 編輯按鈕
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
+        editBtn.innerHTML = '✏️';
+        editBtn.onclick = e => {
           e.stopPropagation();
-          if(!confirm("確定刪除此對話？")) return;
-          await fetch(`/api/conversations/${c.id}/`, {method:"DELETE"});
-          conversations = conversations.filter(x=>x.id!==c.id);
-          if(currentId===c.id) currentId=null;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = c.title;
+          input.className = 'title';
+          // 按 Enter 儲存
+          input.onkeydown = async evt => {
+            if(evt.key === 'Enter') {
+              evt.preventDefault();
+              const newTitle = input.value.trim() || '無標題';
+              await fetch(`/api/conversations/${c.id}/`, {
+                method:'PATCH', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({title:newTitle})
+              });
+              c.title = newTitle;
+              loadConvos();
+            }
+          };
+          li.replaceChild(input, span);
+          input.focus();
+        };
+        actions.appendChild(editBtn);
+
+        // 匯出按鈕
+        const exportBtn = document.createElement('button');
+        exportBtn.className = 'export-btn';
+        exportBtn.textContent = '⬇️';
+        exportBtn.title = '匯出Excel';
+        exportBtn.onclick = e => {
+          e.stopPropagation();
+          // 直接設定 window.location 會觸發下載
+          window.location.assign(`/api/conversations/${c.id}/export_excel/`);
+        };
+
+        actions.appendChild(exportBtn);
+
+
+        // 刪除按鈕
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.textContent = '🗑️';
+        delBtn.onclick = async e => {
+          e.stopPropagation();
+          if(!confirm('確定刪除此對話？')) return;
+          await fetch(`/api/conversations/${c.id}/`, { method:'DELETE' });
+          conversations = conversations.filter(x=> x.id !== c.id);
+          if(currentId === c.id) currentId = null;
           loadConvos();
         };
-        li.appendChild(btn);
+        actions.appendChild(delBtn);
 
+        li.appendChild(actions);
         li.onclick = () => selectConvo(c.id, li);
         ul.appendChild(li);
       });
