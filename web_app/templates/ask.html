@@ -155,6 +155,20 @@
         };
         actions.appendChild(editBtn);
 
+        // 匯出按鈕
+        const exportBtn = document.createElement('button');
+        exportBtn.className = 'export-btn';
+        exportBtn.textContent = '⬇️';
+        exportBtn.title = '匯出Excel';
+        exportBtn.onclick = e => {
+          e.stopPropagation();
+          // 直接設定 window.location 會觸發下載
+          window.location.assign(`/api/conversations/${c.id}/export_excel/`);
+        };
+
+        actions.appendChild(exportBtn);
+
+
         // 刪除按鈕
         const delBtn = document.createElement('button');
         delBtn.className = 'delete-btn';

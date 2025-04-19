@@ -41,6 +41,6 @@ urlpatterns = [
     path('api/conversations/<str:convo_id>/messages/', views.api_messages),
     path('api/ask/', views.api_ask),
     path('api/conversations/<str:convo_id>/', views.api_conversation_detail),
-    path('api/conversations/<str:convo_id>/', views.api_conversation_detail),
+    path('api/conversations/<str:convo_id>/export_excel/', views.api_export_conversation),
 
-    ]
+   ]
