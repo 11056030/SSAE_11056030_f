@@ -5,9 +5,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .views_rag import ask_question, create_vector_store, load_pdf_documents, split_documents
-from .mongo import get_chat_history, save_chat  # ✅ 新增：匯入儲存函式
 
-# 各畫面
 def base(request):
     return render(request, 'base.html')
 
@@ -23,9 +21,8 @@ def login(request):
 def chat(request):
     return render(request, 'chat.html')
 
-
 def navbar2(request):
-  return render(request, 'navbar(2).html')
+    return render(request, 'navbar(2).html')
 
 def join(request):
     return render(request, 'join.html')
@@ -50,26 +47,67 @@ def comment_detail(request):
 
 def add_comment(request):
     return render(request, "add_comment.html")
+# web_app/views.py
+import json
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponseNotAllowed
+from django.views.decorators.csrf import csrf_exempt
+from .mongo import (
+    create_conversation,
+    add_message,
+    get_conversations,
+    get_messages
+)
+from .views_rag import ask_question
+
+USER_ID = "guest"  # 可改為 session 或 request.user.id
+
+def chat_page(request):
+    # 首次載入時不帶任何對話，前端會自動建立
+    return render(request, "ask.html")
 
 @csrf_exempt
-def ask_view(request):
+def api_conversations(request):
+    if request.method == "GET":
+        convos = get_conversations(USER_ID)
+        return JsonResponse({"conversations": convos})
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            question = data.get("question", "")
-            if not question:
-                return JsonResponse({"answer": "請輸入問題。"})
+        data = json.loads(request.body)
+        title = data.get("title", "新對話")
+        convo_id = create_conversation(USER_ID, title)
+        return JsonResponse({"id": convo_id, "title": title})
+    return HttpResponseNotAllowed(["GET", "POST"])
 
-            answer = ask_question(question)
+@csrf_exempt
+def api_messages(request, convo_id):
+    if request.method == "GET":
+        msgs = get_messages(convo_id)
+        # format timestamp
+        out = []
+        for m in msgs:
+            out.append({
+                "question": m["question"],
+                "answer": m["answer"],
+                "timestamp": m["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+            })
+        return JsonResponse({"messages": out})
+    return HttpResponseNotAllowed(["GET"])
 
-            # ✅ 新增：儲存對話到 MongoDB
-            user_id = request.session.get("user_id", "anonymous")
-            save_chat(user_id, question, answer)
+@csrf_exempt
+def api_ask(request):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    data = json.loads(request.body)
+    question = data.get("question", "").strip()
+    convo_id = data.get("conversation_id")
+    if not question or not convo_id:
+        return JsonResponse({"error": "缺少 question 或 conversation_id"}, status=400)
 
-            return JsonResponse({"answer": answer})
-        except Exception as e:
-            return JsonResponse({"error": str(e)})
-    return JsonResponse({"error": "僅支援 POST 請求"})
+    # 呼叫現有 RAG 邏輯
+    answer = ask_question(question)
+    # 存入 MongoDB
+    add_message(convo_id, question, answer)
+    return JsonResponse({"answer": answer})
 
 @csrf_exempt
 def upload_zip(request):
@@ -113,12 +151,50 @@ def upload_zip(request):
     return JsonResponse({"error": "僅支援 POST 請求"})
 
 
-def chat_history_view(request):
-    user_id = request.session.get("user_id", "anonymous")
-    chat_history = get_chat_history(user_id)
-    
-    # Convert MongoDB ObjectId to string for JSON serialization
-    for chat in chat_history:
-        chat["_id"] = str(chat["_id"])
+# web_app/views.py
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponseNotAllowed
+from .mongo import delete_conversation, update_conversation_title
 
-    return JsonResponse({"chat_history": chat_history})
+@csrf_exempt
+def api_conversation_detail(request, convo_id):
+    if request.method == "PATCH":
+        data = json.loads(request.body)
+        new_title = data.get("title")
+        if not new_title:
+            return JsonResponse({"error": "缺少 title"}, status=400)
+        update_conversation_title(convo_id, new_title)
+        return JsonResponse({"message": "更新成功"})
+    elif request.method == "DELETE":
+        delete_conversation(convo_id)
+        return JsonResponse({"message": "刪除成功"})
+    else:
+        return HttpResponseNotAllowed(["PATCH", "DELETE"])
+    
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+import openpyxl
+from io import BytesIO
+from .mongo import get_messages
+
+@csrf_exempt
+def api_export_conversation(request, convo_id):
+    if request.method != "GET":
+        return HttpResponse(status=405)
+    msgs = get_messages(convo_id)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "對話紀錄"
+    ws.append(["問題", "回答"])
+    for m in msgs:
+        ws.append([m["question"], m["answer"]])
+    out = BytesIO()
+    wb.save(out)
+    out.seek(0)
+    resp = HttpResponse(
+        out.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    resp["Content-Disposition"] = f'attachment; filename="conversation_{convo_id}.xlsx"'
+    return resp
+
