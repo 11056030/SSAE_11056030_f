@@ -1,9 +1,8 @@
-{% extends 'base.html' %}
 {% load static %}
 
-{% block lang %}zh-Hant{% endblock %}
+<!-- {% block lang %}zh-Hant{% endblock %} -->
 
-{% block title %}北商rule事說 - 登入{% endblock %}
+<!-- {% block title %}北商rule事說 - 登入{% endblock %} -->
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/join.css' %}">
@@ -52,7 +51,7 @@
                 <input type="text" class="search-box" placeholder="搜尋活動...">
             </div>
             
-            <a href="#" class="create-btn">＋ 發起揪團</a>
+            <!-- <a href="#" class="create-btn">＋ 發起揪團</a> -->
         </header>
         
         <section class="activities-container">
@@ -202,8 +201,26 @@
                 </div>
             </div>
         </section>
+
+        <!-- 上傳按鈕和表單 - 添加在這裡 -->
+        <div class="upload-btn" id="uploadBtn">+</div>
+        
+        <!-- 上傳表單 -->
+        <div class="upload-form" id="uploadForm">
+            <div class="upload-container">
+                <div class="upload-header">
+                    <div class="upload-title">上傳活動</div>
+                    <button class="close-btn" id="closeUploadBtn">&times;</button>
+                </div>
+                <form>
+                    <input type="file" id="imageUpload" accept="image/*">
+                    <!-- 這裡可以添加其他表單元素 -->
+                </form>
+            </div>
+        </div>
         
         <div class="deco-line"></div>
+    </div>
 </body>
 {% endblock %}
 
