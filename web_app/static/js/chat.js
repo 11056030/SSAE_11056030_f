@@ -1,31 +1,11 @@
-//------------------------------------------------------------------------------------------------------------------------------------
+// 當前對話ID
+let currentId = null;
+let conversations = [];
+let nextSeq = 1;
 
-// 當前活動的聊天 ID
-let currentChatId = null;
-
-// 模擬的聊天歷史數據
-let chatHistory = [
-    { id: 1, title: "關於人工智能的討論", messages: [
-        { sender: "bot", content: "您好！我是您的AI助手。我可以幫助回答問題、提供信息或進行交流。有什麼我能幫您的嗎？" },
-        { sender: "user", content: "什麼是人工智能？" },
-        { sender: "bot", content: "人工智能是指由人創造的、模擬人類智能的系統，能夠執行通常需要人類智能的任務，如視覺感知、語音識別、決策和語言翻譯等。" }
-    ]},
-    { id: 2, title: "網站開發問題", messages: [
-        { sender: "bot", content: "您好！我是您的AI助手。我可以幫助回答問題、提供信息或進行交流。有什麼我能幫您的嗎？" },
-        { sender: "user", content: "如何建立一個響應式網站？" },
-        { sender: "bot", content: "建立響應式網站可以使用 HTML, CSS 和 JavaScript。CSS 框架如 Bootstrap 或 Tailwind 也很有幫助。關鍵是使用媒體查詢和靈活的網格系統。" }
-    ]},
-    { id: 3, title: "旅遊建議", messages: [
-        { sender: "bot", content: "您好！我是您的AI助手。我可以幫助回答問題、提供信息或進行交流。有什麼我能幫您的嗎？" },
-        { sender: "user", content: "台灣有哪些值得去的地方？" },
-        { sender: "bot", content: "台灣有許多令人驚嘆的景點！你可以考慮參觀台北101、日月潭、阿里山、花蓮太魯閣峽谷和墾丁國家公園等。" }
-    ]}
-];
-
-// DOM 元素
+// DOM元素
 const sidebar = document.getElementById('sidebar');
 const menuBtn = document.getElementById('menuBtn');
-const menuBtnContainer = document.getElementById('menuBtnContainer');
 const mainContent = document.getElementById('mainContent');
 const currentChatTitle = document.getElementById('currentChatTitle');
 const newChatBtn = document.getElementById('newChatBtn');
@@ -35,263 +15,275 @@ const noMessagesEl = document.getElementById('noMessages');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 
-// 切換側邊欄
+// 側邊欄切換
 let sidebarOpen = true;
 menuBtn.addEventListener('click', () => {
+    sidebarOpen = !sidebarOpen;
     if (sidebarOpen) {
-        // 關閉側邊欄
-        sidebar.classList.add('collapsed');
-        menuBtn.classList.remove('open');
-        document.body.classList.add('sidebar-collapsed');
-        sidebarOpen = false;
-    } else {
-        // 打開側邊欄
         sidebar.classList.remove('collapsed');
         menuBtn.classList.add('open');
         document.body.classList.remove('sidebar-collapsed');
-        sidebarOpen = true;
-    }
-});
-
-// 載入聊天歷史
-function loadChatHistory() {
-    chatHistoryEl.innerHTML = '';
-    chatHistory.forEach(chat => {
-        const chatItem = document.createElement('div');
-        chatItem.className = 'chat-item';
-        chatItem.innerHTML = `
-        <div class="chat-title">${chat.title}</div>
-        <div class="chat-actions">
-            <button class="action-btn download-btn" data-id="${chat.id}">
-                <i class="fa-solid fa-download"></i>
-                <span class="tooltip">下載對話</span>
-            </button>
-            <button class="action-btn delete-btn" data-id="${chat.id}">
-                <i class="fa-solid fa-trash"></i>
-                <span class="tooltip">刪除對話</span>
-            </button>
-        </div>
-    `;
-    
-        chatItem.addEventListener('click', (e) => {
-            // 如果點擊的是操作按鈕，不要切換對話
-            if (!e.target.closest('.action-btn')) {
-                loadChat(chat.id);
-            }
-        });
-        chatHistoryEl.appendChild(chatItem);
-    });
-
-    // 為下載和刪除按鈕添加事件
-    document.querySelectorAll('.download-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            downloadChat(parseInt(btn.getAttribute('data-id')));
-        });
-    });
-
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteChat(parseInt(btn.getAttribute('data-id')));
-        });
-    });
-}
-
-// 載入特定聊天
-function loadChat(chatId) {
-    const chat = chatHistory.find(c => c.id === chatId);
-    if (!chat) return;
-
-    currentChatId = chatId;
-    currentChatTitle.innerText = chat.title;
-    chatContainer.innerHTML = '';
-    noMessagesEl.style.display = 'none';
-
-    // 如果聊天沒有消息，添加AI自我介紹
-    if (chat.messages.length === 0) {
-        addMessageToChat(chatId, 'bot', getAIIntroduction());
     } else {
-        chat.messages.forEach(message => {
-            addMessageToUI(message.sender, message.content);
-        });
-    }
-
-    // 滾動到最新消息
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-    // 在移動設備上，載入聊天後自動關閉側邊欄
-    if (window.innerWidth <= 768) {
         sidebar.classList.add('collapsed');
         menuBtn.classList.remove('open');
         document.body.classList.add('sidebar-collapsed');
-        sidebarOpen = false;
-    }
-}
-
-// 獲取AI自我介紹消息
-function getAIIntroduction() {
-    return "您好！我是您的AI助手。我可以幫助回答問題、提供信息或進行交流。有什麼我能幫您的嗎？";
-}
-
-// 新增對話
-newChatBtn.addEventListener('click', () => {
-    const newChatId = Date.now();
-    const newChat = {
-        id: newChatId,
-        title: "新對話",
-        messages: []
-    };
-    chatHistory.unshift(newChat);
-    loadChatHistory();
-    loadChat(newChatId);
-    // 注意：loadChat 函數會自動添加 AI 自我介紹，所以這裡不需要再次添加
-});
-
-// 發送消息
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
     }
 });
 
-function sendMessage() {
-    const content = messageInput.value.trim();
-    if (!content) return;
-
-    if (!currentChatId) {
-        // 如果沒有活動的聊天，創建一個新的
-        newChatBtn.click();
+// 從API載入對話列表
+async function loadConvos() {
+    try {
+        const res = await fetch('/api/conversations/');
+        conversations = (await res.json()).conversations;
+        nextSeq = conversations.length + 1;
+        renderConvos();
+    } catch (error) {
+        console.error('載入對話失敗:', error);
     }
-
-    // 添加用戶消息
-    addMessageToChat(currentChatId, 'user', content);
-    messageInput.value = '';
-    
-    // 模擬機器人回覆
-    setTimeout(() => {
-        const botReply = "這是一個自動回覆。在實際應用中，您需要連接到後端服務或 API 來處理真實的對話。";
-        addMessageToChat(currentChatId, 'bot', botReply);
-    }, 500);
-
-    // 調整輸入框高度
-    adjustTextareaHeight();
 }
 
-// 向聊天添加消息
-function addMessageToChat(chatId, sender, content) {
-    const chat = chatHistory.find(c => c.id === chatId);
-    if (!chat) return;
+// 渲染對話列表
+function renderConvos() {
+    chatHistoryEl.innerHTML = '';
+    conversations.forEach(c => {
+        const chatItem = document.createElement('div');
+        chatItem.className = 'chat-item';
+        if (c.id === currentId) chatItem.classList.add('active');
+        
+        chatItem.innerHTML = `
+            <div class="chat-title">${c.title}</div>
+            <div class="chat-actions">
+                <button class="action-btn download-btn" data-id="${c.id}">
+                    <i class="fa-solid fa-download"></i>
+                    <span class="tooltip">匯出對話</span>
+                </button>
+                <button class="action-btn delete-btn" data-id="${c.id}">
+                    <i class="fa-solid fa-trash"></i>
+                    <span class="tooltip">刪除對話</span>
+                </button>
+            </div>
+        `;
 
-    chat.messages.push({ sender, content });
-    
-    // 如果是第一條消息，更新聊天標題
-    if (chat.messages.length === 1 && sender === 'user') {
-        chat.title = content.length > 25 ? content.substring(0, 25) + '...' : content;
-        currentChatTitle.innerText = chat.title;
-        loadChatHistory();
-    } 
-    // 如果是第二條消息（用戶第一條消息），更新聊天標題
-    else if (chat.messages.length === 2 && sender === 'user') {
-        chat.title = content.length > 25 ? content.substring(0, 25) + '...' : content;
-        currentChatTitle.innerText = chat.title;
-        loadChatHistory();
+        chatItem.addEventListener('click', (e) => {
+            // 如果點擊的是操作按鈕，不要切換對話
+            if (!e.target.closest('.action-btn')) {
+                selectConvo(c.id);
+            }
+        });
+        
+        chatHistoryEl.appendChild(chatItem);
+    });
+
+    // 綁定匯出按鈕事件
+    document.querySelectorAll('.download-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            window.location.assign(`/api/conversations/${id}/export_excel/`);
+        });
+    });
+
+    // 綁定刪除按鈕事件
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            if (!confirm('確定刪除此對話？')) return;
+            
+            try {
+                await fetch(`/api/conversations/${id}/`, { method: 'DELETE' });
+                conversations = conversations.filter(x => x.id !== id);
+                if (currentId === id) {
+                    currentId = null;
+                    chatContainer.innerHTML = '';
+                    noMessagesEl.style.display = 'block';
+                    currentChatTitle.innerText = '對話';
+                }
+                renderConvos();
+            } catch (error) {
+                console.error('刪除對話失敗:', error);
+            }
+        });
+    });
+}
+
+// 選擇對話
+async function selectConvo(id) {
+    try {
+        currentId = id;
+        document.querySelectorAll(".chat-item").forEach(item => item.classList.remove("active"));
+        document.querySelector(`.chat-item:has([data-id="${id}"])`)?.classList.add("active");
+        
+        const res = await fetch(`/api/conversations/${id}/messages/`);
+        const data = await res.json();
+        renderMessages(data.messages);
+        
+        // 更新標題
+        const convo = conversations.find(c => c.id === id);
+        if (convo) {
+            currentChatTitle.innerText = convo.title;
+        }
+        
+        // 手機版自動關閉側邊欄
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            menuBtn.classList.remove('open');
+            document.body.classList.add('sidebar-collapsed');
+            sidebarOpen = false;
+        }
+    } catch (error) {
+        console.error('載入對話內容失敗:', error);
     }
+}
 
-    addMessageToUI(sender, content);
-
-    // 滾動到最新消息
+// 渲染對話訊息
+function renderMessages(messages) {
+    chatContainer.innerHTML = '';
+    noMessagesEl.style.display = messages.length ? 'none' : 'block';
+    
+    messages.forEach(msg => {
+        // 用戶訊息
+        const userMsg = document.createElement('div');
+        userMsg.className = 'message-container user-container';
+        userMsg.innerHTML = `
+            <div class="message-content user-content">${msg.question}</div>
+            <div class="avatar user-avatar">你</div>
+        `;
+        chatContainer.appendChild(userMsg);
+        
+        // 機器人訊息
+        const botMsg = document.createElement('div');
+        botMsg.className = 'message-container bot-container';
+        botMsg.innerHTML = `
+            <div class="avatar bot-avatar">AI</div>
+            <div class="message-content bot-content">${msg.answer}</div>
+        `;
+        chatContainer.appendChild(botMsg);
+    });
+    
+    // 滾動到最新訊息
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// 向 UI 添加消息
-function addMessageToUI(sender, content) {
-    const messageContainer = document.createElement('div');
-    messageContainer.className = `message-container ${sender}-container`;
-    
-    const avatar = document.createElement('div');
-    avatar.className = `avatar ${sender}-avatar`;
-    avatar.innerText = sender === 'user' ? '你' : 'AI';
-
-    
-    const messageContent = document.createElement('div');
-    messageContent.className = `message-content ${sender}-content`;
-    messageContent.innerText = content;
-    
-    if (sender === 'user') {
-        messageContainer.appendChild(messageContent);
-        messageContainer.appendChild(avatar);
-    } else {
-        messageContainer.appendChild(avatar);
-        messageContainer.appendChild(messageContent);
-    }
-    
-    chatContainer.appendChild(messageContainer);
-}
-
-// 下載聊天
-function downloadChat(chatId) {
-    const chat = chatHistory.find(c => c.id === chatId);
-    if (!chat) return;
-
-    let content = `# ${chat.title}\n\n`;
-    chat.messages.forEach(msg => {
-        const sender = msg.sender === 'user' ? '你' : 'AI';
-        content += `**${sender}**: ${msg.content}\n\n`;
-    });
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${chat.title}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// 刪除聊天
-function deleteChat(chatId) {
-    if (confirm('確定要刪除此對話嗎？')) {
-        chatHistory = chatHistory.filter(chat => chat.id !== chatId);
-        loadChatHistory();
+// 建立新對話
+newChatBtn.addEventListener('click', async () => {
+    try {
+        const title = `新對話${nextSeq++}`;
+        const res = await fetch("/api/conversations/", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({title})
+        });
         
-        if (currentChatId === chatId) {
-            // 如果刪除的是當前活動的聊天，清空聊天窗口
-            currentChatId = null;
-            chatContainer.innerHTML = '';
-            noMessagesEl.style.display = 'block';
-            currentChatTitle.innerText = '對話';
+        const newConvo = await res.json();
+        currentId = newConvo.id;
+        await loadConvos();
+        selectConvo(newConvo.id);
+    } catch (error) {
+        console.error('建立新對話失敗:', error);
+    }
+});
+
+// 發送訊息
+async function sendQuestion() {
+    const questionEl = document.getElementById('messageInput');
+    const question = questionEl.value.trim();
+    
+    if (!question || !currentId) return;
+    
+    // 清空輸入框並調整高度
+    questionEl.value = '';
+    adjustTextareaHeight();
+    
+    try {
+        // 在聊天區域加入用戶訊息
+        const userMsg = document.createElement('div');
+        userMsg.className = 'message-container user-container';
+        userMsg.innerHTML = `
+            <div class="message-content user-content">${question}</div>
+            <div class="avatar user-avatar">你</div>
+        `;
+        chatContainer.appendChild(userMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+        // 發送到後端
+        const res = await fetch("/api/ask/", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({conversation_id: currentId, question: question})
+        });
+        
+        const data = await res.json();
+        
+        // 在聊天區域加入機器人回覆
+        const botMsg = document.createElement('div');
+        botMsg.className = 'message-container bot-container';
+        botMsg.innerHTML = `
+            <div class="avatar bot-avatar">AI</div>
+            <div class="message-content bot-content">${data.answer || data.error}</div>
+        `;
+        chatContainer.appendChild(botMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+        // 更新對話標題（如果是第一條訊息）
+        const convo = conversations.find(c => c.id === currentId);
+        if (convo && (!convo.title || convo.title.startsWith('新對話'))) {
+            const title = question.length > 25 ? question.substring(0, 25) + '...' : question;
+            await fetch(`/api/conversations/${currentId}/`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title: title})
+            });
+            currentChatTitle.innerText = title;
+            await loadConvos();
         }
+    } catch (error) {
+        console.error('發送問題失敗:', error);
     }
 }
+
+// 發送按鈕點擊事件
+sendBtn.addEventListener('click', sendQuestion);
+
+// Enter鍵發送(Shift+Enter換行)
+messageInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendQuestion();
+    }
+});
 
 // 自適應文本輸入框高度
-messageInput.addEventListener('input', adjustTextareaHeight);
-
 function adjustTextareaHeight() {
     messageInput.style.height = 'auto';
     messageInput.style.height = (messageInput.scrollHeight) + 'px';
 }
 
+messageInput.addEventListener('input', adjustTextareaHeight);
+
 // 初始化
-loadChatHistory();
+(async () => {
+    await loadConvos();
+    
+    // 初始對話選擇
+    if (conversations.length) {
+        selectConvo(conversations[0].id);
+    } else {
+        newChatBtn.click();
+    }
+    
+    // 檢查窗口大小，決定初始側邊欄狀態
+    if (window.innerWidth <= 768) {
+        sidebar.classList.add('collapsed');
+        menuBtn.classList.remove('open');
+        document.body.classList.add('sidebar-collapsed');
+        sidebarOpen = false;
+    } else {
+        menuBtn.classList.add('open');
+    }
+})();
 
-// 檢查窗口大小，決定初始側邊欄狀態
-if (window.innerWidth <= 768) {
-    sidebar.classList.add('collapsed');
-    menuBtn.classList.remove('open');
-    document.body.classList.add('sidebar-collapsed');
-    sidebarOpen = false;
-} else {
-    // 在大屏幕上默認打開側邊欄並顯示叉叉
-    menuBtn.classList.add('open');
-}
-
-// 設定窗口調整大小時的行為
+// 窗口大小調整時的行為
 window.addEventListener('resize', () => {
     if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) {
         sidebar.classList.add('collapsed');
@@ -300,4 +292,3 @@ window.addEventListener('resize', () => {
         sidebarOpen = false;
     }
 });
-//------------------------------------------------------------------------------------------------------------------------------------
