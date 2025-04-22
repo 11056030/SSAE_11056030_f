@@ -15,6 +15,80 @@ const noMessagesEl = document.getElementById('noMessages');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 
+// 建立上傳ZIP按鈕
+const headerArea = currentChatTitle.parentElement;
+const uploadZipContainer = document.createElement('div');
+uploadZipContainer.className = 'upload-zip-container';
+uploadZipContainer.innerHTML = `
+    <label for="zipUpload" class="upload-btn">
+        <i class="fa-solid fa-upload"></i>
+        <span>上傳 ZIP</span>
+    </label>
+    <input type="file" id="zipUpload" accept=".zip" style="display:none" />
+    
+    <div id="floating-progress" style="display:none; position:fixed; top:10px; right:10px; background:white; border:1px solid #ccc; padding:10px; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:1000; width:250px;">
+        <div id="progressText">上傳中...</div>
+        <div style="background:#eee; height:10px; margin-top:5px; border-radius:5px;">
+            <div id="progressBar" style="background:#4CAF50; height:100%; width:0%; border-radius:5px;"></div>
+        </div>
+    </div>
+`;
+
+// 插入到標題區域的右側
+headerArea.style.display = 'flex';
+headerArea.style.justifyContent = 'space-between';
+headerArea.style.alignItems = 'center';
+headerArea.appendChild(uploadZipContainer);
+
+// 綁定上傳事件
+document.getElementById('zipUpload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        uploadZip(file);
+    }
+});
+
+// 上傳ZIP檔的函數
+function uploadZip(file) {
+    if (!file || !file.name.endsWith('.zip')) {
+        alert("請選擇 zip 檔！");
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append("zip_file", file);
+    
+    const progressBox = document.getElementById("floating-progress");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    
+    progressBox.style.display = "block";
+    progressBar.style.width = "0%";
+    progressText.innerText = "上傳中...";
+    
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/upload_zip/", true);
+    
+    xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+            progressBar.style.width = Math.round(e.loaded/e.total*100)+"%";
+        }
+    };
+    
+    xhr.onload = () => {
+        const res = JSON.parse(xhr.responseText);
+        progressText.innerText = res.message ? "✅ 上傳完成" : `❌ 錯誤：${res.error}`;
+        setTimeout(() => progressBox.style.display = "none", 5000);
+    };
+    
+    xhr.onerror = () => {
+        progressText.innerText = "❌ 上傳錯誤";
+        setTimeout(() => progressBox.style.display = "none", 5000);
+    };
+    
+    xhr.send(formData);
+}
+
 // 側邊欄切換
 let sidebarOpen = true;
 menuBtn.addEventListener('click', () => {
