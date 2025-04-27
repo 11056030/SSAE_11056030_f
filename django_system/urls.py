@@ -24,7 +24,7 @@ urlpatterns = [
     path('base/' , views.base),
     path('login/' , views.login),
     path('welcome/' , views.welcome),
-    path('' , views.welcome),  # Set welcome_f as the default landing page
+    path('' , views.welcome),
     path('index/' , views.index),
     path('chat/' , views.chat),
     path('join/' , views.join),
