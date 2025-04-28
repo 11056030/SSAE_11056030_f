@@ -72,7 +72,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
-
+// 立體模型
+document.addEventListener('DOMContentLoaded', () => {
+  import('https://unpkg.com/@splinetool/runtime@0.9.457/build/runtime.js')
+    .then(({ Application }) => {
+      const canvas1 = document.getElementById('canvas3d');
+      const app1 = new Application(canvas1);
+      app1.load('https://prod.spline.design/aj26V7f18nBGVaU1/scene.splinecode');
+    })
+    .catch(error => console.error('Failed to load Spline:', error));
+});
 
 
 
@@ -206,7 +215,7 @@ function initTechParticles() {
   
   // 創建自定義流場函數 - 模擬流體動力學
   const customFlowField = {
-    resolution: 35, // 流場網格解析度
+    resolution: 40, // 流場網格解析度
     points: [],
     time: 0,
     
@@ -323,7 +332,7 @@ function initTechParticles() {
   const particleConfig = {
     particles: {
       number: {
-        value: 1800, // 大幅增加粒子數量使圓形充滿
+        value: 1500, // 大幅增加粒子數量使圓形充滿
         density: {
           enable: true,
           value_area: 400 // 降低面積使粒子更密集
@@ -331,7 +340,7 @@ function initTechParticles() {
       },
       color: {
         // value: ["#D1C5D1", "#AA9DA9", "#e0d3e0", "#c8b8c8", "#d8d0d8", "#ffffff", "#f0e8f0"] // 紫色系粒子
-        value: ["#D1C5D1", "#AA9DA9", "#e0d3e0", "#c8b8c8", "#d8d0d8", "#ffffff"]
+        value: ["#B5A9B5", "#8F7C8F", "#C2B3C2", "#A899A8", "#B9ADB9", "#ffffff"]
       },
       shape: {
         type: "triangle", // 使用三角形形狀
@@ -347,7 +356,7 @@ function initTechParticles() {
         }
       },
       size: {
-        value: 2.3, // 使粒子大小適中
+        value: 2.5, // 使粒子大小適中
         random: true,
         anim: {
           enable: true,
@@ -358,7 +367,7 @@ function initTechParticles() {
       },
       line_linked: {
         enable: true,
-        distance: 40, // 增加連線距離以創建更多連接
+        distance: 50, // 增加連線距離以創建更多連接
         color: "#D1C5D1", // 紫色系連線
         opacity: 0.25, // 增加線條不透明度
         width: 1.5 // 調整線條粗細
@@ -610,7 +619,7 @@ function initTechParticles() {
     
     let time = 0;
     const animate = () => {
-      time += 0.003; // 降低速度，使運動更柔和
+      time += 0.006; // 降低速度，使運動更柔和
       
       // 創建均勻的圓形路徑運動，不往任何特定方向偏移
       const x = Math.sin(time) * 3;

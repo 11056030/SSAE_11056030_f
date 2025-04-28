@@ -14,14 +14,14 @@
 
 {% block content %}
 
-<div id="loading-screen">
+<!--<div id="loading-screen">
   <div class="scene">
     <div class="cube">
       <div class="face front">WELCOME</div>
       <div class="face bottom" id="final-text">智能校事專家</div>
     </div>
   </div>
-</div>
+</div> -->
 
 
 
@@ -37,9 +37,6 @@
   </div>-->
 
   <div class="main-container">
-    <div class="marquee-container">
-      <h2 class="floating-marquee">song's run horse light 快來使用校規查詢功能吧</h2>
-    </div>
     <!--<div class="marquee-container-2">
       <h2 class="floating-marquee">倒數不知道幾天！啊啊啊啊啊我要被吃掉了</h2>
     </div>-->
@@ -68,8 +65,15 @@
       <!-- Decorative elements -->
       <div class="shape">
         <div class="circle-container">
+          <div class="marquee-container">
+            <h2 class="floating-marquee">song's run horse light 快來使用校規查詢功能吧</h2>
+          </div>
           <div class="circle-particles">
-            <div class="circle-background"></div> <!-- 新增這一層背景 -->
+            <div class="circle-background">
+              <div class="dialog-canvas">
+                <canvas id="canvas3d"></canvas>
+              </div>
+            </div> <!-- 新增這一層背景 -->
             <div id="tsparticles"></div> <!-- 粒子效果在上層 -->
           </div>
           
@@ -122,20 +126,8 @@
         </div>
 
 
-
-
-
       <!-- Feature sections with curved path connections -->
       <div class="feature-container">
-
-        <!--<div class="wrapper">
-          <div class="bubble" tabindex="0"></div>
-          <div class="bubble" tabindex="0"></div>
-          <div class="bubble" tabindex="0"></div>
-          <div class="bubble" tabindex="0"></div>
-          <div class="bubble" tabindex="0"></div>
-        </div>-->
-
         <svg id="triangle-1" xmlns="http://www.w3.org/2000/svg" width="188" height="143" viewBox="0 0 188 143" fill="none">
           <path d="M152.521 102.905L104.945 47.015L80.1997 115.423L152.521 102.905Z" fill="#D1C5D1"/> 
           <path d="M94.2181 81.8137L46.6427 25.9242L21.897 94.3321L94.2181 81.8137Z" fill="#D1C5D1"/> 
@@ -150,6 +142,27 @@
           <path d="M182.717 1C182.717 1 788.061 316.164 570.5 336.5C-670.5 452.5 1231.5 612 1344 609C1404 603 1520 588 1533 545.5C1546.24 502.224 1488.91 477.05 1445 488C1393.78 500.772 1358 513.5 1344 609C1329 721.5 1461 1142.5 1736.5 1321.5C1840.79 1389.26 1881.45 1319.22 1696 1310.5C1451.5 1299 966.283 1193.5 793.783 1180C348.564 1145.16 -293.147 1268.99 151.5 1310.5C236.46 1318.43 438.783 1361 370 1310.5C345.197 1292.29 328.324 1283.72 298 1278.5C185.052 1259.07 306 1369.5 370 1467.5C655.429 1904.56 1508 1673 1508 1673" stroke="#635C63" stroke-width="2"/>
         </svg>
 
+        <div class="feature-box">
+          <div class="feature-item">
+            <h3>comment</h3>
+            <p>提供課程評論功能，讓學生可以分享對於課程的看法和建議。</p>
+          </div>
+          <div class="feature-item">
+            <h3>rulesinfo</h3>
+            <p>提供校規查詢功能，讓學生可以快速找到相關的校規資訊。</p>
+          </div>
+          <div class="feature-item">
+            <h3>Meetactive</h3>
+            <p>提供即時通知功能，讓學生可以隨時獲得最新的校內消息。</p>
+          </div>
+          <div class="feature-item">
+            <h3>bookbuy</h3>
+            <p>提供即時通知功能，讓學生可以隨時獲得最新的校內消息。</p>
+          </div>
+        </div>
+
+        
+
         <svg id="triangle-2" xmlns="http://www.w3.org/2000/svg" width="224" height="197" viewBox="0 0 224 197" fill="none">
           <path d="M177.938 108.543L114.582 71.4881L113.801 144.23L177.938 108.543Z" fill="#D1C5D1"/>
           <path d="M115.941 107.877L52.5853 70.822L51.8043 143.564L115.941 107.877Z" fill="#D1C5D1"/>
@@ -158,9 +171,8 @@
           <path d="M68.2753 53.2116L67.5312 122.51L128.633 88.513L68.2753 53.2116Z" stroke="#635C63" stroke-width="2"/>
           </g>
         </svg>
-        
-
       </div>
+
   </div>
 {% endblock %}
 

@@ -1,247 +1,33 @@
 body {
-    margin: 0;
-    background-color: #F8F6F4;
-    font-family: sans-serif;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-  }
+  margin: 0;
+  background-color: #F8F6F4;
+  font-family: sans-serif;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+}
 
-  .transition-page {
-    position: relative;
-    display: flex;
-    flex-direction: column; /* 垂直排列 */
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    height: 100vh;
-    text-align: center;
-    transition: opacity 1.5s ease-out; /* 使透明度變化平滑 */
-    overflow: hidden;
-  }
+.transition-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  .triangle {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    width: 15%;
-    height: auto;
-    z-index: 2;
-  }
+/* 容器大小限制 + 裁切內容 */
+.spline-mask {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
 
-  .line-container {
-    position: absolute;
-    top: 200px; /* Move the entire container down */
-    left: 100px;
-    height: calc(100vh - 200px); /* Adjust height to account for top margin */
-    z-index: 1;
-  }
-
-  .line{
-    position: absolute;
-    left: 0;
-  }
-
-  .line1 {
-    top: 0; /* Position relative to the container which is already 200px from top */
-    opacity: 1;
-    transition: opacity 1s ease-out;
-  }
-  
-  .line2 {
-    top: 0; /* Position relative to the container which is already 200px from top */
-    opacity: 0;
-    transform: scaleY(0.2); /* Start with minimal height */
-    transform-origin: top; /* Grow from the top down */
-    transition: opacity 1s ease-out, transform 1.5s ease-out;
-  }
-
-  .transition-page.animate .line1 {
-    opacity: 0;
-  }
-  
-  .transition-page.animate .line2 {
-    opacity: 1;
-    transform: scaleY(1); /* Expand to full height */
-  }
-
-  .intro {
-    position: absolute;
-    top: 300px; /* Adjust position for vertical text */
-    left: 20px;
-    font-size: 1.5rem;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 1s ease-out 0.5s, transform 1s ease-out 0.5s;
-    white-space: nowrap;
-    writing-mode: vertical-lr; /* Make text vertical */
-    transform-origin: left top;
-  }
-
-  .transition-page.animate .intro {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-95%, -100%); /* 垂直和水平居中 */
-    text-align: center;
-    font-size: 2rem;
-    z-index: 2;
-  }
-
-  .wel {
-    font-family: 'La Belle Aurore', cursive;
-    font-size: 4.5rem;
-    color: #8C618C;
-    position: absolute;
-    top: -55px;
-    left: -50px;
-    margin: 0;
-    padding: 0;
-  }
-
-  h1 {
-    font-size: 5.5rem;
-    line-height: 1.1;
-    margin: 0;
-    padding: 0;
-  }
-
-  .transition-page h1 + h1 {
-    margin-top: 5px; /* 行距縮小 */
-  }
-
-  .transition-page.fade-out {
-    opacity: 0;
-  }
-
-  .circle{
-    position: absolute;
-    left: 630px;
-    width: 20%;
-    height: 20%;
-    z-index: -1;
-  }
-
-  .rtdecorate{
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 40%;
-    height: 40%;
-    z-index: -1;
-  }
-
-  .door-container {
-    position: absolute;
-    bottom: 30px;
-    right: 150px; /* Add more margin from right edge */
-    width: 385px;
-    height: 388px;
-    z-index: 1;
-    overflow: visible;
-  }
-
-  .door-frame {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 3; /* Above door1 */
-  }
-
-  .door1 {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 1;
-    transform: perspective(1200px) rotateY(0deg);
-    z-index: 1;
-    transform-origin: left center; /* Rotate from the left edge (hinge) */
-    transition: transform 1.5s ease-out;
-  }
-    
-  .transition-page.animate .door1 {
-    transform: perspective(1200px) rotateY(40deg) translateX(21px) translateY(9px); /* Rotate outward */
-    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.4));
-  }
-
-  .door-container svg {
-    overflow: visible;
-  }
-
-  /* Door frame expansion animation */
-  .door-frame-expand {
-    position: fixed;
-    width: 300px;
-    height: 300px;
-    right: 150px;
-    bottom: 30px;
-    transform: translate(300%, 300%) scale(0);  /* 保證中心點放大 */
-    transform-origin: calc(100% - 150px) calc(100% - 30px);
-    transition: transform 1s ease-out;  /* 變慢一點，像自然擴張 */
-    z-index: 1000;
-    pointer-events: none;
-  }
-  
-  .door-frame-expand.active {
-    transform: translate(600%, 600%) scale(20);  /* 根據需求調整 scale 值 */
-  }
-  
-  .door-frame-expand svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  
-  
-  
-  
-
-  /* Add animation trigger with JavaScript */
-  @keyframes startAnimation {
-    to {
-      opacity: 1;
-    }
-  }
-
-  /* Media queries for responsiveness */
-  @media (max-width: 1200px) {
-    .text {
-      transform: translate(-80%, -100%);
-    }
-    
-    .circle {
-      left: 45%;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .text {
-      transform: translate(-50%, -100%);
-    }
-    
-    h1 {
-      font-size: 4rem;
-    }
-    
-    .wel {
-      font-size: 3.5rem;
-    }
-    
-    .door-container {
-      width: 300px;
-      height: 300px;
-    }
-    
-    .circle {
-      left: 40%;
-    }
-  }
+/* Spline 實際內容超出時會被容器擋住 */
+.spline-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 110vh; /* 比容器高，底下30px會被裁掉 */
+}
