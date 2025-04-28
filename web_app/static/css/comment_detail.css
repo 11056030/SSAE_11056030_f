@@ -16,6 +16,49 @@ body {
     z-index: 1;
 }
 
+/* Back button styles */
+.back-button {
+    margin-bottom: 25px;
+}
+
+.back-button a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: bold;
+    padding: 8px 12px;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    border-radius: 100px;
+}
+
+.back-button a:hover {
+    color: #222;
+}
+
+.back-button a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: #555;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.back-button a:hover::after {
+    width: 80%;
+}
+
+.back-button a:before {
+    content: '←';
+    margin-right: 5px;
+    font-weight: bold;
+}
+
 /* Star Rating Styles */
 .stars {
     display: inline-flex;

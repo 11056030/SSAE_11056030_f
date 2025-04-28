@@ -460,6 +460,12 @@ textarea:focus {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1290px) {
+    .form-col-left {
+        grid-template-columns: 60% 60%;
+    }
+}
+
 @media (max-width: 768px) {
     .form-row {
         flex-direction: column;
@@ -471,5 +477,9 @@ textarea:focus {
     
     .comment-content {
         flex-direction: column;
+    }
+
+    .form-col-left {
+        grid-template-columns: 50% 50%;
     }
 }
