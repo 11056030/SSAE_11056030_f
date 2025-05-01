@@ -83,6 +83,51 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(error => console.error('Failed to load Spline:', error));
 });
 
+// 字母
+document.addEventListener("DOMContentLoaded", () => {
+  const icons = document.querySelectorAll('.icon-container');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate');
+
+        // 移除後可再次進入視窗時再觸發
+        setTimeout(() => {
+          entry.target.classList.remove('animate');
+        }, 1000);
+      }
+    });
+  }, {
+    threshold: 0.6 // 元素進入畫面 60% 時觸發
+  });
+
+  icons.forEach(icon => {
+    observer.observe(icon);
+  });
+});
+
+
+// 文字
+document.addEventListener("DOMContentLoaded", () => {
+  const features = document.querySelectorAll('.feature-item');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.3 // 當30%進入畫面就觸發
+  });
+
+  features.forEach(item => {
+    observer.observe(item);
+  });
+});
+
+
 
 
 //線條

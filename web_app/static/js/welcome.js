@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const viewer = document.querySelector('spline-viewer');
   const REDIRECT_DELAY = 800; // 毫秒延遲
-  const FALLBACK_DELAY = 3000; // 如果未載入 spline-viewer，5 秒後跳轉
+  const FALLBACK_DELAY = 2000; // 如果未載入 spline-viewer，5 秒後跳轉
   const redirect = () => window.location.replace('/index/');
   let redirected = false;
 
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => {
       console.warn('Fallback timeout reached, forcing redirect.');
       tryRedirect();
-    }, 5500);
+    }, 7000);
 
     // 點擊立即跳轉
     viewer.addEventListener('click', () => {
