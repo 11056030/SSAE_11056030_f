@@ -5,6 +5,7 @@
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/index.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=La+Belle+Aurore&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block head_js %}
@@ -13,6 +14,14 @@
 
 
 {% block content %}
+
+<!-- 背景影片 -->
+<video autoplay muted loop id="bg-video">
+  <source src="{% static 'image/wavevideo.mp4' %}" type="video/mp4">
+</video>
+
+<!-- 半透明遮罩 -->
+<div class="bg-overlay"></div>
 
 <!--<div id="loading-screen">
   <div class="scene">
@@ -144,24 +153,57 @@
 
         <div class="feature-box">
           <div class="feature-item">
-            <h3>comment</h3>
-            <p>提供課程評論功能，讓學生可以分享對於課程的看法和建議。</p>
+            <div class="feature-title">
+              <h3>校規查詢</h3>
+            </div>
+            <div class="feature-desc">
+              <p>提供校規查詢功能，讓學生可以快速找到相關的校規資訊。</p>
+            </div>
           </div>
           <div class="feature-item">
-            <h3>rulesinfo</h3>
-            <p>提供校規查詢功能，讓學生可以快速找到相關的校規資訊。</p>
+            <div class="feature-title">
+              <h3>課程評論</h3>
+            </div>
+            <div class="feature-desc">
+              <p>提供課程評論功能，讓學生可以分享對於課程的看法和建議。</p>
+            </div>
           </div>
           <div class="feature-item">
-            <h3>Meetactive</h3>
-            <p>提供即時通知功能，讓學生可以隨時獲得最新的校內消息。</p>
+            <div class="feature-title">
+              <h3>活動召集</h3>
+            </div>
+            <div class="feature-desc">
+              <p>提供即時通知功能，讓學生可以隨時獲得最新的校內消息。</p>
+            </div>
           </div>
           <div class="feature-item">
-            <h3>bookbuy</h3>
-            <p>提供即時通知功能，讓學生可以隨時獲得最新的校內消息。</p>
+            <div class="feature-title">
+              <h3>二手書</h3>
+            </div>
+            <div class="feature-desc">
+              <p>提供即時通知功能，讓學生可以隨時獲得最新的校內消息。</p>
+            </div>
           </div>
         </div>
 
-        
+
+        <!-- Icon containers (獨立的 80x80 容器) -->
+        <div class="icon-container">
+        </div>
+        <div class="icon-container">
+          i
+         </div>
+        <div class="icon-container">
+          m
+        </div>
+        <div class="icon-container">
+          c
+        </div>
+        <div class="icon-container">
+          b
+        </div>
+
+
 
         <svg id="triangle-2" xmlns="http://www.w3.org/2000/svg" width="224" height="197" viewBox="0 0 224 197" fill="none">
           <path d="M177.938 108.543L114.582 71.4881L113.801 144.23L177.938 108.543Z" fill="#D1C5D1"/>

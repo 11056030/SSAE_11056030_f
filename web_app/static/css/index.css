@@ -23,6 +23,29 @@ font-family: 'Poppins', sans-serif;
 height: 100%;
 }
 
+
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -2; /* 放在最底層 */
+}
+
+.bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #f8f6f4f0; /* 半透明的背景色 */
+  z-index: -1; /* 蓋住影片但在內容下方 */
+}
+
+/* 
+
 #loading-screen {
   position: fixed;
   inset: 0;
@@ -101,7 +124,7 @@ height: 100%;
     transform: rotateX(90deg);
   }
 }
-
+ */
 
 
 
@@ -688,10 +711,10 @@ to {
 .feature-title::before {
     content: "";
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
     margin-right: 10px;
-    background-color: #e0d3e0ac;
+    background-color: #e0d3e0;
     border-radius: 50%;
 }
 
@@ -737,140 +760,172 @@ to {
 /* Common styles for feature items */
 .feature-item {
   position: absolute;
-  width: 200px;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 15px 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  pointer-events: auto; /* Make items clickable */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-left: 4px solid #AA9DA9;
+  width: 800px;
+  height: 200px;
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
 
-.feature-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+/* 出現後的狀態 */
+.feature-item.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* Feature item headings */
-.feature-item h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
+.feature-title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.feature-desc {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+}
+
+/* 可依需求進一步個別定義 */
+.feature-item:nth-child(1) .feature-title {
+  top: 50px;
+  left: 0;
+}
+
+.feature-item:nth-child(1) .feature-desc {
+  bottom: 10px;
+  left: 100px;
+}
+
+.feature-item:nth-child(2) .feature-title {
+  top: 40px;
+  left: 550px;
+}
+
+.feature-item:nth-child(2) .feature-desc {
+  bottom: 10px;
+  left: 100px;
+}
+
+.feature-item:nth-child(3) .feature-title {
+  top: 40px;
+  left: 30px;
+}
+
+.feature-item:nth-child(3) .feature-desc {
+  bottom: 10px;
+  left: 100px;
+}
+
+.feature-item:nth-child(4) .feature-title {
+  top: 40px;
+  left: 30px;
+}
+
+.feature-item:nth-child(4) .feature-desc {
+  bottom: 10px;
+  left: 100px;
+}
+
+.feature-title h3 {
+  font-size: 50px;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
   color: #635C63;
   font-weight: 600;
 }
 
-/* Feature item paragraphs */
-.feature-item p {
-  font-size: 14px;
+.feature-desc p {
+  font-size: 24px;
   color: #635C63;
-  line-height: 1.5;
 }
 
-/* Position each feature item strategically along the path */
+
 .feature-item:nth-child(1) {
-  top: 100px;
-  left: 300px;
-  animation: fadeIn 0.8s ease forwards;
-  animation-delay: 0.2s;
-  opacity: 0;
+  top: 200px;
+  left: 410px;
 }
 
 .feature-item:nth-child(2) {
-  top: 300px;
-  right: 250px;
-  animation: fadeIn 0.8s ease forwards;
-  animation-delay: 0.6s;
-  opacity: 0;
+  top: 500px;
+  right: 400px;
 }
 
 .feature-item:nth-child(3) {
-  top: 550px;
-  left: 150px;
-  animation: fadeIn 0.8s ease forwards;
-  animation-delay: 1s;
-  opacity: 0;
+  top: 880px;
+  left: 350px;
 }
 
 .feature-item:nth-child(4) {
-  top: 700px;
-  right: 180px;
-  animation: fadeIn 0.8s ease forwards;
-  animation-delay: 1.4s;
-  opacity: 0;
+  top: 1250px;
+  right: 350px;
 }
 
-/* Connecting lines from feature items to the path */
-.feature-item::after {
-  content: "";
+
+/* 80x80 容器，獨立於 feature-item */
+/* icon-container 樣式：以 Y 軸旋轉 360 度 */
+.icon-container {
   position: absolute;
-  width: 40px;
-  height: 2px;
-  background-color: #635C63;
-  z-index: -1;
-  opacity: 0.6;
-  transition: width 0.3s ease;
+  width: auto;
+  height: auto;
+  min-width: 100px;
+  min-height: 100px;
+  font-family: 'La Belle Aurore', cursive;
+  color: #a37ea3c9;
+  text-align: center;
+  line-height: 80px;
+  text-shadow:
+  4px 4px 6px #a37ea3,   /* 底部陰影 */
+  -1px -1px 0 rgba(255, 255, 255, 0.4); /* 高光效果 */
+  transition: transform 1s;
+  will-change: transform;
+  transform-origin: center center;
+
 }
 
-.feature-item:nth-child(1)::after {
-  top: 50%;
-  right: -40px;
-}
-
-.feature-item:nth-child(2)::after {
-  top: 50%;
-  left: -40px;
-}
-
-.feature-item:nth-child(3)::after {
-  top: 50%;
-  right: -40px;
-}
-
-.feature-item:nth-child(4)::after {
-  top: 50%;
-  left: -40px;
-}
-
-.feature-item:hover::after {
-  width: 60px;
-}
-
-/* Fade-in animation for feature items */
-@keyframes fadeIn {
+/* 旋轉動畫定義 */
+@keyframes rotateOnce {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: rotateY(0deg);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotateY(360deg);
   }
 }
 
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .feature-item {
-    width: 180px;
-  }
-  
-  .feature-item:nth-child(1) {
-    left: 200px;
-  }
-  
-  .feature-item:nth-child(2) {
-    right: 200px;
-  }
-  
-  .feature-item:nth-child(3) {
-    left: 100px;
-  }
-  
-  .feature-item:nth-child(4) {
-    right: 120px;
-  }
+.icon-container.animate {
+  animation: rotateOnce 1s ease-out;
 }
 
+
+
+/* icon-container 位置 */
+.icon-container:nth-child(5) {
+  top: 300px;
+  left: 200px;
+  font-size: 220px;
+}
+
+.icon-container:nth-child(7) {
+  top: 680px;
+  right: 200px;
+  font-size: 300px;
+}
+
+.icon-container:nth-child(6) {
+  top: 950px;
+  left: 100px;
+  font-size: 260px;
+}
+
+.icon-container:nth-child(8) {
+  top: 1350px;
+  left: 190px;
+  font-size: 230px;
+}
+
+
+/* 響應式調整 */
 @media (max-width: 768px) {
   .feature-box {
     position: relative;
@@ -880,7 +935,7 @@ to {
     margin-top: 400px;
     padding: 20px;
   }
-  
+
   .feature-item {
     position: relative;
     width: 100%;
@@ -889,8 +944,13 @@ to {
     right: auto;
     margin: 10px 0;
   }
-  
+
   .feature-item::after {
     display: none;
+  }
+
+  .icon-container {
+    position: relative;
+    margin: 0 auto 15px auto;
   }
 }
