@@ -1,8 +1,8 @@
+{% extends 'base.html' %}
 {% load static %}
 
-<!-- {% block lang %}zh-Hant{% endblock %} -->
-
-<!-- {% block title %}北商rule事說 - 登入{% endblock %} -->
+{% block title %}北商rule事說 - 活動召集{% endblock %}
+{% block lang %}zh-Hant{% endblock %}
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/join.css' %}">
@@ -12,7 +12,7 @@
 
 
 {% block content %}
-<body>
+<div class="body">
     <!-- 背景的ACTIVITY GROUP ACTIVITY GROUP -->
     <div class="bg-text">ACTIVITY GROUP ACTIVITY GROUP</div>
     
@@ -20,7 +20,7 @@
     <div class="main-container">
             <!-- 上面 分類 -------------------------------------------------------->
             <div>
-                <h1 class="page-title">揪團區</h1>
+                <h1 class="page-title">活動召集</h1>
             </div>
             
             <div>
@@ -360,7 +360,7 @@
             });
         });
     </script>
-</body>
+</div>
 {% endblock %}
 
 {% block body_js %}
