@@ -52,8 +52,9 @@ body {
 
 /* 頁首設計 */
 header {
-  padding: 40px 0 30px;
-  position: relative;
+    margin-top: 60px;
+    padding: 40px 0 30px;
+    position: relative;
 }
 
 .header-container {
@@ -100,28 +101,27 @@ header {
 }
 
 .site-title {
-  font-size: 60px;
-  font-weight: 700;
-  text-align: center;
-  margin: 0 auto;
-  color: var(--text-color);
-  letter-spacing: 2px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 50px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 auto;
+    color: var(--text-color);
+    letter-spacing: 2px;
 }
 
 /* 篩選區域 */
 .filter-card {
   margin: 30px 0;
-  background-color: white;
   border-radius: 15px;
   padding: 25px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
 .filter-options {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
 }
 
 .filter-group {
@@ -412,26 +412,7 @@ header {
   opacity: 0.2;
 }
 
-/* 頁腳設計 */
-footer {
-  padding: 30px 0;
-  text-align: center;
-  font-size: 14px;
-  color: #777;
-  margin-top: 50px;
-  background-color: white;
-  border-top: 1px solid #e0e0e0;
-}
 
-footer a {
-  color: var(--primary-color);
-  text-decoration: none;
-  transition: all 0.3s;
-}
-
-footer a:hover {
-  text-decoration: underline;
-}
 
 /* 浮動動畫 */
 @keyframes float {
