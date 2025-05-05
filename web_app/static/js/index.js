@@ -109,23 +109,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // 文字
-document.addEventListener("DOMContentLoaded", () => {
-  const features = document.querySelectorAll('.feature-item');
+document.addEventListener('DOMContentLoaded', () => {
+    const featureItems = document.querySelectorAll('.feature-item');
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');  // 進入視口 => 顯示
+        } else {
+          entry.target.classList.remove('visible');  // 離開視口 => 隱藏
+        }
+      });
+    }, {
+      threshold: 0.3 // 元素進入 30% 時觸發
     });
-  }, {
-    threshold: 0.3 // 當30%進入畫面就觸發
-  });
 
-  features.forEach(item => {
-    observer.observe(item);
+    featureItems.forEach(item => {
+      observer.observe(item);
+    });
   });
-});
 
 
 
