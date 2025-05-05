@@ -1,9 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}二手書{% endblock %}
+{% block lang %}zh{% endblock %}
 {% load static %}
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/book.css' %}">
 {% endblock %}
-
 
 {% block content %}
 <body>
@@ -21,7 +23,6 @@
                             </text>
                         </svg>
                     </div>
-                    <div class="logo-icon">🔍</div>
                 </div>
             </div>
             
@@ -206,12 +207,6 @@
             </div>
         </div>
     </div>
-    
-    <footer>
-        <div class="container">
-            <p>© 2025 二手書必區 - 版權所有 | <a href="#">使用條款</a> · <a href="#">隱私政策</a></p>
-        </div>
-    </footer>
 </body>
 {% endblock %}
 
