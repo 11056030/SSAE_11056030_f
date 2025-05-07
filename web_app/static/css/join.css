@@ -19,7 +19,8 @@
   font-family: 'Noto Sans TC', sans-serif;
 }
 
-body {
+.body {
+  margin-top: 50px;
   background-color: var(--secondary-color);
   color: var(--text-color);
   overflow-x: hidden;
@@ -35,8 +36,7 @@ body {
   font-size: 18vw;
   font-weight: 900;
   line-height: 0.8;
-  color: rgba(240, 240, 240, 0.5);
-  z-index: -1;
+  color: #f0f0f0;
   white-space: nowrap;
   overflow: hidden;
   letter-spacing: -0.05em;
@@ -87,9 +87,10 @@ body {
   font-weight: 700;
   color: #36464e;
   text-align: center;
-  margin-bottom: 0;
+  margin-bottom: 10;
   letter-spacing: 0.05em;
 }
+
 
 .page-subtitle {
   font-size: 18px;
