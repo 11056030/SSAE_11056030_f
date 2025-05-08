@@ -4,244 +4,275 @@
   <meta charset="UTF-8" />
   <title>北商rule是說 Chatbot</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: sans-serif;
-      overflow: hidden;
-    }
+    html, body { margin:0; padding:0; height:100%; font-family:sans-serif; }
+    body { display:flex; height:100vh; overflow:hidden; }
 
-    body {
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      background-color: #f1f1f1;
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .main-container {
-      display: flex;
-      flex: 1;
-      height: calc(100vh - 60px);
-    }
-
+    /* 左側會話列表 */
     #sidebar {
-      width: 280px;
-      background-color: #fafafa;
-      border-right: 1px solid #ccc;
-      padding: 10px;
-      overflow-y: auto;
+      width:260px; background:#f0f0f0; border-right:1px solid #ccc;
+      display:flex; flex-direction:column;
     }
-
-    #chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      overflow-y: auto;
+    #sidebar h3 { margin:0; padding:12px; background:#0078d4; color:#fff; }
+    #convoList { flex:1; overflow-y:auto; list-style:none; margin:0; padding:0;}
+    #convoList li {
+      position:relative;
+      display:flex; align-items:center;
+      padding:8px 12px; border-bottom:1px solid #ddd; cursor:pointer;
     }
+    #convoList li.active { background:#e1f0ff; font-weight:bold; }
 
+    /* 標題與按鈕區 */
+    #convoList li .title {
+      flex:1; margin-right:8px;
+      font-size:14px;
+      line-height:1.2;
+    }
+    #convoList li input.title {
+      flex:1; margin-right:8px;
+      font-size:14px; line-height:1.2;
+      padding:2px 4px; height:auto;
+      border:1px solid #ccc; border-radius:4px;
+      box-sizing:border-box;
+    }
+    #convoList li .action-btns {
+      display:flex; align-items:center;
+    }
+    #convoList li .edit-btn,
+    #convoList li .delete-btn {
+      background:transparent; border:none; cursor:pointer; font-size:16px;
+      margin-left:4px;
+    }
+    #convoList li .delete-btn { color:#e74c3c; }
+    #newConvo { padding:10px; border:none; background:#0078d4; color:#fff; cursor:pointer; }
+
+    /* 主聊天區 */
+    .main { flex:1; display:flex; flex-direction:column; }
+    .chat-container {
+      flex:1; display:flex; flex-direction:column;
+      justify-content:flex-end; overflow-y:auto; padding:20px; background:#fff;
+    }
+    .message-row { display:flex; align-items:flex-end; margin:10px 0; }
+    .message-row.user { justify-content:flex-end; }
+    .message-row.bot  { justify-content:flex-start; }
+    .avatar { font-size:24px; margin:0 10px; }
     .message {
-      max-width: 70%;
-      margin: 10px 0;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background-color: #e0e0e0;
-      display: flex;
-      align-items: flex-end;
+      max-width:70%; padding:10px 14px; border-radius:14px;
+      word-wrap:break-word; white-space:pre-wrap;
     }
-
-    .user {
-      align-self: flex-end;
-      justify-content: flex-end;
-    }
-
-    .bot {
-      align-self: flex-start;
-    }
-
-    .avatar {
-      margin: 0 8px;
-    }
+    .user .message { background:#e6f7ff; }
+    .bot  .message { background:#f0f0f0; }
 
     .input-area {
-      position: absolute;
-      bottom: 0;
-      left: 280px;
-      right: 0;
-      background-color: #f9f9f9;
-      padding: 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-top: 1px solid #ccc;
+      position:sticky; bottom:0; display:flex; padding:10px;
+      background:#fff; border-top:1px solid #ccc;
     }
-
-    .input-area input {
-      width: 33%;
-      padding: 10px;
-      font-size: 1em;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-right: 10px;
+    textarea {
+      flex:1; resize:none; padding:10px; font-size:1em;
+      border:1px solid #ccc; border-radius:6px; height:60px;
+      line-height:1.4;
     }
-
-    .input-area button {
-      padding: 10px 16px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .conversation-title {
-      background: #eee;
-      margin-bottom: 5px;
-      padding: 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .conversation-title input {
-      width: 100px;
-      border: none;
-      background: transparent;
-      font-size: 0.9em;
+    #sendBtn {
+      margin-left:10px; padding:10px 16px; font-size:1em;
+      cursor:pointer; background:#4CAF50; color:#fff;
+      border:none; border-radius:6px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div>北商rule是說 Chatbot</div>
-  </header>
 
-  <div class="main-container">
-    <div id="sidebar">
-      <button onclick="startNewConversation()">➕ 開啟新對話</button>
-      <h2>對話紀錄</h2>
-      <div id="conversation-list"></div>
-    </div>
-
-    <div id="chat-area">
-      <div id="chat-messages"></div>
-    </div>
+  <!-- 左側：會話列表 -->
+  <div id="sidebar">
+    <h3>對話列表</h3>
+    <ul id="convoList"></ul>
+    <button id="newConvo">＋ 新對話</button>
   </div>
 
-  <div class="input-area">
-    <input id="input" type="text" placeholder="輸入問題..." onkeydown="handleKeyDown(event)" />
-    <button onclick="send()">送出</button>
+  <!-- 右側：主聊天區 -->
+  <div class="main">
+    <div class="chat-container" id="chatBox"></div>
+
+    <div class="input-area">
+      <textarea id="question" placeholder="請輸入問題..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
+      <button id="sendBtn">送出</button>
+    </div>
   </div>
 
   <script>
-    let allConversations = [{ title: "新對話1", messages: [] }];
-    let currentConversation = allConversations[0];
+    let conversations = [];
+    let currentId = null;
+    let nextSeq = 1;
 
-    function renderConversationList() {
-      const list = document.getElementById("conversation-list");
-      list.innerHTML = "";
-      allConversations.forEach((conv, idx) => {
-        const div = document.createElement("div");
-        div.className = "conversation-title";
-        div.innerHTML = `
-          <input value="${conv.title}" onchange="renameTitle(${idx}, this.value)" />
-          <div>
-            <button onclick="loadConversation(${idx})">📂</button>
-            <button onclick="exportConversation(${idx})">💾</button>
-            <button onclick="deleteConversation(${idx})">❌</button>
-          </div>`;
-        list.appendChild(div);
+    async function loadConvos() {
+      const res = await fetch('/api/conversations/');
+      conversations = (await res.json()).conversations;
+      nextSeq = conversations.length + 1;
+      renderConvos();
+    }
+
+    function renderConvos() {
+      const ul = document.getElementById('convoList');
+      ul.innerHTML = '';
+      conversations.forEach(c => {
+        const li = document.createElement('li');
+        li.dataset.id = c.id;
+        if(c.id === currentId) li.classList.add('active');
+
+        // 標題區
+        const span = document.createElement('span');
+        span.className = 'title';
+        span.textContent = c.title;
+        li.appendChild(span);
+
+        // 按鈕區
+        const actions = document.createElement('div');
+        actions.className = 'action-btns';
+
+        // 編輯按鈕
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
+        editBtn.innerHTML = '✏️';
+        editBtn.onclick = e => {
+          e.stopPropagation();
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = c.title;
+          input.className = 'title';
+          // 按 Enter 儲存
+          input.onkeydown = async evt => {
+            if(evt.key === 'Enter') {
+              evt.preventDefault();
+              const newTitle = input.value.trim() || '無標題';
+              await fetch(`/api/conversations/${c.id}/`, {
+                method:'PATCH', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({title:newTitle})
+              });
+              c.title = newTitle;
+              loadConvos();
+            }
+          };
+          li.replaceChild(input, span);
+          input.focus();
+        };
+        actions.appendChild(editBtn);
+
+        // 匯出按鈕
+        const exportBtn = document.createElement('button');
+        exportBtn.className = 'export-btn';
+        exportBtn.textContent = '⬇️';
+        exportBtn.title = '匯出Excel';
+        exportBtn.onclick = e => {
+          e.stopPropagation();
+          // 直接設定 window.location 會觸發下載
+          window.location.assign(`/api/conversations/${c.id}/export_excel/`);
+        };
+
+        actions.appendChild(exportBtn);
+
+
+        // 刪除按鈕
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.textContent = '🗑️';
+        delBtn.onclick = async e => {
+          e.stopPropagation();
+          if(!confirm('確定刪除此對話？')) return;
+          await fetch(`/api/conversations/${c.id}/`, { method:'DELETE' });
+          conversations = conversations.filter(x=> x.id !== c.id);
+          if(currentId === c.id) currentId = null;
+          loadConvos();
+        };
+        actions.appendChild(delBtn);
+
+        li.appendChild(actions);
+        li.onclick = () => selectConvo(c.id, li);
+        ul.appendChild(li);
       });
     }
 
-    function renameTitle(index, newTitle) {
-      allConversations[index].title = newTitle;
-      renderConversationList();
+    async function selectConvo(id, el){
+      currentId = id;
+      document.querySelectorAll("#convoList li").forEach(li=>li.classList.remove("active"));
+      el.classList.add("active");
+      const res = await fetch(`/api/conversations/${id}/messages/`);
+      const msgs = (await res.json()).messages;
+      renderMsgs(msgs);
     }
 
-    function deleteConversation(index) {
-      allConversations.splice(index, 1);
-      renderConversationList();
-    }
-
-    function exportConversation(index) {
-      const conv = allConversations[index];
-      const text = conv.messages.map(m => (m.role === "user" ? "😀 " : "🦉 ") + m.text).join("\n");
-      const blob = new Blob([text], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = conv.title + ".txt";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function loadConversation(index) {
-      currentConversation = allConversations[index];
-      renderMessages();
-    }
-
-    function startNewConversation() {
-      const newTitle = `新對話${allConversations.length + 1}`;
-      currentConversation = { title: newTitle, messages: [] };
-      allConversations.unshift(currentConversation);  // Add to the top of the list
-      renderConversationList();
-      renderMessages();
-    }
-
-    function renderMessages() {
-      const area = document.getElementById("chat-messages");
-      area.innerHTML = "";
-      currentConversation.messages.forEach(m => {
-        const div = document.createElement("div");
-        div.className = "message " + (m.role === "user" ? "user" : "bot");
-        div.innerHTML = `
-          ${m.role === "bot" ? '<div class="avatar">🦉</div>' : ""}
-          <div style="max-width: fit-content; display: inline-block;">${m.text}</div>
-          ${m.role === "user" ? '<div class="avatar">😀</div>' : ""}`;
-        area.appendChild(div);
+    function renderMsgs(msgs){
+      const box = document.getElementById("chatBox");
+      box.innerHTML = "";
+      msgs.forEach(m=>{
+        const u = document.createElement("div"); u.className="message-row user";
+        u.innerHTML=`<div class="message">${m.question}</div><div class="avatar">😀</div>`;
+        box.appendChild(u);
+        const b = document.createElement("div"); b.className="message-row bot";
+        b.innerHTML=`<div class="avatar">🦉</div><div class="message">${m.answer}</div>`;
+        box.appendChild(b);
       });
-      area.scrollTop = area.scrollHeight;
+      box.scrollTop=box.scrollHeight;
     }
 
-    async function send() {
-      const input = document.getElementById("input");
-      const question = input.value.trim();
-      if (!question) return;
-
-      currentConversation.messages.push({ role: "user", text: question });
-      renderMessages();
-      input.value = "";
-
-      const res = await fetch("/ask/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question })
+    document.getElementById("newConvo").onclick = async ()=>{
+      const title = `新對話${nextSeq++}`;
+      const res = await fetch("/api/conversations/", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({title})
       });
+      const c = await res.json();
+      currentId=c.id;
+      await loadConvos();
+      document.querySelector(`#convoList li[data-id="${c.id}"]`).click();
+    };
 
+    async function sendQuestion(){
+      const qEl = document.getElementById("question");
+      const q = qEl.value.trim();
+      if(!q||!currentId) return;
+      const box = document.getElementById("chatBox");
+      const u = document.createElement("div"); u.className="message-row user";
+      u.innerHTML=`<div class="message">${q}</div><div class="avatar">😀</div>`;
+      box.appendChild(u);
+      qEl.value="";
+      const res = await fetch("/api/ask/", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({conversation_id:currentId, question:q})
+      });
       const data = await res.json();
-      const reply = data.answer || "（無回應）";
-      currentConversation.messages.push({ role: "bot", text: reply });
-      renderMessages();
+      const b = document.createElement("div"); b.className="message-row bot";
+      b.innerHTML=`<div class="avatar">🦉</div><div class="message">${data.answer||data.error}</div>`;
+      box.appendChild(b);
+      box.scrollTop=box.scrollHeight;
     }
+    document.getElementById("sendBtn").onclick = sendQuestion;
+    document.getElementById("question").addEventListener("keydown", e=>{
+      if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendQuestion(); }
+    });
 
-    function handleKeyDown(event) {
-      if (event.key === "Enter") {
-        send();
+    (async ()=>{
+      await loadConvos();
+      if(conversations.length) {
+        document.querySelector("#convoList li").click();
+      } else {
+        document.getElementById("newConvo").click();
       }
-    }
+    })();
 
-    renderConversationList();
-    renderMessages();
+    function uploadZip(file) {
+      // 你的原本上傳ZIP程式不動
+      if (!file || !file.name.endsWith('.zip')) { alert("請選擇 zip 檔！"); return; }
+      const formData = new FormData(); formData.append("zip_file", file);
+      const progressBox = document.getElementById("floating-progress");
+      const progressBar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
+      progressBox.style.display = "block"; progressBar.style.width = "0%"; progressText.innerText = "上傳中...";
+      const xhr = new XMLHttpRequest(); xhr.open("POST", "/upload_zip/", true);
+      xhr.upload.onprogress = e => { if (e.lengthComputable) { progressBar.style.width = Math.round(e.loaded/e.total*100)+"%"; }};
+      xhr.onload = () => { const res = JSON.parse(xhr.responseText); progressText.innerText = res.message?"✅ 上傳完成":`❌ 錯誤：${res.error}`; setTimeout(()=>progressBox.style.display="none",5000); };
+      xhr.onerror = () => { progressText.innerText = "❌ 上傳錯誤"; setTimeout(()=>progressBox.style.display="none",5000); };
+      xhr.send(formData);
+    }
   </script>
 </body>
 </html>

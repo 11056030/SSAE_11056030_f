@@ -23,6 +23,29 @@ font-family: 'Poppins', sans-serif;
 height: 100%;
 }
 
+
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -2; /* 放在最底層 */
+}
+
+.bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #f8f6f4f0; /* 半透明的背景色 */
+  z-index: -1; /* 蓋住影片但在內容下方 */
+}
+
+/* 
+
 #loading-screen {
   position: fixed;
   inset: 0;
@@ -101,7 +124,7 @@ height: 100%;
     transform: rotateX(90deg);
   }
 }
-
+ */
 
 
 
@@ -168,26 +191,14 @@ background: var(--cr-2);
 /* 外層容器限制顯示寬度 */
 .marquee-container {
 position: absolute;
-top: 13%;
-left: 570px;
+top: 48%;
+left: 10px;
 width: 300px; /* 控制你想要的寬度，例如 300px */
 height: 32px;  /* 可依照字體大小調整 */
 overflow: hidden; /* 超出文字隱藏，製造滾動效果 */
-z-index: 1; /* 確保仍與 blob 背景融合 */
+z-index: 100;
 pointer-events: none;
 }
-
-.marquee-container-2 {
-    position: absolute;
-    top: 14%;
-    right: 350px;
-    width: 300px; /* 控制你想要的寬度，例如 300px */
-    height: 32px;  /* 可依照字體大小調整 */
-    overflow: hidden; /* 超出文字隱藏，製造滾動效果 */
-    z-index: 1; /* 確保仍與 blob 背景融合 */
-    pointer-events: none;
-}
-
 
 /* 跑馬燈文字動畫 */
 .floating-marquee {
@@ -374,6 +385,21 @@ to {
   height: 450px; /* 增加高度確保有足夠空間 */
   z-index: 1;
 }
+
+
+
+#canvas3d{
+  position: relative;
+}
+
+.dialog-canvas{
+  width: 300px;
+  height: 300px;
+  position: absolute;
+  z-index: 100;
+  left: 10px;
+}
+
 
 .circle-container {
   position: absolute;
@@ -685,10 +711,10 @@ to {
 .feature-title::before {
     content: "";
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
     margin-right: 10px;
-    background-color: #e0d3e0ac;
+    background-color: #e0d3e0;
     border-radius: 50%;
 }
 
@@ -717,3 +743,214 @@ to {
     z-index: 2;
 }
 
+
+
+/*內容*/
+/* Feature box container */
+.feature-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Allow clicks to pass through to elements below */
+  z-index: 4; /* Make sure it's above the animated line */
+}
+
+/* Common styles for feature items */
+.feature-item {
+  position: absolute;
+  width: 800px;
+  height: 200px;
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+/* 出現後的狀態 */
+.feature-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.feature-title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.feature-desc {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+}
+
+/* 可依需求進一步個別定義 */
+.feature-item:nth-child(1) .feature-title {
+  top: 50px;
+  left: 0;
+}
+
+.feature-item:nth-child(1) .feature-desc {
+  bottom: 10px;
+  left: 100px;
+}
+
+.feature-item:nth-child(2) .feature-title {
+  top: 40px;
+  left: 550px;
+}
+
+.feature-item:nth-child(2) .feature-desc {
+  bottom: 10px;
+  left: 100px;
+}
+
+.feature-item:nth-child(3) .feature-title {
+  top: 40px;
+  left: 30px;
+}
+
+.feature-item:nth-child(3) .feature-desc {
+  bottom: 10px;
+  left: 100px;
+}
+
+.feature-item:nth-child(4) .feature-title {
+  top: 40px;
+  left: 30px;
+}
+
+.feature-item:nth-child(4) .feature-desc {
+  bottom: 10px;
+  left: 100px;
+}
+
+.feature-title h3 {
+  font-size: 50px;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  color: #635C63;
+  font-weight: 600;
+}
+
+.feature-desc p {
+  font-size: 24px;
+  color: #635C63;
+}
+
+
+.feature-item:nth-child(1) {
+  top: 200px;
+  left: 410px;
+}
+
+.feature-item:nth-child(2) {
+  top: 500px;
+  right: 400px;
+}
+
+.feature-item:nth-child(3) {
+  top: 880px;
+  left: 350px;
+}
+
+.feature-item:nth-child(4) {
+  top: 1250px;
+  right: 350px;
+}
+
+
+/* 80x80 容器，獨立於 feature-item */
+/* icon-container 樣式：以 Y 軸旋轉 360 度 */
+.icon-container {
+  position: absolute;
+  width: auto;
+  height: auto;
+  min-width: 100px;
+  min-height: 100px;
+  font-family: 'La Belle Aurore', cursive;
+  color: #a37ea3c9;
+  text-align: center;
+  line-height: 80px;
+  text-shadow:
+  4px 4px 6px #a37ea3,   /* 底部陰影 */
+  -1px -1px 0 rgba(255, 255, 255, 0.4); /* 高光效果 */
+  transition: transform 1s;
+  will-change: transform;
+  transform-origin: center center;
+
+}
+
+/* 旋轉動畫定義 */
+@keyframes rotateOnce {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.icon-container.animate {
+  animation: rotateOnce 1s ease-out;
+}
+
+
+
+/* icon-container 位置 */
+.icon-container:nth-child(5) {
+  top: 300px;
+  left: 200px;
+  font-size: 220px;
+}
+
+.icon-container:nth-child(7) {
+  top: 680px;
+  right: 200px;
+  font-size: 300px;
+}
+
+.icon-container:nth-child(6) {
+  top: 950px;
+  left: 100px;
+  font-size: 260px;
+}
+
+.icon-container:nth-child(8) {
+  top: 1350px;
+  left: 190px;
+  font-size: 230px;
+}
+
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .feature-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 400px;
+    padding: 20px;
+  }
+
+  .feature-item {
+    position: relative;
+    width: 100%;
+    top: auto;
+    left: auto;
+    right: auto;
+    margin: 10px 0;
+  }
+
+  .feature-item::after {
+    display: none;
+  }
+
+  .icon-container {
+    position: relative;
+    margin: 0 auto 15px auto;
+  }
+}

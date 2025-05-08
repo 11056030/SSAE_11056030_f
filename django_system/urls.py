@@ -1,3 +1,4 @@
+#urls.py
 """
 URL configuration for django_system project.
 
@@ -23,17 +24,23 @@ urlpatterns = [
     path('base/' , views.base),
     path('login/' , views.login),
     path('welcome/' , views.welcome),
-    path('' , views.welcome),  # Set welcome_f as the default landing page
+    path('' , views.welcome),
     path('index/' , views.index),
     path('chat/' , views.chat),
     path('join/' , views.join),
     path('join_create/' , views.join_create),
     path('join_detail/' , views.join_detail),
-    path("test", views.ask_page, name="ask_page"),
-    path("ask/", views.ask_view, name="ask_api"),
+    path('book/' , views.book),
+    path("test/", views.ask_page, name="ask_page"),
     path('navbar2/' , views.navbar2),
     path("upload_zip/", views.upload_zip, name="upload_zip"),
     path("comment/", views.comment, name="comment"),   
     path("comment_detail/", views.comment_detail, name="comment_detail"),   
     path("add_comment/", views.add_comment, name="add_comment"),
-    ]
+    path('api/conversations/', views.api_conversations),
+    path('api/conversations/<str:convo_id>/messages/', views.api_messages),
+    path('api/ask/', views.api_ask),
+    path('api/conversations/<str:convo_id>/', views.api_conversation_detail),
+    path('api/conversations/<str:convo_id>/export_excel/', views.api_export_conversation),
+
+   ]

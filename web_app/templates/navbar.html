@@ -1,38 +1,38 @@
-<!DOCTYPE html>
-<html lang="{% block lang %}en{% endblock %}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}北商rule書說{% endblock %}</title>
-    {% load static %}
-    {% block css %}{% endblock %}
-    {% block head_js %}{% endblock %}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
-</head>
+<!DOCTYPE html> 
+<html lang="{% block lang %}en{% endblock %}"> 
+<head>     
+    <meta charset="UTF-8">     
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">     
+    <title>{% block title %}北商rule事說{% endblock %}</title>     
+    {% load static %}     
+    {% block css %}{% endblock %}     
+    {% block head_js %}{% endblock %}     
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">     
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}"> 
+</head>  
 
-<body>
-    {% block header %}
-    <nav class="navbar navbar-initial" id="navbar">
-        <a href="/index/" class="logo">logo</a>
-        <ul class="nav-links">
-            <li><a href="/chat/">校規查詢</a></li>
-            <li><a href="/add_comment/">傳聲筒</a></li>
-            <li><a href="/join/">揪團區</a></li>
-            <li><a href="#">二手區交換</a></li>
-        </ul>
-        <a href="/login/" class="user-circle">
-            <i class="fa-solid fa-user"></i>
-        </a>
-    </nav>
-    {% endblock %}
-
-    {% block content %}{% endblock %}
-  
-    {% block footer %}{% endblock %}
+<body>     
+    {% block header %}     
+    <nav class="navbar navbar-initial" id="navbar">         
+        <a href="/index/" class="logo">logo</a>         
+        <ul class="nav-links">             
+            <li><a href="/chat/">校規查詢</a></li>             
+            <li><a href="/comment/">傳聲筒</a></li>             
+            <li><a href="/join/">活動召集</a></li>             
+            <li><a href="/book/">二手區平台</a></li>         
+        </ul>         
+        <a href="/login/" class="user-circle">             
+            <i class="fa-solid fa-user"></i>         
+        </a>     
+    </nav>     
+    {% endblock %}      
     
-    {% block body_js %}{% endblock %}
+    {% block content %}{% endblock %}        
     
-    <script src="{% static 'js/navbar.js' %}"></script>
-</body>
+    {% block footer %}{% endblock %}          
+    
+    {% block body_js %}{% endblock %}          
+    
+    <script src="{% static 'js/navbar.js' %}"></script> 
+</body> 
 </html>

@@ -1,39 +1,38 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const transitionPage = document.querySelector('.transition-page');
-  const door1 = document.querySelector('.door1');
-  const doorFrameExpand = document.querySelector('.door-frame-expand');
+  const viewer = document.querySelector('spline-viewer');
+  const REDIRECT_DELAY = 800; // 毫秒延遲
+  const FALLBACK_DELAY = 2000; // 如果未載入 spline-viewer，5 秒後跳轉
+  const redirect = () => window.location.replace('/index/');
+  let redirected = false;
 
-  // Step 1: 1 秒後觸發門打開動畫
-  setTimeout(function () {
-    transitionPage.classList.add('animate');
-  }, 1000);
+  const tryRedirect = () => {
+    if (!redirected) {
+      redirected = true;
+      console.log('Redirecting to /index/');
+      redirect();
+    }
+  };
 
-  // Step 2: 約 1.3 秒後（門還在轉，但接近結束）啟動門框放大動畫
-  setTimeout(function () {
-    doorFrameExpand.classList.add('active');
+  if (viewer) {
+    // 設定保險機制：載入後不管如何都要跳轉
+    viewer.addEventListener('load', () => {
+      console.log('Spline viewer loaded.');
+      setTimeout(tryRedirect, REDIRECT_DELAY);
+    });
 
-    // Step 3: 動畫完成後轉跳頁面
-    setTimeout(function () {
-      window.location.href = '/index/';
-    }, 1500); // 根據你的 scale transition duration 設定
-  }, 2300); // 調整成比原本 3500 提早
+    // 確保即使 load 事件未觸發，也能在 10 秒後跳轉（保險計時器）
+    setTimeout(() => {
+      console.warn('Fallback timeout reached, forcing redirect.');
+      tryRedirect();
+    }, 7000);
 
-  // ✅ 可選：點擊直接跳過動畫
-  transitionPage.addEventListener('click', function () {
-    doorFrameExpand.classList.add('active');
-
-    setTimeout(function () {
-      window.location.href = '/index/';
-    }, 1000);
-  });
+    // 點擊立即跳轉
+    viewer.addEventListener('click', () => {
+      console.log('User clicked, skipping animation.');
+      tryRedirect();
+    });
+  } else {
+    console.error('spline-viewer not found, fallback redirect in 5s.');
+    setTimeout(tryRedirect, FALLBACK_DELAY);
+  }
 });
-// 設定延遲後自動跳轉
-setTimeout(function() {
-    // 啟動淡出動畫
-    document.querySelector('.transition-page').classList.add('fade-out');
-    
-    // 等待動畫結束後進行跳轉
-    setTimeout(function() {
-        window.location.href = "welcome_s.html";  // 更改為你的第二個頁面的網址
-    }, 1500);  // 動畫時間是 1.5 秒，所以這裡延遲相同時間
-}, 3000);  // 延遲時間：3000毫秒 (即3秒)

@@ -1,29 +1,31 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}北商rule事說 - 活動召集{% endblock %}
 {% block lang %}zh-Hant{% endblock %}
-
-{% block title %}北商rule事說 - 登入{% endblock %}
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/join.css' %}">
+<link rel="stylesheet" href="{% static 'css/join_create.css' %}">
+
 {% endblock %}
 
 
 {% block content %}
-<body>
-    <!-- Background text -->
+<div class="body">
+    <!-- 背景的ACTIVITY GROUP ACTIVITY GROUP -->
     <div class="bg-text">ACTIVITY GROUP ACTIVITY GROUP</div>
     
-    <!-- Cloud decorations -->
-    <div class="cloud-shape" style="width: 200px; height: 200px; top: 150px; left: 10%; opacity: 0.2;"></div>
-    <div class="cloud-shape" style="width: 150px; height: 150px; top: 400px; right: 15%; opacity: 0.2;"></div>
-    <div class="cloud-shape" style="width: 250px; height: 250px; top: 800px; left: 20%; opacity: 0.2;"></div>
     
     <div class="main-container">
-        <header class="page-header">
-            <h1 class="page-title">揪團區</h1>
-            <p class="page-subtitle">（尋找同好・共享樂趣）</p>
+            <!-- 上面 分類 -------------------------------------------------------->
+            <div>
+                <h1 class="page-title">活動召集</h1>
+            </div>
+            
+            <div>
+                <p class="page-subtitle">（尋找同好・共享樂趣）</p>
+            </div>
             
             <div class="filter-section">
                 <select class="filter-item">
@@ -52,13 +54,12 @@
                 <input type="text" class="search-box" placeholder="搜尋活動...">
             </div>
             
-            <a href="#" class="create-btn">＋ 發起揪團</a>
-        </header>
+
         
         <section class="activities-container">
             <div class="activity-grid">
-                <!-- Activity Card 1 -->
-                <div class="activity-card">
+                <!-- 活動 到時候改迴圈 -->
+                <div class="activity-card" onclick="window.location.href='/join_detail/?id=1'">
                     <div class="activity-header">週末烤肉趴</div>
                     <div class="activity-image">
                         <img src="{% static 'image/bbq.jpeg' %}" alt="烤肉聚會">
@@ -88,13 +89,13 @@
                                 </div>
                                 <div class="participant-count">8/15人</div>
                             </div>
-                            <a href="#" class="join-btn">我要參加</a>
+                            <a href="/join_detail/?id=1" class="join-btn" onclick="event.stopPropagation();">我要參加</a>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Activity Card 2 -->
-                <div class="activity-card">
+                <div class="activity-card" onclick="window.location.href='/join_detail/?id=2'">
                     <div class="activity-header">ACTIVITY 02 - 會計學讀書會</div>
                     <div class="activity-image">
                         <img src="/api/placeholder/400/180" alt="期中考讀書會">
@@ -124,13 +125,13 @@
                                 </div>
                                 <div class="participant-count">5/8人</div>
                             </div>
-                            <a href="#" class="join-btn">我要參加</a>
+                            <a href="/join_detail/?id=2" class="join-btn" onclick="event.stopPropagation();">我要參加</a>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Activity Card 3 -->
-                <div class="activity-card">
+                <div class="activity-card" onclick="window.location.href='/join_detail/?id=3'">
                     <div class="activity-header">ACTIVITY 03 - 籃球練習</div>
                     <div class="activity-image">
                         <img src="/api/placeholder/400/180" alt="籃球練習">
@@ -160,13 +161,13 @@
                                 </div>
                                 <div class="participant-count">9/10人</div>
                             </div>
-                            <a href="#" class="join-btn">我要參加</a>
+                            <a href="/join_detail/?id=3" class="join-btn" onclick="event.stopPropagation();">我要參加</a>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Activity Card 4 -->
-                <div class="activity-card">
+                <div class="activity-card" onclick="window.location.href='/join_detail/?id=4'">
                     <div class="activity-header">ACTIVITY 04 - 漫威馬拉松</div>
                     <div class="activity-image">
                         <img src="/api/placeholder/400/180" alt="電影之夜">
@@ -196,18 +197,173 @@
                                 </div>
                                 <div class="participant-count">12/20人</div>
                             </div>
-                            <a href="#" class="join-btn">我要參加</a>
+                            <a href="/join_detail/?id=4" class="join-btn" onclick="event.stopPropagation();">我要參加</a>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- 上傳按鈕 -->
+        <div class="upload-btn" id="uploadBtn">+</div>
+        
+        <!-- 發起揪團表單 -->
+        <div class="upload-form" id="uploadForm">
+            <div class="upload-container">
+                <div class="upload-header">
+                    <div class="upload-title">發起揪團</div>
+                    <button class="close-btn" id="closeUploadBtn">&times;</button>
+                </div>
+                
+                <!-- 從join_create.html整合的發起揪團表單 -->
+                <form id="create-group-form">
+                    <div class="form-group">
+                        <label for="activity-title" class="form-label">活動標題</label>
+                        <input type="text" id="activity-title" class="form-input" placeholder="請輸入活動標題（最多30字）" maxlength="30" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="activity-type" class="form-label">活動類型</label>
+                                <select id="activity-type" class="form-select" required>
+                                    <option value="" disabled selected>請選擇活動類型</option>
+                                    <option value="food">美食</option>
+                                    <option value="sport">運動</option>
+                                    <option value="study">讀書</option>
+                                    <option value="travel">旅遊</option>
+                                    <option value="movie">電影</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="activity-location" class="form-label">活動地點</label>
+                                <input type="text" id="activity-location" class="form-input" placeholder="請輸入活動地點" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="activity-date" class="form-label">活動日期</label>
+                                <input type="date" id="activity-date" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="activity-time" class="form-label">活動時間</label>
+                                <input type="time" id="activity-time" class="form-input" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="min-participants" class="form-label">最少參加人數</label>
+                                <input type="number" id="min-participants" class="form-input" min="2" value="2" required>
+                                <div class="help-text">若未達最少人數，活動將被取消</div>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="max-participants" class="form-label">最多參加人數</label>
+                                <input type="number" id="max-participants" class="form-input" min="2" value="10" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activity-description" class="form-label">活動說明</label>
+                        <textarea id="activity-description" class="form-textarea" placeholder="請詳細描述活動內容、準備物品、費用說明等資訊..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">活動封面圖片</label>
+                        <div class="image-upload-container" id="image-upload-area">
+                            <div class="image-upload-icon">📷</div>
+                            <div class="image-upload-text">點擊上傳圖片或拖曳圖片至此處</div>
+                        </div>
+                        <div class="help-text">建議尺寸：800x400像素，檔案大小不超過2MB</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="activity-deadline" class="form-label">報名截止日期</label>
+                        <input type="date" id="activity-deadline" class="form-input" required>
+                        <div class="help-text">報名截止日期必須早於活動日期</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact-info" class="form-label">聯絡方式（選填）</label>
+                        <input type="text" id="contact-info" class="form-input" placeholder="LINE ID、IG、電話等，方便參加者聯繫">
+                    </div>
+                    
+                    <div class="preview-section">
+                        <div class="preview-title">
+                            <span class="preview-icon">👁️</span>
+                            活動預覽
+                        </div>
+                        <div class="preview-card">
+                            <div class="preview-image">
+                                圖片預覽區域
+                                <div class="preview-tag" id="preview-tag">活動類型</div>
+                            </div>
+                            <div class="preview-content">
+                                <h3 class="preview-activity-title" id="preview-title">活動標題</h3>
+                                <div class="preview-info">
+                                    <div class="preview-location">
+                                        <span class="location-icon">📍</span>
+                                        <span id="preview-location">活動地點</span>
+                                    </div>
+                                    <div class="preview-time">
+                                        <span class="time-icon">🕒</span>
+                                        <span id="preview-time">活動時間</span>
+                                    </div>
+                                </div>
+                                <p class="preview-description" id="preview-description">活動說明將顯示在這裡...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="buttons-container">
+                        <button type="button" class="cancel-btn" id="cancel-create-btn">取消</button>
+                        <button type="submit" class="submit-btn">發布活動</button>
+                    </div>
+                </form>
+            </div>
+        </div>
         
         <div class="deco-line"></div>
-</body>
+    </div>
+    
+    <!-- 添加JavaScript代碼，使活動卡片點擊功能更加穩健 -->
+    <script>
+        // 確保DOM加載完成後執行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 獲取所有活動卡片
+            const activityCards = document.querySelectorAll('.activity-card');
+            
+            // 為每個活動卡片添加點擊事件監聽器
+            activityCards.forEach(function(card) {
+                card.style.cursor = 'pointer'; // 添加手型游標，提示可點擊
+            });
+            
+            // 防止"我要參加"按鈕冒泡事件
+            const joinButtons = document.querySelectorAll('.join-btn');
+            joinButtons.forEach(function(button) {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation(); // 阻止事件冒泡
+                });
+            });
+        });
+    </script>
+</div>
 {% endblock %}
 
 {% block body_js %}
 <script src="{% static 'js/join.js' %}"></script>
+<script src="{% static 'js/join_create.js' %}"></script>
 {% endblock %}
-    
