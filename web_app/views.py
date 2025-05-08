@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .views_rag import ask_question, create_vector_store, load_pdf_documents, split_documents
+from django.contrib.auth.decorators import login_required
 
 def base(request):
     return render(request, 'base.html')
@@ -12,11 +13,13 @@ def base(request):
 def welcome(request):
     return render(request, 'welcome.html')
 
+
 def index(request):
     return render(request, 'index.html')
 
 def login(request):
     return render(request, 'login.html')
+
 
 def chat(request):
     return render(request, 'chat.html')
