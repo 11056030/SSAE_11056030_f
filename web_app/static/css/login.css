@@ -15,8 +15,8 @@ body {
 
 input:focus {
     appearance: none;
-    -webkit-appearance: none; /* �?Safari ??Chrome 必�? */
-    -moz-appearance: none;    /* �?Firefox 必�? */
+    -webkit-appearance: none;
+    -moz-appearance: none;
     background: white;
 }
   
@@ -135,24 +135,9 @@ main {
     z-index: -1;
 }
 
-/* Decorative box */
-/* .login-container::after {
-    content: "";
-    position: absolute;
-    width: 800px;
-    height: 400px;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    bottom: -20px;
-    right: -20px;
-    z-index: -1;
-    pointer-events: none;
-} */
-
 /* Sidebar */
 .login-sidebar {
     width: 150px;
-    /* background-color: #f0f0f0; */
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -176,12 +161,9 @@ main {
 
 /* Login form */
 .login-form {
-    flex: 1;
     padding: 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding-bottom: 50px; 
+    flex-grow: 1;
+    position: relative;
 }
 
 .login-sidebar h2 {
@@ -210,97 +192,63 @@ main {
     font-weight: bold;
 }
 
-.form-group {
-    margin-bottom: 25px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #333;
-}
-
-
-.form-group input {
-    appearance: none;
-    -webkit-appearance: none; /* �?Safari ??Chrome 必�? */
-    -moz-appearance: none;    /* �?Firefox 必�? */
-    border: none;
-    border-bottom: 2px solid #6e6e6e;
-    outline: none;
-    width: 100%;
-    padding: 12px;
-    border-radius: 4px;
-    font-size: 16px;
-}
-.form-group input:focus {
-    background-color: white;
-}
-.form-group input::placeholder {
-    background-color: white;
-}
-
-.password-container {
-    position: relative;
-}
-
-.toggle-password {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-.toggle-password img {
-    width: 18px;
-}
-
-.error-message {
-    color: #ff0000;
-    font-size: 14px;
-    margin-top: 5px;
-}
-
-.form-actions {
+/* Login buttons */
+.login-buttons {
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+    align-items: center;
+    justify-content: center;
     margin-top: 20px;
 }
 
-.btn-cancel, .btn-submit {
+.login-img {
+    width: 40%;
+    position: relative;
+}
+
+.other-login-btn {
+    text-align: center;
+    display: inline-block;
+}
+
+/* Form actions */
+.form-actions {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+}
+
+.btn-cancel {
     padding: 10px 20px;
     border: none;
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s;
-}
-
-.btn-cancel {
     background-color: #f0f0f0;
     color: #333;
-}
-
-.btn-submit {
-    background-color: #4a4a4a;
-    color: #fff;
 }
 
 .btn-cancel:hover {
     background-color: #e0e0e0;
 }
 
-.btn-submit:hover {
-    background-color: #333;
+/* Logout button */
+.logout-form {
+    display: inline-block;
+    margin-right: 20px;
 }
 
-/* 修改input預設顏色 */
-input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0px 1000px white inset;
-  }
+.btn-logout {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.btn-logout:hover {
+    background-color: #e0e0e0;
+}
