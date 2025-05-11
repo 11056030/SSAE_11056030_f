@@ -1,0 +1,614 @@
+/* 基本樣式重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+}
+
+/* 全局變量 */
+:root {
+    --primary-bg: #F8F6F4;
+    --card-bg: #FFFFFF;
+    --primary-purple: rgba(158, 140, 157, 1);
+    --purple-medium: rgba(158, 140, 157, 0.8);
+    --light-purple: rgba(209, 197, 209, 0.7);
+    --very-light-purple: rgba(209, 197, 209, 0.3);
+    --accent-color1: #FF9F80; /* 橘色調 */
+    --accent-color2: #80D8FF; /* 藍色調 */
+    --accent-color3: #B388FF; /* 紫色調 */
+    --accent-color4: #8BC34A; /* 綠色調 */
+    --text-color: #333333;
+    --border-color: #E0E0E0;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    --border-radius: 16px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+}
+
+body {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* 頭部樣式 */
+header {
+    background: linear-gradient(135deg, var(--primary-purple), var(--accent-color3));
+    color: white;
+    padding: var(--space-md) var(--space-lg);
+    box-shadow: var(--shadow);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.logo i {
+    font-size: 1.5rem;
+    animation: pulse 3s infinite alternate;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.15);
+    }
+}
+
+h1, h2, h3 {
+    font-weight: 600;
+}
+
+/* 容器樣式 */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-lg);
+}
+
+.row {
+    display: flex;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+/* 卡片樣式 */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: var(--space-lg);
+    flex: 1;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-top: 4px solid var(--primary-purple);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.course-schedule {
+    border-top-color: var(--accent-color1);
+}
+
+.profile-card {
+    border-top-color: var(--accent-color2);
+}
+
+.activities-card {
+    border-top-color: var(--accent-color3);
+}
+
+.calendar-card {
+    border-top-color: var(--accent-color4);
+}
+
+.todo-card {
+    border-top-color: var(--primary-purple);
+}
+
+.card h2 {
+    color: var(--primary-purple);
+    margin-bottom: var(--space-md);
+    border-bottom: 2px solid var(--light-purple);
+    padding-bottom: var(--space-sm);
+    font-size: 1.3rem;
+    display: inline-block;
+    position: relative;
+}
+
+.card h2:after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 40%;
+    height: 2px;
+    background-color: var(--primary-purple);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.view-all {
+    color: var(--primary-purple);
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.view-all:hover {
+    text-decoration: underline;
+}
+
+/* 課表樣式 */
+.schedule-table th {
+    background: linear-gradient(to right, var(--primary-purple), var(--light-purple));
+    color: white;
+    padding: var(--space-sm) var(--space-md);
+    font-weight: normal;
+}
+
+.schedule-table .time {
+    width: 80px;
+    background: linear-gradient(to right, var(--primary-purple), var(--light-purple));
+    color: white;
+}
+
+.schedule-table .has-class {
+    position: relative;
+}
+
+.class-item {
+    background-color: var(--very-light-purple);
+    color: var(--text-color);
+    border-radius: 6px;
+    padding: var(--space-sm);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    border-left: 4px solid var(--primary-purple);
+    transition: transform 0.2s;
+}
+
+.class-item:hover {
+    transform: translateY(-2px);
+}
+
+.class-name {
+    font-weight: bold;
+    margin-bottom: 2px;
+    color: var(--primary-purple);
+}
+
+.class-room {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+/* 重新加上之前被刪除的部分 */
+/* 不同課程的邊框顏色 */
+.schedule-table tr:nth-child(1) .class-item {
+    border-left-color: var(--accent-color1);
+}
+
+.schedule-table tr:nth-child(2) .class-item {
+    border-left-color: var(--accent-color2);
+}
+
+.schedule-table tr:nth-child(3) .class-item {
+    border-left-color: var(--accent-color3);
+}
+
+.schedule-table tr:nth-child(5) .class-item {
+    border-left-color: var(--accent-color4);
+}
+
+.schedule-table tr:nth-child(6) .class-item {
+    border-left-color: var(--primary-purple);
+}
+
+.course-schedule {
+    flex: 2;
+}
+
+.schedule-table {
+    overflow-x: auto;
+}
+
+.schedule-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.schedule-table th, .schedule-table td {
+    border: 1px solid var(--border-color);
+    padding: var(--space-sm);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* 個人資料卡片樣式 */
+.profile-card {
+    flex: 1;
+}
+
+.profile-content {
+    display: flex;
+    gap: var(--space-lg);
+}
+
+.profile-image img {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--accent-color2);
+    background-color: #f0f0f0;
+    transition: transform 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+.profile-image img:hover {
+    transform: scale(1.05) rotate(5deg);
+}
+
+.profile-details {
+    flex: 1;
+}
+
+.profile-item {
+    display: flex;
+    margin-bottom: var(--space-sm);
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--very-light-purple);
+}
+
+.profile-item:last-child {
+    border-bottom: none;
+}
+
+.profile-item .label {
+    width: 80px;
+    color: var(--primary-purple);
+    font-weight: 500;
+}
+
+.profile-item .value {
+    flex: 1;
+    font-weight: 500;
+}
+
+/* 活動卡片樣式 */
+.activities-card {
+    flex: 1;
+}
+
+.activities-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.activity-item {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-radius: 10px;
+    background-color: var(--very-light-purple);
+    transition: transform 0.2s, background-color 0.2s;
+    margin-bottom: var(--space-sm);
+}
+
+.activity-item:hover {
+    transform: translateX(5px);
+    background-color: rgba(209, 197, 209, 0.5);
+}
+
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+
+.activity-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.activity-item:nth-child(1) .activity-icon {
+    background: linear-gradient(135deg, var(--accent-color1), #FFC180);
+}
+
+.activity-item:nth-child(2) .activity-icon {
+    background: linear-gradient(135deg, var(--accent-color2), #B6FFFF);
+}
+
+.activity-item:nth-child(3) .activity-icon {
+    background: linear-gradient(135deg, var(--accent-color3), #D1C4FF);
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--primary-purple);
+}
+
+.activity-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.activity-details span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 行事曆樣式 */
+.calendar-card {
+    flex: 2;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.calendar-nav {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary-purple);
+    font-size: 1.2rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.calendar-nav:hover {
+    background-color: var(--very-light-purple);
+}
+
+.calendar table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.calendar th, .calendar td {
+    border: 1px solid var(--border-color);
+    padding: var(--space-sm);
+    text-align: center;
+    height: 80px;
+    width: 14.28%;
+    vertical-align: top;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.calendar th {
+    background: linear-gradient(to right, var(--primary-purple), var(--accent-color4));
+    color: white;
+    height: auto;
+    padding: var(--space-sm);
+}
+
+.calendar td:hover {
+    background-color: var(--very-light-purple);
+}
+
+.calendar .other-month {
+    color: #cccccc;
+    background-color: rgba(240, 240, 240, 0.5);
+}
+
+.calendar .current-day {
+    background-color: rgba(209, 197, 209, 0.3);
+    font-weight: bold;
+    position: relative;
+}
+
+.calendar .current-day:before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-color1);
+    border-radius: 50%;
+}
+
+.event {
+    background: linear-gradient(to right, var(--primary-purple), var(--light-purple));
+    color: white;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin-top: 4px;
+    font-size: 0.8rem;
+    text-align: left;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.event:hover {
+    transform: translateY(-2px);
+}
+
+/* 待辦事項樣式 */
+.todo-card {
+    flex: 1;
+}
+
+.todo-list {
+    list-style: none;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    transition: background-color 0.2s;
+    border-left: 3px solid var(--border-color);
+}
+
+.todo-item:hover {
+    background-color: var(--very-light-purple);
+}
+
+.todo-item.completed {
+    border-left-color: var(--accent-color4);
+    background-color: rgba(139, 195, 74, 0.1);
+}
+
+.todo-item:not(.completed) {
+    border-left-color: var(--accent-color1);
+}
+
+.todo-item input[type="checkbox"] {
+    margin-right: var(--space-sm);
+    accent-color: var(--primary-purple);
+    width: 18px;
+    height: 18px;
+}
+
+.todo-item.completed label {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.todo-status {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: linear-gradient(to right, var(--primary-purple), var(--light-purple));
+}
+
+.add-todo {
+    margin-top: var(--space-lg);
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.add-todo input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--light-purple);
+    border-radius: 20px;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.add-todo input:focus {
+    outline: none;
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 0 3px var(--very-light-purple);
+}
+
+.add-todo {
+    margin-top: var(--space-lg);
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.add-todo input {
+    flex: 1;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* 按鈕樣式 */
+.btn-primary, .btn-secondary {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-purple);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: var(--light-purple);
+    color: var(--text-color);
+    margin-top: var(--space-md);
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+    opacity: 0.9;
+}
+
+/* 響應式設計 */
+@media (max-width: 992px) {
+    .row {
+        flex-direction: column;
+    }
+    
+    .course-schedule, .calendar-card, .right-column {
+        flex: auto;
+    }
+    
+    .calendar td {
+        height: 60px;
+    }
+}
+
+@media (max-width: 576px) {
+    .profile-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profile-item {
+        justify-content: center;
+    }
+    
+    .activity-details {
+        flex-direction: column;
+    }
+}
