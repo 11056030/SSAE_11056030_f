@@ -30,30 +30,23 @@
         <div class="login-form">
             
             <form id="loginForm">
-                <div class="form-group">
-                    <label for="username">帳號</label>
-                    <input type="text" id="username" name="username" placeholder="11056000.ntub.edu.tw" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">密碼</label>
-                    <div class="password-container">
-                        <input type="password" id="password" name="password" required>
-                        <button type="button" id="togglePassword" class="toggle-password">
-                            <img src="{% static 'image/eye.svg' %}" alt="顯示密碼">
-                        </button>
-                    </div>
-                    <p class="error-message" id="errorMessage" style="display: none;">您的帳號或密碼輸入錯誤</p>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel">取消</button>
-                    <button type="submit" class="btn-submit">確定</button>
-                </div>
+                    <a class="other-login-btn" href="{% url 'social:begin' 'google-oauth2' %}?prompt=select_account">
+                        <img class="login-img" src="{% static 'image/login.png' %}" alt="Google 登入">
+                    </a>
             </form>
+
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit">登出</button>
+                <div class="form-actions" onclick="history.back()">
+                    <button type="button" class="btn-cancel">取消</button>
+                </div> 
+              </form>
         </div>
     </div>
 </main>
 {% endblock %}
 
-{% block body_js %}
+{% comment %} {% block body_js %}
 <script src="{% static 'js/login.js' %}"></script>
-{% endblock %}
+{% endblock %} {% endcomment %}

@@ -18,6 +18,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from web_app import views
+from django.urls import include, path
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -42,5 +44,6 @@ urlpatterns = [
     path('api/ask/', views.api_ask),
     path('api/conversations/<str:convo_id>/', views.api_conversation_detail),
     path('api/conversations/<str:convo_id>/export_excel/', views.api_export_conversation),
-
-   ]
+    path('auth/', include('social_django.urls', namespace='social')),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+]
