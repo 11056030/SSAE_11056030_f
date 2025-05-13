@@ -28,6 +28,7 @@ urlpatterns = [
     path('welcome/' , views.welcome),
     path('' , views.welcome),
     path('index/' , views.index),
+    path('personal/' , views.personal),
     path('chat/' , views.chat),
     path('join/' , views.join),
     path('join_create/' , views.join_create),

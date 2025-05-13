@@ -20,6 +20,8 @@ def index(request):
 def login(request):
     return render(request, 'login.html')
 
+def personal(request):
+    return render(request, 'personal.html')
 
 def chat(request):
     return render(request, 'chat.html')
