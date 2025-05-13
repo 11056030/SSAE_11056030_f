@@ -1,0 +1,354 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人中心</title>
+    <link rel="stylesheet" href="{% static 'css/personal.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-chart-bar"></i>
+            <h1>個人中心</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="row">
+            <!-- 左側課表區塊 -->
+            <div class="card course-schedule">
+                <h2>課表</h2>
+                <div class="schedule-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>時間</th>
+                                <th>星期一</th>
+                                <th>星期二</th>
+                                <th>星期三</th>
+                                <th>星期四</th>
+                                <th>星期五</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="time">08:10<br>09:00</td>
+                                <td></td>
+                                <td class="has-class">
+                                    <div class="class-item">
+                                        <div class="class-name">統計學</div>
+                                        <div class="class-room">教407</div>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td class="has-class">
+                                    <div class="class-item">
+                                        <div class="class-name">會計學</div>
+                                        <div class="class-room">商305</div>
+                                    </div>
+                                </td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td class="time">09:10<br>10:00</td>
+                                <td class="has-class">
+                                    <div class="class-item">
+                                        <div class="class-name">經濟學</div>
+                                        <div class="class-room">商204</div>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td class="has-class">
+                                    <div class="class-item">
+                                        <div class="class-name">行銷管理</div>
+                                        <div class="class-room">商102</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="time">10:10<br>11:00</td>
+                                <td></td>
+                                <td class="has-class">
+                                    <div class="class-item">
+                                        <div class="class-name">管理學</div>
+                                        <div class="class-room">商505</div>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td class="time">11:10<br>12:00</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td class="time">13:10<br>14:00</td>
+                                <td></td>
+                                <td></td>
+                                <td class="has-class">
+                                    <div class="class-item">
+                                        <div class="class-name">商用英文</div>
+                                        <div class="class-room">語言中心</div>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td class="has-class">
+                                    <div class="class-item">
+                                        <div class="class-name">體育</div>
+                                        <div class="class-room">體育館</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="time">14:10<br>15:00</td>
+                                <td class="has-class">
+                                    <div class="class-item">
+                                        <div class="class-name">企業實務</div>
+                                        <div class="class-room">商104</div>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td class="time">15:10<br>16:00</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 右側資料與活動區塊 -->
+            <div class="right-column">
+                <!-- 個人資料卡片 -->
+                <div class="card profile-card">
+                    <h2>我的資料</h2>
+                    <div class="profile-content">
+                        <div class="profile-image">
+                            <img src="/api/placeholder/120/120" alt="">
+                            <div class="user-name">王大明</div>
+                        </div>
+                        <div class="profile-details">
+                            <div class="profile-item">
+                                <div class="label">學號</div>
+                                <div class="value">11056009</div>
+                            </div>
+                            <div class="profile-item">
+                                <div class="label">系所</div>
+                                <div class="value">資訊管理科</div>
+                            </div>
+                            <div class="profile-item">
+                                <div class="label">年級</div>
+                                <div class="value">四年級</div>
+                            </div>
+                            <div class="profile-item">
+                                <div class="label">學分</div>
+                                <div class="value">已修 64/總數 128</div>
+                            </div>
+                            <button class="btn-secondary">編輯資料</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 活動卡片 -->
+                <div class="card activities-card">
+                    <div class="card-header">
+                        <h2>我的活動</h2>
+                        <a href="#" class="view-all">查看全部 <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="activities-list">
+                        <div class="activity-item">
+                            <div class="activity-icon"><i class="fas fa-running"></i></div>
+                            <div class="activity-content">
+                                <div class="activity-title">週末慢跑團，一起來同樂！</div>
+                                <div class="activity-details">
+                                    <span><i class="fas fa-map-marker-alt"></i> 大安森林公園</span>
+                                    <span><i class="far fa-clock"></i> 4/6 下午2:00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon"><i class="fas fa-utensils"></i></div>
+                            <div class="activity-content">
+                                <div class="activity-title">會計學期中考讀書會</div>
+                                <div class="activity-details">
+                                    <span><i class="fas fa-map-marker-alt"></i> 圖書館3樓讀書室</span>
+                                    <span><i class="far fa-clock"></i> 4/5 晚上7:00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon"><i class="fas fa-film"></i></div>
+                            <div class="activity-content">
+                                <div class="activity-title">漫威電影馬拉松</div>
+                                <div class="activity-details">
+                                    <span><i class="fas fa-map-marker-alt"></i> 多媒體教室</span>
+                                    <span><i class="far fa-clock"></i> 4/8 上午10:00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 行事曆卡片 -->
+            <div class="card calendar-card">
+                <h2>行事曆</h2>
+                <div class="calendar-header">
+                    <button id="prevMonth" class="calendar-nav"><i class="fas fa-chevron-left"></i></button>
+                    <h3 id="currentMonth">2025年4月</h3>
+                    <button id="nextMonth" class="calendar-nav"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>星期日</th>
+                                <th>星期一</th>
+                                <th>星期二</th>
+                                <th>星期三</th>
+                                <th>星期四</th>
+                                <th>星期五</th>
+                                <th>星期六</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendarBody">
+                            <tr>
+                                <td class="other-month">30</td>
+                                <td class="other-month">31</td>
+                                <td>1</td>
+                                <td>2
+                                    <div class="event">統計學測驗</div>
+                                </td>
+                                <td>3</td>
+                                <td class="current-day">4
+                                    <div class="event">展交所期貨日</div>
+                                    <div class="event">讀書會</div>
+                                </td>
+                                <td>5</td>
+                            </tr>
+                            <tr>
+                                <td>6
+                                    <div class="event">慢跑趣</div>
+                                </td>
+                                <td>7</td>
+                                <td>8
+                                    <div class="event">電影馬拉松</div>
+                                </td>
+                                <td>9</td>
+                                <td>10</td>
+                                <td>11</td>
+                                <td>12</td>
+                            </tr>
+                            <tr>
+                                <td>13</td>
+                                <td>14</td>
+                                <td>15
+                                    <div class="event">會計期中考</div>
+                                </td>
+                                <td>16</td>
+                                <td>17</td>
+                                <td>18
+                                    <div class="event">經濟期中考</div>
+                                </td>
+                                <td>19</td>
+                            </tr>
+                            <tr>
+                                <td>20</td>
+                                <td>21
+                                    <div class="event">統計期中考</div>
+                                </td>
+                                <td>22</td>
+                                <td>23</td>
+                                <td>24
+                                    <div class="event">行銷期中考</div>
+                                </td>
+                                <td>25</td>
+                                <td>26</td>
+                            </tr>
+                            <tr>
+                                <td>27</td>
+                                <td>28</td>
+                                <td>29</td>
+                                <td>30</td>
+                                <td class="other-month">1</td>
+                                <td class="other-month">2</td>
+                                <td class="other-month">3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 待辦事項卡片 -->
+            <div class="card todo-card">
+                <div class="card-header">
+                    <h2>代辦事項</h2>
+                    <a href="#" class="view-all">查看全部 <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="todo-content">
+                    <ul class="todo-list">
+                        <li class="todo-item completed">
+                            <input type="checkbox" id="task1" checked>
+                            <label for="task1">完成統計學作業</label>
+                            <span class="todo-status">已完成</span>
+                        </li>
+                        <li class="todo-item">
+                            <input type="checkbox" id="task2">
+                            <label for="task2">準備行銷管理報告</label>
+                            <span class="todo-status">今天</span>
+                        </li>
+                        <li class="todo-item">
+                            <input type="checkbox" id="task3">
+                            <label for="task3">預約圖書館讀書室</label>
+                            <span class="todo-status">今天</span>
+                        </li>
+                        <li class="todo-item">
+                            <input type="checkbox" id="task4">
+                            <label for="task4">整理會計學筆記</label>
+                            <span class="todo-status">明天</span>
+                        </li>
+                        <li class="todo-item">
+                            <input type="checkbox" id="task5">
+                            <label for="task5">複習經濟學第四章</label>
+                            <span class="todo-status">4/6</span>
+                        </li>
+                    </ul>
+                    <div class="add-todo">
+                        <input type="text" id="newTask" placeholder="添加新的待辦事項...">
+                        <input type="date" id="taskDate" min="2025-04-01" max="2025-04-30">
+                        <select id="taskTime">
+                            <option value="">選擇時間</option>
+                            <option value="morning">上午</option>
+                            <option value="afternoon">下午</option>
+                            <option value="evening">晚上</option>
+                        </select>
+                        <button id="addTask" class="btn-primary">添加</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="{% static 'js/personal.js' %}"></script>
+</body>
+</html>
