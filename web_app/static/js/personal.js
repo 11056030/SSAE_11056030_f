@@ -189,17 +189,6 @@ function updateSelectedDateDisplay() {
 }
 
 
-// 月份導航按鈕
-document.getElementById('prevMonth').addEventListener('click', () => {
-    // 在實際應用中，這裡會更新日曆顯示上個月
-    alert('切換到上個月');
-});
-
-document.getElementById('nextMonth').addEventListener('click', () => {
-    // 在實際應用中，這裡會更新日曆顯示下個月
-    alert('切換到下個月');
-});
-
 // 待辦事項相關函數
 document.getElementById('addTask').addEventListener('click', addNewTask);
 
