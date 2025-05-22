@@ -174,12 +174,14 @@ function bindCalendarDayClick() {
 
 function updateSelectedDateDisplay() {
     const display = document.getElementById('selectedDateDisplay');
+    const newTaskInput = document.getElementById('newTask');
     if (selectedDay) {
-        display.style.display = '';
-        display.textContent = `${calendarYear}年${calendarMonth}月${selectedDay}日`;
+        display.style.display = 'block';
+        display.textContent = `${calendarYear}.${calendarMonth}.${selectedDay}`;
+        if (newTaskInput) newTaskInput.placeholder = '添加新的待辦事項...';
     } else {
-        display.style.display = '';
-        display.textContent = '請先點選左側日曆日期';
+        display.style.display = 'none';
+        if (newTaskInput) newTaskInput.placeholder = '請點選左方日期';
     }
     // 右側輸入框清空
     document.getElementById('newTask').value = '';
