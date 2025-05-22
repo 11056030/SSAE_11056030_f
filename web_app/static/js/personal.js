@@ -174,29 +174,20 @@ function bindCalendarDayClick() {
 
 function updateSelectedDateDisplay() {
     const display = document.getElementById('selectedDateDisplay');
+    const newTaskInput = document.getElementById('newTask');
     if (selectedDay) {
-        display.style.display = '';
-        display.textContent = `${calendarYear}年${calendarMonth}月${selectedDay}日`;
+        display.style.display = 'block';
+        display.textContent = `${calendarYear}.${calendarMonth}.${selectedDay}`;
+        if (newTaskInput) newTaskInput.placeholder = '添加新的待辦事項...';
     } else {
-        display.style.display = '';
-        display.textContent = '請先點選左側日曆日期';
+        display.style.display = 'none';
+        if (newTaskInput) newTaskInput.placeholder = '請點選左方日期';
     }
     // 右側輸入框清空
     document.getElementById('newTask').value = '';
     document.getElementById('taskTime').value = '';
 }
 
-
-// 月份導航按鈕
-document.getElementById('prevMonth').addEventListener('click', () => {
-    // 在實際應用中，這裡會更新日曆顯示上個月
-    alert('切換到上個月');
-});
-
-document.getElementById('nextMonth').addEventListener('click', () => {
-    // 在實際應用中，這裡會更新日曆顯示下個月
-    alert('切換到下個月');
-});
 
 // 待辦事項相關函數
 document.getElementById('addTask').addEventListener('click', addNewTask);
