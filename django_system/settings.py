@@ -71,6 +71,10 @@ DATABASES = {
         'PASSWORD': '@!LL51o@',
         'HOST': '140.131.114.242',
         'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',  # 這行是關鍵
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",  # 可選，避免一些嚴格模式問題
+        },
     }
 }
 
@@ -94,8 +98,8 @@ SOCIAL_AUTH_RAISE_EXCEPTIONS = False
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '37270199093-k1doq535f74tl3423amrrqv9dincdeb4.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
-SOCIAL_AUTH_GOOGLE_OAUTH2_WHITELISTED_DOMAINS = ['ntub.edu.tw']
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+# SOCIAL_AUTH_GOOGLE_OAUTH2_WHITELISTED_DOMAINS = ['ntub.edu.tw']
+# SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'http://127.0.0.1:8000/auth/complete/google-oauth2/'
 
@@ -148,5 +152,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 載入 .env
+# 載入 .env
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
+
+# ========================
+# 🔑 Azure OpenAI 設定
+# ========================
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-06-01")
+AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME")

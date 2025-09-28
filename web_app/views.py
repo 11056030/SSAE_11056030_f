@@ -1087,10 +1087,6 @@ def add_comment_submit(request, course_id):
 
         data = json.loads(request.body.decode("utf-8"))
         content = (data.get("content") or "").strip()
-        
-        if not content:
-            return JsonResponse({"error": "評論內容不能為空"}, status=400)
-
         is_anonymous = bool(data.get("anonymous", True))
 
         comment = CourseReview.objects.create(
@@ -1463,15 +1459,17 @@ def _clean_input(text: str) -> str:
     return text.strip()
 
 SYSTEM_PROMPT = (
-    "你是一位課程評論的文字潤飾助手。請在保留使用者原始意思的前提下，"
-    "僅針對用詞與語氣進行優化，讓文字更中性、禮貌且具參考價值："
-    "1) 嚴禁新增使用者未提及的內容或細節；"
-    "2) 僅調整表達方式，使語句更流暢與委婉；"
-    "3) 移除粗話、人身攻擊或過度情緒化字眼，但保留原本要表達的核心觀點；"
-    "4) 若有期望或建議，保持為描述式語氣（如「希望能有更多實作範例」），"
-    "5) 僅輸出最終潤飾後的評論文字，不要附加任何解釋或標題；"
-    "6) 請使用繁體中文輸出。"
+    "You help polish course reviews. Keep the user's original meaning almost completely. "
+    "Only fix words if they are super harsh or offensive, but make the wording funny, casual, and easy to read—like a real person talking. "
+    "Everything else should stay as close to the original as possible. "
+    "At the end of the review, add a short, natural improvement suggestion prefixed with 🦉：, and start it on a new line using a literal \\n (so the 🦉 part is always on its own line). "
+    "1) Don’t add or remove details the user didn’t mention, except for the improvement suggestion; "
+    "2) Only swap out offensive words while keeping the same strong opinion; "
+    "3) Make the smallest edits needed, no over-polishing; "
+    "4) Just output the final review text, no explanations; "
+    "5) Write in Traditional Chinese."
 )
+
 
 @csrf_exempt
 @require_POST
@@ -2140,52 +2138,69 @@ def cancel_activity(request, pk):
 # -----------------------
 # 建立活動
 # -----------------------
-from .utils.content_filter import contains_banned_content  # 確保已建立並匯入
+from .utils.content_filter import contains_banned_content, BANNED_WORDS  # 確保已建立並匯入
 
 @csrf_exempt
 @login_required
 def create_activity(request):
+    def is_ajax(req):
+        return req.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+    def render_form(form_obj):
+        # ★ 無論 GET 或 POST 重新 render，都把禁用詞清單丟給模板
+        return render(request, 'join_create.html', {
+            'form': form_obj,
+            'banned_words': BANNED_WORDS(),
+        })
+
     if request.method == 'GET':
-        form = ActivityForm()
-        return render(request, 'join_create.html', {'form': form})
-    
+        return render_form(ActivityForm())
+
     elif request.method == 'POST':
+        # ❶ 前置禁用詞檢查（不依賴 form.is_valid）
+        #    覆蓋所有字串欄位：title / description / address / contact...
+        text_blob = " ".join(v for v in request.POST.values() if isinstance(v, str))
+        if contains_banned_content(text_blob):
+            msg = '輸入內容包含禁止或不當詞彙，請重新編輯。'
+            if is_ajax(request):
+                return JsonResponse({'ok': False, 'success': False, 'message': msg}, status=400)
+            messages.error(request, msg)
+            return render_form(ActivityForm(request.POST, request.FILES))
+
+        # ❷ 無禁用詞才做表單驗證
         form = ActivityForm(request.POST, request.FILES)
-
         if form.is_valid():
-            # ---- 禁用詞檢查 ----
-            has_banned = any(
-                isinstance(value, str) and contains_banned_content(value)
-                for value in form.cleaned_data.values()
-            )
-            if has_banned:
-                msg = '輸入內容包含禁止詞彙，請重新編輯。'
-                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                    return JsonResponse({'ok': False, 'errors': {'general': [msg]}})
-                messages.error(request, msg)
-                return render(request, 'join_create.html', {'form': form})
-
-            # ---- 真的落盤 ----
             try:
                 activity = form.save(commit=False)
                 activity.user = request.user
                 activity.save()
-                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                    return JsonResponse({'ok': True, 'message': '活動創建成功！', 'activity_id': activity.id})
+                if is_ajax(request):
+                    return JsonResponse(
+                        {'ok': True, 'success': True, 'message': '活動創建成功！', 'activity_id': activity.id},
+                        status=201
+                    )
                 messages.success(request, '活動創建成功！')
                 return redirect('activity_list')
             except Exception as e:
-                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                    return JsonResponse({'ok': False, 'errors': {'general': [f'創建活動時發生錯誤: {str(e)}']}})
-                messages.error(request, f'創建活動時發生錯誤: {str(e)}')
-        else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'ok': False, 'errors': form.errors})
-            messages.error(request, '表單填寫有誤，請檢查後重試')
-        return render(request, 'join_create.html', {'form': form})
-    
-    return JsonResponse({'ok': False, 'errors': {'general': ['僅接受 GET 和 POST 請求']}})
+                msg = f'創建活動時發生錯誤: {str(e)}'
+                if is_ajax(request):
+                    return JsonResponse({'ok': False, 'success': False, 'message': msg}, status=500)
+                messages.error(request, msg)
+                return render_form(form)
 
+        # ❸ 表單驗證失敗（非禁用詞）
+        generic_msg = '表單填寫有誤，請檢查後重試'
+        if is_ajax(request):
+            # 只回一句話（不再丟整包 form.errors）
+            return JsonResponse({'ok': False, 'success': False, 'message': generic_msg}, status=400)
+        messages.error(request, generic_msg)
+        return render_form(form)
+
+    # 其他 HTTP 方法
+    if is_ajax(request):
+        return JsonResponse({'ok': False, 'success': False, 'message': '僅接受 GET 和 POST 請求'}, status=405)
+    messages.error(request, '僅接受 GET 和 POST 請求')
+    return render_form(ActivityForm())
 
 # -----------------------
 # 用戶參與的活動列表
@@ -2235,54 +2250,43 @@ def activity_participants(request, pk):
 # -----------------------
 from .utils.content_filter import contains_banned_content
 
+def _parse_request_data(request):
+    """優先解析 JSON，失敗時退回 POST（避免 Content-Type 與 body 不一致造成 400）"""
+    ctype = (request.content_type or "").lower()
+    if "application/json" in ctype:
+        try:
+            return json.loads(request.body or "{}")
+        except Exception:
+            # 直接退回 POST，而不是丟 400
+            return request.POST
+    return request.POST
+
+def _json_error(message, status=400):
+    return JsonResponse({"success": False, "ok": False, "message": message}, status=status)
+
+def _json_ok(payload=None, status=200):
+    base = {"success": True, "ok": True}
+    if payload:
+        base.update(payload)
+    return JsonResponse(base, status=status)
+
 @csrf_exempt
 @login_required
 def add_comment(request, activity_id):
-    if request.method != 'POST':
-        return JsonResponse(
-            {'success': False, 'ok': False, 'message': '僅支援 POST 請求', 'errors': {'general': ['僅支援 POST 請求']}},
-            status=405
-        )
+    if request.method != "POST":
+        return _json_error("僅支援 POST 請求", status=405)
 
     a = get_object_or_404(GroupActivity, id=activity_id)
 
-    if request.content_type and 'application/json' in request.content_type.lower():
-        try:
-            data = json.loads(request.body or '{}')
-        except Exception:
-            return JsonResponse(
-                {
-                    'success': False, 'ok': False,
-                    'message': '無效的請求內容（JSON 解析失敗）',
-                    'errors': {'general': ['無效的請求內容（JSON 解析失敗）']}
-                },
-                status=400
-            )
-    else:
-        data = request.POST
-
-    content   = (data.get('content') or '').strip()
-    parent_id = data.get('parent_id')
+    data = _parse_request_data(request)
+    content   = (data.get("content") or "").strip()
+    parent_id = data.get("parent_id") or None
 
     if not content:
-        return JsonResponse(
-            {
-                'success': False, 'ok': False,
-                'message': '留言內容不能為空',
-                'errors': {'general': ['留言內容不能為空']}
-            },
-            status=400
-        )
+        return _json_error("留言內容不能為空")
 
     if contains_banned_content(content):
-        return JsonResponse(
-            {
-                'success': False, 'ok': False,
-                'message': '留言內容包含禁止詞彙，請重新編輯。',
-                'errors': {'general': ['留言內容包含禁止詞彙，請重新編輯。']}
-            },
-            status=400
-        )
+        return _json_error("輸入內容包含禁止或不當詞彙，請重新編輯。")
 
     parent = None
     if parent_id:
@@ -2295,23 +2299,22 @@ def add_comment(request, activity_id):
         parent=parent
     )
 
-    user_avatar = '/static/image/avatar24-01.jpg'
-    display_name = (getattr(request.user, 'last_name', '') or '') + (getattr(request.user, 'first_name', '') or '')
+    user_avatar = "/static/image/avatar24-01.jpg"
+    display_name = (getattr(request.user, "last_name", "") or "") + (getattr(request.user, "first_name", "") or "")
     if not display_name:
-        display_name = getattr(request.user, 'username', '') or '使用者'
+        display_name = getattr(request.user, "username", "") or "使用者"
 
-    return JsonResponse({
-        'success': True,
-        'ok': True,
-        'comment': {
-            'id': comment.id,
-            'content': comment.content,
-            'user_name': display_name,
-            'user_avatar': user_avatar,
-            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M'),
-            'likes_count': 0,
-            'is_liked': False
-        }
+    return _json_ok({
+        "comment": {
+            "id": comment.id,
+            "content": comment.content,
+            "user_name": display_name,
+            "user_avatar": user_avatar,
+            "created_at": comment.created_at.strftime("%Y-%m-%d %H:%M"),
+            "likes_count": 0,
+            "is_liked": False
+        },
+        "message": "留言成功"
     }, status=200)
 
 # -----------------------
