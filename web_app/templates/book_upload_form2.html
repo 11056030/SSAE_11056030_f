@@ -43,17 +43,99 @@
     color: #dc3545;
 }
 
-/* ★ 新增：欄位下方的純文字錯誤樣式 */
 .field-error {
     display: none;
     margin-top: 6px;
     font-size: 13px;
     line-height: 1.45;
-    color: #b91c1c; /* 深紅 */
+    color: #b91c1c;
 }
 .form-input[aria-invalid="true"] {
     border-color: #ef4444;
     box-shadow: 0 0 0 3px rgba(239,68,68,.08);
+}
+
+.recognition-status {
+    display: none;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.recognition-status.loading {
+    background: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.recognition-status.success {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.recognition-status.error {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+.auto-fill-info {
+    display: none;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 13px;
+}
+
+.auto-fill-info .info-item {
+    margin-bottom: 8px;
+}
+
+.auto-fill-info .info-label {
+    font-weight: bold;
+    color: #495057;
+}
+
+.manual-search {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.manual-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.manual-search-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.manual-search-btn {
+    padding: 6px 12px;
+    border: 1px solid #6F557D;
+    background: #6F557D;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.manual-search-type {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
 }
 </style>
 
@@ -66,10 +148,10 @@
     </div>
 
     <div class="form-container">
-
         <form id="bookForm2" method="post" enctype="multipart/form-data" action="{% url 'upload_book2' %}">
             {% csrf_token %}
             
+            <!-- 上傳區域 -->
             <div class="upload-area" id="uploadArea" onclick="triggerFileInput()">
                 <div class="upload-icon">📷</div>
                 <div class="upload-text">點擊上傳書籍封面圖片</div>
@@ -83,6 +165,33 @@
                    style="display: none;"
                    onchange="handleFileSelect(this)">
 
+            <!-- 識別狀態顯示 -->
+            <div class="recognition-status" id="recognitionStatus"></div>
+
+            <!-- 自動填入資訊顯示 -->
+            <div class="auto-fill-info" id="autoFillInfo">
+                <div class="info-item">
+                    <span class="info-label">識別結果：</span>
+                    <span id="recognitionResult"></span>
+                </div>
+            </div>
+
+            <!-- 手動搜尋區域 -->
+            <div class="manual-search">
+                <div style="margin-bottom: 8px; font-weight: bold; color: #495057;">手動搜尋書籍資訊</div>
+                <input type="text" 
+                       class="manual-search-input" 
+                       id="manualSearchInput" 
+                       placeholder="輸入書名或 ISBN 搜尋">
+                <div class="manual-search-controls">
+                    <select class="manual-search-type" id="manualSearchType">
+                        <option value="title">書名搜尋</option>
+                        <option value="isbn">ISBN 搜尋</option>
+                    </select>
+                    <button type="button" class="manual-search-btn" onclick="manualSearchBook()">搜尋</button>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label class="form-label required" for="id_title">書名</label>
                 <input type="text" 
@@ -92,8 +201,40 @@
                        id="id_title" 
                        placeholder="請輸入書名" 
                        required>
-                <!-- ★ 新增：只顯示純文字錯誤 -->
                 <div id="id_title_error_text" class="field-error" role="alert" aria-live="polite"></div>
+            </div>
+
+            <!-- 新增作者欄位 -->
+            <div class="form-group">
+                <label class="form-label" for="id_author">作者</label>
+                <input type="text" 
+                       name="author" 
+                       maxlength="255" 
+                       class="form-input" 
+                       id="id_author" 
+                       placeholder="請輸入作者">
+            </div>
+
+            <!-- 新增出版社欄位 -->
+            <div class="form-group">
+                <label class="form-label" for="id_publisher">出版社</label>
+                <input type="text" 
+                       name="publisher" 
+                       maxlength="255" 
+                       class="form-input" 
+                       id="id_publisher" 
+                       placeholder="請輸入出版社">
+            </div>
+
+            <!-- 新增 ISBN 欄位 -->
+            <div class="form-group">
+                <label class="form-label" for="id_isbn">ISBN</label>
+                <input type="text" 
+                       name="isbn" 
+                       maxlength="20" 
+                       class="form-input" 
+                       id="id_isbn" 
+                       placeholder="請輸入 ISBN">
             </div>
 
             <div class="form-group">
@@ -201,11 +342,9 @@
 <script>
 let selectedFile = null;
 let isLoadingData = false;
-let isSubmitting = false; // 防止重複提交
+let isSubmitting = false;
 
-/* ★ 新增：禁用詞清單與工具 */
 const BANNED_WORDS = [
-  // 依你的後端清單對齊；這裡放範例
   '違禁','仿冒','成人','武器','毒品','菸草','賭博'
 ];
 function normalizeText(s){ return (s||'').toLowerCase().trim(); }
@@ -214,7 +353,7 @@ function containsBannedTitle(s){
   for (const w of BANNED_WORDS){ if (w && t.includes(normalizeText(w))) return true; }
   return false;
 }
-/* ★ 新增：欄位錯誤顯示/清除 */
+
 function setTitleError(msg){
   const input = document.getElementById('id_title');
   const box = document.getElementById('id_title_error_text');
@@ -229,13 +368,212 @@ function setTitleError(msg){
     input.removeAttribute('aria-invalid');
   }
 }
-// 使用者一輸入就清掉錯誤
+
 document.addEventListener('input', function(e){
   if (e.target && e.target.id === 'id_title'){ setTitleError(''); }
 });
 
+function showRecognitionStatus(message, type) {
+    const statusElement = document.getElementById('recognitionStatus');
+    statusElement.textContent = message;
+    statusElement.className = `recognition-status ${type}`;
+    statusElement.style.display = 'block';
+    
+    if (type === 'loading') {
+        setTimeout(() => {
+            if (statusElement.className.includes('loading')) {
+                statusElement.style.display = 'none';
+            }
+        }, 10000);
+    }
+}
+
+function hideRecognitionStatus() {
+    document.getElementById('recognitionStatus').style.display = 'none';
+}
+
+async function recognizeBookFromFile(file) {
+    try {
+        showRecognitionStatus('正在識別書籍資訊...', 'loading');
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('/api/recognize-book/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showRecognitionStatus('識別成功！正在自動填入資訊...', 'success');
+            
+            fillBookInfo(data.data);
+            showAutoFillInfo(data.data, data.ocr_text);
+            
+            setTimeout(hideRecognitionStatus, 3000);
+        } else {
+            showRecognitionStatus('識別失敗：' + data.error, 'error');
+            console.error('識別失敗：', data.error);
+            
+            if (data.ocr_text) {
+                showAutoFillInfo({}, data.ocr_text);
+            }
+        }
+        
+    } catch (error) {
+        console.error('識別請求錯誤：', error);
+        showRecognitionStatus('識別請求失敗，請稍後再試', 'error');
+    }
+}
+
+async function manualSearchBook() {
+    const query = document.getElementById('manualSearchInput').value.trim();
+    const type = document.getElementById('manualSearchType').value;
+    
+    if (!query) {
+        alert('請輸入搜尋關鍵字');
+        return;
+    }
+    
+    try {
+        showRecognitionStatus(`正在搜尋${type === 'isbn' ? 'ISBN' : '書名'}...`, 'loading');
+        
+        const response = await fetch('/api/search-book/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                query: query,
+                type: type
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showRecognitionStatus('搜尋成功！正在填入資訊...', 'success');
+            fillBookInfo(data.data);
+            showAutoFillInfo(data.data, '');
+            setTimeout(hideRecognitionStatus, 3000);
+        } else {
+            showRecognitionStatus('搜尋失敗：' + data.error, 'error');
+        }
+        
+    } catch (error) {
+        console.error('搜尋錯誤：', error);
+        showRecognitionStatus('搜尋請求失敗，請稍後再試', 'error');
+    }
+}
+
+function fillBookInfo(bookData) {
+    if (bookData.title) {
+        document.getElementById('id_title').value = bookData.title;
+    }
+    if (bookData.author) {
+        document.getElementById('id_author').value = bookData.author;
+    }
+    if (bookData.publisher) {
+        document.getElementById('id_publisher').value = bookData.publisher;
+    }
+    if (bookData.isbn) {
+        document.getElementById('id_isbn').value = bookData.isbn;
+    }
+    
+    if (bookData.description) {
+        const descTextarea = document.getElementById('description');
+        const currentDesc = descTextarea.value;
+        const newDesc = bookData.description.substring(0, 200) + '...';
+        
+        if (currentDesc) {
+            descTextarea.value = currentDesc + '\n\n自動識別描述：' + newDesc;
+        } else {
+            descTextarea.value = '自動識別描述：' + newDesc;
+        }
+    }
+    
+    if (bookData.categories && bookData.categories.length > 0) {
+        autoSelectCategory(bookData.categories);
+    }
+}
+
+function autoSelectCategory(categories) {
+    const categorySelect = document.getElementById('id_category');
+    const categoryOptions = Array.from(categorySelect.options);
+    
+    const categoryMapping = {
+        '教育': ['education', 'textbook', '教科書', '教材'],
+        '文學': ['fiction', 'literature', '小說', '文學'],
+        '科學': ['science', 'technology', '科學', '技術'],
+        '歷史': ['history', '歷史'],
+        '藝術': ['art', 'design', '藝術', '設計'],
+        '商業': ['business', 'economics', '商業', '經濟'],
+        '計算機': ['computer', 'programming', '電腦', '程式'],
+        '語言': ['language', 'linguistics', '語言', '語文']
+    };
+    
+    for (const category of categories) {
+        const lowerCategory = category.toLowerCase();
+        
+        for (const [key, keywords] of Object.entries(categoryMapping)) {
+            if (keywords.some(keyword => lowerCategory.includes(keyword.toLowerCase()))) {
+                const option = categoryOptions.find(opt => opt.textContent.includes(key));
+                if (option) {
+                    categorySelect.value = option.value;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+function showAutoFillInfo(bookData, ocrText) {
+    const infoElement = document.getElementById('autoFillInfo');
+    const resultElement = document.getElementById('recognitionResult');
+    
+    let infoHtml = '';
+    
+    if (bookData.title) infoHtml += `<strong>書名：</strong> ${bookData.title}<br>`;
+    if (bookData.author) infoHtml += `<strong>作者：</strong> ${bookData.author}<br>`;
+    if (bookData.publisher) infoHtml += `<strong>出版社：</strong> ${bookData.publisher}<br>`;
+    if (bookData.isbn) infoHtml += `<strong>ISBN：</strong> ${bookData.isbn}<br>`;
+    if (bookData.source) infoHtml += `<strong>資料來源：</strong> ${bookData.source}<br>`;
+    
+    if (ocrText) {
+        const shortText = ocrText.substring(0, 100) + (ocrText.length > 100 ? '...' : '');
+        infoHtml += `<strong>識別文字：</strong> ${shortText}<br>`;
+    }
+    
+    if (infoHtml) {
+        resultElement.innerHTML = infoHtml;
+        infoElement.style.display = 'block';
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // 確保關閉按鈕事件正常工作
     const closeBtn = document.querySelector('.upload-modal2 .close-btn');
     if (closeBtn) {
         closeBtn.addEventListener('click', function(e) {
@@ -246,7 +584,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 點擊模態框背景也能關閉
     const modal = document.getElementById('uploadFormModal2');
     if (modal) {
         modal.addEventListener('click', function(e) {
@@ -257,7 +594,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ESC鍵關閉表單
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('uploadFormModal2');
@@ -277,7 +613,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const academicId = this.value;
             console.log('學制選擇變更:', academicId);
 
-            // 重置科系和年級選項
             resetDepartmentAndGrade();
 
             if (!academicId) {
@@ -333,7 +668,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             console.log('🚀 表單提交事件被觸發！');
 
-            // ★ 先做「前端」禁用詞檢查（只檢查 title）
             const titleVal = (document.getElementById('id_title')?.value || '').trim();
             if (!titleVal){
                 setTitleError('請輸入書名');
@@ -341,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (containsBannedTitle(titleVal)){
                 setTitleError('輸入內容包含禁止或不當詞彙，請重新編輯。');
-                return; // 阻擋送出
+                return;
             }
             
             if (isLoadingData) { alert('正在載入資料，請稍候再提交'); return; }
@@ -349,13 +683,17 @@ document.addEventListener('DOMContentLoaded', function() {
             isSubmitting = true;
             
             const formData = new FormData(this);
+            
+            if (selectedFile) {
+                formData.set('cover_image', selectedFile);
+            }
+            
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
 
-            // 基本驗證
             const price = formData.get('price');
             if (!price || parseFloat(price) < 0) {
-                setTitleError(''); // 不要影響 title 的錯誤
+                setTitleError('');
                 alert('請輸入有效的價格');
                 isSubmitting = false;
                 return;
@@ -373,7 +711,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
 
-                // 嘗試解析 JSON；若不是 JSON 再抓文字
                 let data = null, rawText = '';
                 try { data = await response.json(); }
                 catch { try { rawText = await response.text(); } catch(_){} }
@@ -385,19 +722,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     closeForm2();
                     setTimeout(() => { hideSuccessModal(); window.location.reload(); }, 2000);
                 } else {
-                    // ★ 後端失敗（含 400 禁用詞）：只顯示純文字錯誤
                     let msg = (data && (data.message || data.error)) || '';
                     if (!msg && rawText) {
-                        // 若後端回傳 Django 預設 <ul class="errorlist">，把 HTML 去掉並只保留訊息
                         msg = rawText
-                                .replace(/<[^>]+>/g, ' ')   // 去標籤
-                                .replace(/\s+/g,' ')        // 正規化空白
-                                .replace(/^title\s*/i,'')   // 去掉欄位名
+                                .replace(/<[^>]+>/g, ' ')
+                                .replace(/\s+/g,' ')
+                                .replace(/^title\s*/i,'')
                                 .trim();
                     }
                     if (!msg) msg = '上架失敗，請重試';
 
-                    // 如果是禁用詞訊息，不顯示其它包裝
                     if (/禁止|不當|禁用/.test(msg)) {
                         msg = '輸入內容包含禁止或不當詞彙，請重新編輯。';
                     }
@@ -420,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const submitBtn = bookForm.querySelector('button[type="submit"]');
         if (submitBtn) {
             console.log('✅ 找到上架按鈕，添加點擊事件');
-            submitBtn.addEventListener('click', function(){ /* 調試用途 */ });
+            submitBtn.addEventListener('click', function(){ });
         } else {
             console.error('❌ 找不到上架按鈕');
         }
@@ -495,7 +829,7 @@ function triggerFileInput() {
     document.getElementById('id_cover_image').click(); 
 }
 
-function handleFileSelect(input) {
+async function handleFileSelect(input) {
     const file = input.files[0];
     const uploadArea = document.getElementById('uploadArea');
     
@@ -539,6 +873,8 @@ function handleFileSelect(input) {
         `;
     };
     reader.readAsDataURL(file);
+    
+    await recognizeBookFromFile(file);
 }
 
 function toggleTag(btn, text) {
@@ -583,8 +919,10 @@ function closeForm2() {
         isLoadingData = false;
         isSubmitting = false;
 
-        // 同步把 title 的錯誤清掉
         setTitleError('');
+        
+        hideRecognitionStatus();
+        document.getElementById('autoFillInfo').style.display = 'none';
         
         const uploadArea = document.getElementById('uploadArea');
         if (uploadArea) {
@@ -618,9 +956,11 @@ function openBookUploadModal2() {
     document.body.style.overflow = 'hidden';
     resetDepartmentAndGrade();
     setTitleError('');
+    
+    hideRecognitionStatus();
+    document.getElementById('autoFillInfo').style.display = 'none';
 }
 
-// 顯示成功方塊
 function showSuccessModal() {
     const modal = document.getElementById('successModal');
     if (modal) {
@@ -630,7 +970,6 @@ function showSuccessModal() {
     }
 }
 
-// 隱藏成功方塊
 function hideSuccessModal() {
     const modal = document.getElementById('successModal');
     if (modal) {
@@ -640,7 +979,6 @@ function hideSuccessModal() {
     }
 }
 
-// 頁面關閉前的警告（如果有未保存的內容）
 window.addEventListener('beforeunload', function(e) {
     const modal = document.getElementById('uploadFormModal2');
     if (modal && modal.style.display === 'flex' && selectedFile) {
