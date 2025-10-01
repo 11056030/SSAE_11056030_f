@@ -3,17 +3,92 @@
 import os
 import json
 import zipfile
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods, require_GET
+import re
+import logging
+import base64
+import mimetypes
+import openpyxl
+from datetime import date, timedelta
+from io import BytesIO
+from urllib.parse import unquote
+
+# Django imports
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponse, FileResponse
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods, require_GET, require_POST
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-import json
-from django.db import models
+from django.contrib.auth import get_user_model
+from django.contrib import messages
+from django.db import models, connection, transaction, IntegrityError
+from django.db.models import Avg, Count, Max, Q, Subquery, OuterRef, F, Value, BooleanField, Case, When, Prefetch, IntegerField
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+from django.utils.encoding import smart_str
+from django.urls import reverse, NoReverseMatch
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.templatetags.static import static
+from django.conf import settings
+
+# Third-party imports
+from social_django.models import UserSocialAuth
+import openai
+
+# Local imports
 from .views_rag import ask_question, create_vector_store, load_pdf_documents, split_documents
-from django.contrib.auth.decorators import login_required
-from django.db import connection, transaction
+from .models import (
+    GroupActivity, ActivityParticipant, ActivityComment, Book2, Todo, User,
+    Department, Category, Academic, AcademicGrade, AcadeDepart, AcadeGrade,
+    Course, Departmentd, Academica, CourseReview, ReviewLike,
+    User as LegacyUser
+)
+from .forms import Book2Form, ActivityForm
+from .utils.content_filter import contains_banned_content, BANNED_WORDS
+from .mongo import (
+    create_conversation, add_message, get_conversations, get_messages,
+    delete_conversation, update_conversation_title, get_conversation_by_id
+)
+
+# Setup
+AuthUser = get_user_model()
+logger = logging.getLogger(__name__)
+
+def get_user_display_name(user):
+    """
+    獲取用戶顯示名稱：優先使用暱稱，如果暱稱為空則使用真實姓名
+    """
+    if not user or not user.is_authenticated:
+        return "訪客"
+    
+    # 嘗試從自定義 User 表獲取暱稱和姓名
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT anonymous, name
+                FROM `User`
+                WHERE mail = %s
+            """, [user.email])
+            row = cursor.fetchone()
+            if row:
+                anonymous, name = row
+                # 優先使用暱稱（anonymous 欄位），如果為空則使用真實姓名
+                if anonymous and anonymous.strip():
+                    return anonymous.strip()
+                elif name and name.strip():
+                    return name.strip()
+    except Exception as e:
+        logger.warning(f"無法從自定義 User 表獲取用戶資料: {e}")
+    
+    # 如果自定義表沒有資料，則使用 Django 用戶的姓名
+    if user.last_name and user.first_name:
+        return f"{user.last_name}{user.first_name}"
+    elif user.first_name:
+        return user.first_name
+    elif user.username:
+        return user.username
+    else:
+        return "使用者"
 
 def ttt(request):
     return render(request, 'ttt.html')
@@ -38,49 +113,39 @@ def login(request):
 
 def personal(request):
     if not request.user.is_authenticated:
-        from django.shortcuts import redirect
         return redirect('login')
-        
     # 從自定義 User 表獲取用戶資料
-    from django.db import connection
     user_data = None
-    
     try:
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT name, student_id, mail, course, grade, academic, role 
-                FROM `User` 
+                SELECT name, student_id, mail, course, grade, academic, role, phone, LINE_ID, anonymous
+                FROM `User`
                 WHERE mail = %s
             """, [request.user.email])
-            
             columns = [col[0] for col in cursor.description]
             row = cursor.fetchone()
-            
             if row:
                 user_data = dict(zip(columns, row))
     except Exception as e:
         print(f"Error fetching user data: {e}")
-    
+
     # 獲取 Google 用戶照片
     google_picture = None
     try:
-        print("Checking social auth for user:", request.user.email)  # 調試日誌
         social = request.user.social_auth.filter(provider='google-oauth2').first()
-        print("Social auth found:", bool(social))  # 調試日誌
         if social:
-            print("Social extra data:", social.extra_data)  # 調試日誌
             google_picture = social.extra_data.get('picture')
-            print("Google picture URL:", google_picture)  # 調試日誌
     except Exception as e:
-        print(f"Error getting social auth data: {e}")  # 調試日誌
+        print(f"Error getting social auth data: {e}")
 
-    # 讀取「我已參加的活動」（顯示於個人中心）
+    # 讀取「我已參加的活動」與「我發起的活動」
     joined_activities = []
     created_activities = []
     try:
         from django.db.models import Count, Q
         from django.utils import timezone
-        # 僅顯示「尚未結束」的活動（日期在未來，或今天且時間未到），並依日期時間由近到遠排序
+
         now_date = timezone.localdate()
         now_time = timezone.localtime().time()
         upcoming_q = Q(date__gt=now_date) | (Q(date=now_date) & Q(time__gte=now_time))
@@ -92,7 +157,6 @@ def personal(request):
             .annotate(participants_count=Count('participants', filter=Q(participants__status='joined'), distinct=True))
             .order_by('date', 'time')
         )
-        # 我發起的活動（同樣顯示於個人中心）
         created_activities = (
             GroupActivity.objects
             .filter(user=request.user)
@@ -103,10 +167,9 @@ def personal(request):
     except Exception as e:
         print(f"Error fetching joined activities: {e}")
 
-    # 準備行事曆事件（顯示「所有」我發起與我參加過的活動，包含已過去）
+    # 準備行事曆事件（顯示所有我發起/參加過的活動，包含已過去）
     calendar_events = []
     try:
-        from django.db.models import Q
         def to_event(a):
             return {
                 "date": getattr(a, 'date', None),
@@ -115,13 +178,11 @@ def personal(request):
                 "created_at": getattr(a, 'created_at', None),
                 "time": getattr(a, 'time', None),
             }
-        # 重新查詢：不套用 upcoming 過濾
         all_created = GroupActivity.objects.filter(user=request.user)
         all_joined = GroupActivity.objects.filter(
             participants__user=request.user,
             participants__status='joined'
         )
-        # 合併 + 去重
         seen = set()
         for a in list(all_created) + list(all_joined):
             if not getattr(a, 'date', None):
@@ -132,6 +193,272 @@ def personal(request):
             calendar_events.append(to_event(a))
     except Exception as e:
         print(f"Error building calendar events: {e}")
+
+    # === 以 joined_activities 組成票券（重疊堆疊，越快到的在最上） ===
+    tickets = []
+    created_flags = []
+    try:
+        from .models import ActivityParticipant
+        import calendar
+        from datetime import date as _date, time as _time
+
+        # 疊法參數（可微調）
+        BASE_LEFT = 20     # 起始 X
+        BASE_TOP  = 10     # 起始 Y
+        STEP_X    = 10     # 每張向右偏移（越小越緊）
+        STEP_Y    = 18     # 每張向下偏移（越小越緊）
+        TICKET_H  = 200    # 票券高度，對應 .cticket
+
+        # 先把活動轉成 list，依 (date, time) 升冪；None 視為最大（排最後）
+        def _dt_key(a):
+            ad = getattr(a, 'date', None)
+            at = getattr(a, 'time', None)
+            if ad is None:
+                return (_date.max, _time.max)
+            if at is None:
+                at = _time.max
+            return (ad, at)
+
+        ja = list(joined_activities)
+        ja.sort(key=_dt_key)  # 越快到的在前面
+
+        total = len(ja)
+
+        for i, a in enumerate(ja, start=1):
+            host = (
+                getattr(a, 'host_name', None)
+                or getattr(a, 'creator_name', None)
+                or getattr(getattr(a, 'user', None), 'username', '主辦單位')
+            )
+
+            # 人數（含發起者）
+            participants_qs = ActivityParticipant.objects.filter(activity=a, status='joined').order_by('id')
+            participants_count  = participants_qs.count()
+            total_participants  = participants_count + 1
+            max_participants    = getattr(a, 'max_participants', None) or getattr(a, 'capacity', 0)
+            remaining_slots     = max(0, (max_participants or 0) - total_participants)
+
+            # 使用者順序 → 票號
+            user_position = None
+            for idx, p in enumerate(participants_qs, start=1):
+                if p.user_id == request.user.pk:
+                    user_position = idx
+                    break
+            if user_position is None and a.user_id == request.user.pk:
+                user_position = 0
+
+            ticket_number = f"NO:{a.pk:03d}{user_position:03d}" if user_position is not None else f"NO:{a.pk:06d}"
+
+            # 顯示欄位
+            if getattr(a, 'date', None):
+                month_abbr  = (calendar.month_abbr[a.date.month] or '').capitalize() + '.'
+                weekday_zh  = ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][a.date.weekday()]
+                month_num   = a.date.strftime('%m')
+                date_num    = a.date.strftime('%d')
+                time_txt    = a.time.strftime('%H:%M') if getattr(a, 'time', None) else '—'
+            else:
+                month_abbr, weekday_zh, month_num, date_num, time_txt = '—','—','—','—','—'
+
+            # 位移與層級：越早越上（top 較小、z 較大），重疊更緊密
+            left_px = BASE_LEFT + (i - 1) * STEP_X
+            top_px  = BASE_TOP  + (i - 1) * STEP_Y
+            z_idx   = 100 - i               # 保持你的原規則：i=1 → 最大
+
+            # 輕微角度變化，避免完全重疊死板
+            rotate = (-2 if i % 2 == 0 else 2)
+
+            tickets.append({
+                "id": a.pk,
+                "title": getattr(a, 'title', ''),
+                "subtitle": (getattr(a, 'category', None) or 'CAMPUS EVENT').upper(),
+                "weekday": weekday_zh,
+                "month": month_num,
+                "date": date_num,
+                "time": time_txt,
+                "month_abbr": month_abbr,
+
+                "number": ticket_number,
+                "location": getattr(a, 'location', '校園活動場地'),
+                "host": host,
+                "icon": getattr(a, 'icon', 'fa-solid fa-ticket'),
+                "desc": getattr(a, 'description', '活動說明稍後公布。'),
+
+                "total_participants": total_participants,
+                "max_participants": max_participants,
+                "remaining_slots": remaining_slots,
+
+                "left_px": left_px,
+                "top_px":  top_px,
+                "z_index": z_idx,
+                "rotate_deg": rotate,
+            })
+
+        # 動態容器高度：最後一張的 top + 高度 + 底部留白
+        tickets_container_h = (BASE_TOP + (total - 1) * STEP_Y + TICKET_H + 16) if total else 240
+
+    except Exception as e:
+        print(f"Error building tickets: {e}")
+
+    # === 我發起的活動：旗子資料 ===
+    created_flags = []
+    try:
+        from .models import ActivityParticipant
+        for a in created_activities:
+            participants_qs = ActivityParticipant.objects.filter(activity=a, status='joined')
+            participants_count = participants_qs.count()
+            total_participants = participants_count + 1
+            max_participants = getattr(a, 'max_participants', None) or getattr(a, 'capacity', 0)
+
+            if getattr(a, 'date', None):
+                weekday_zh = ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][a.date.weekday()]
+                month_num  = a.date.strftime('%m')
+                date_num   = a.date.strftime('%d')
+            else:
+                weekday_zh, month_num, date_num = '—','—','—'
+
+            created_flags.append({
+                "id": a.pk,
+                "title": getattr(a, 'title', ''),
+                "desc": getattr(a, 'description', '活動說明稍後公布。'),
+                "location": getattr(a, 'location', '校園活動場地'),
+                "weekday": weekday_zh,
+                "month": month_num,
+                "date": date_num,
+                "time": a.time.strftime('%H:%M') if getattr(a, 'time', None) else '—',
+                "total_participants": total_participants,
+                "max_participants": max_participants,
+                "tone": (getattr(a, 'category', '') or '').lower(),
+            })
+    except Exception as e:
+        print(f"Error building created_flags: {e}")
+
+    # === 我的書櫃（跨 app 自動偵測 Model 與擁有者欄位，含除錯） ===
+    books = []
+    try:
+        from django.apps import apps
+        from django.db.models import Q
+        from django.conf import settings
+        from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
+
+        def _cover_url(obj):
+            # 常見封面欄位：都試一次；ImageField/File 取 .url
+            for name in ['cover_url', 'image_url', 'thumbnail_url', 'cover', 'image', 'thumbnail', 'photo']:
+                if hasattr(obj, name):
+                    val = getattr(obj, name)
+                    if not val:
+                        continue
+                    try:
+                        return val.url  # ImageField/File
+                    except Exception:
+                        return str(val)
+            return ''
+
+        def _text(obj, *names, default=''):
+            for n in names:
+                if hasattr(obj, n):
+                    v = getattr(obj, n)
+                    if v:
+                        return str(v)
+            return default
+
+        # 1) 從所有 model 中找「像是書」的候選清單
+        candidates = []
+        for M in apps.get_models():
+            label = M._meta.label_lower  # e.g. "market.book2"
+            name  = M.__name__.lower()
+            fields = list(M._meta.get_fields())
+            field_names = {f.name for f in fields}
+
+            looks_like_book = (
+                'book' in name
+                or 'book' in label
+                or {'isbn', 'book_title', 'author'}.intersection(field_names)
+            )
+            if not looks_like_book:
+                continue
+
+            # 簡單打分：越像「二手書」分越高
+            score = 0
+            if any(k in name for k in ['used', 'secondhand', 'second_hand', 'preowned']):
+                score += 3
+            if 'isbn' in field_names: score += 2
+            if any(n in field_names for n in ['title','book_title']): score += 1
+            if any(n in field_names for n in ['user','owner','seller','created_by','uploader']): score += 2
+
+            candidates.append((score, M, fields, field_names))
+
+        if not candidates:
+            print('[books] no candidate models found.')
+            BookModel = None
+        else:
+            # 分數高者優先
+            candidates.sort(key=lambda x: x[0], reverse=True)
+            BookModel, fields, field_names = candidates[0][1], candidates[0][2], candidates[0][3]
+            print(f"[books] picked model: {BookModel._meta.label} (score={candidates[0][0]})")
+
+        if BookModel:
+            # 2) 組「屬於我的」過濾條件：支援 FK / O2O / M2M / email 欄位
+            ors = Q()
+            uid = getattr(request.user, 'id', None)
+            my_email = (request.user.email or '').strip() if hasattr(request.user, 'email') else ''
+
+            for f in fields:
+                # 針對關聯到 User 的 FK / O2O
+                if isinstance(f, (ForeignKey, OneToOneField)) and getattr(f, 'related_model', None):
+                    if f.related_model == apps.get_model(settings.AUTH_USER_MODEL):
+                        # 欄位名例如: user/owner/seller/created_by/uploader...
+                        ors |= Q(**{f.name: request.user}) | Q(**{f.name + '_id': uid})
+
+                # 針對 M2M 到 User
+                if isinstance(f, ManyToManyField) and getattr(f, 'related_model', None):
+                    if f.related_model == apps.get_model(settings.AUTH_USER_MODEL):
+                        ors |= Q(**{f.name: request.user})
+
+            # 另外嘗試常見欄位名（即使不是外鍵）
+            for fn in ['user', 'owner', 'seller', 'created_by', 'uploader', 'posted_by']:
+                if fn in field_names:
+                    ors |= Q(**{fn: request.user}) | Q(**{fn + '_id': uid})
+
+            # 以 email 存的情況
+            for fn in ['seller_email', 'owner_email', 'email', 'contact_email']:
+                if fn in field_names and my_email:
+                    ors |= Q(**{fn: my_email})
+
+            # 3) 查詢
+            base_qs = BookModel.objects.all() if ors == Q() else BookModel.objects.filter(ors)
+
+            # 若有狀態欄位再加條件（存在才套用）
+            if 'is_active' in field_names:
+                base_qs = base_qs.filter(is_active=True)
+            if 'status' in field_names:
+                base_qs = base_qs.filter(status__in=['listed', 'published', 'active', 'available'])
+
+            qs = base_qs.order_by('-id')[:12]
+
+            # 若依然撈不到任何東西，為了除錯先拿最近 12 筆給你看得到畫面
+            if not qs.exists():
+                print('[books] filtered result empty; fallback to latest 12 for debugging.')
+                qs = BookModel.objects.all().order_by('-id')[:12]
+
+            for b in qs:
+                books.append({
+                    "id": b.pk,
+                    "title": _text(b, 'title', 'book_title', default=''),
+                    "author": _text(b, 'author', 'authors', default=''),
+                    "publisher": _text(b, 'publisher', default=''),
+                    "isbn": _text(b, 'isbn', 'isbn13', 'isbn_13', default=''),
+                    "desc": _text(b, 'description', 'intro', 'summary', default='這本書目前尚未提供簡介。'),
+                    "cover": _cover_url(b),
+                })
+
+            print(f"[books] model={BookModel._meta.label}, fields={sorted(list(field_names))}")
+            print(f"[books] final count={len(books)}")
+
+        else:
+            print("No Book model found in installed apps.")
+
+    except Exception as e:
+        print(f"Error fetching books: {e}")
     
     return render(request, "personal.html", {
         'user_data': user_data,
@@ -149,7 +476,15 @@ def personal(request):
             }
             for e in calendar_events
         ], ensure_ascii=False),
+
+        # ★ 新增：提供給 course-schedule 卡片使用
+        'tickets': tickets,
+        'books': books,
+        'created_flags': created_flags,
     })
+
+
+    
 
 def chat(request):
     return render(request, 'chat.html')
@@ -167,17 +502,6 @@ def join_detail(request):
     return render(request, 'join_detail.html')
 
 
-import json
-import logging
-from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-
-from .models import GroupActivity, ActivityComment
-from .utils.content_filter import contains_banned_content
-
-logger = logging.getLogger(__name__)
 
 def _parse_request_data(request):
     """同時支援 JSON 與 x-www-form-urlencoded"""
@@ -191,18 +515,19 @@ def _parse_request_data(request):
     return request.POST
 
 
-from .models import ActivityComment, Book2
-from .models import Department, Category
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth.decorators import login_required
-from .models import Book2, Category, Academic, AcademicGrade, Department, AcadeDepart, AcadeGrade
-from .forms import Book2Form
-from django.http import JsonResponse
 
 def book(request):
-    books_list = Book2.objects.all().order_by('-created_at')
+    # 只顯示可購買的書籍（排除已下架和已售出）
+    from .models import Status
+    try:
+        offline_status = Status.objects.get(name='已下架')
+        sold_status = Status.objects.get(name='已售出')
+        books_list = Book2.objects.exclude(
+            status__in=[offline_status, sold_status]
+        ).order_by('-created_at')
+    except Status.DoesNotExist:
+        # 如果沒有相關狀態，顯示所有書籍
+        books_list = Book2.objects.all().order_by('-created_at')
 
     # 每行顯示數量（URL參數，預設4）
     items_per_row = int(request.GET.get('items_per_row', 4))
@@ -224,6 +549,26 @@ def book(request):
     departments = []  # 空的科系列表
     academic_grades = []  # 空的年級列表
 
+    # 獲取當前用戶的聯絡資訊
+    user_phone = None
+    user_line_id = None
+    if request.user.is_authenticated:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT phone, LINE_ID
+                    FROM `User`
+                    WHERE mail = %s
+                """, [request.user.email])
+                row = cursor.fetchone()
+                if row:
+                    user_phone, user_line_id = row
+                    logger.info(f"Book頁面 - 用戶聯絡資訊查詢結果 - Email: {request.user.email}, Phone: {user_phone}, LINE: {user_line_id}")
+                else:
+                    logger.info(f"Book頁面 - 未找到用戶聯絡資訊 - Email: {request.user.email}")
+        except Exception as e:
+            logger.warning(f"Book頁面 - 無法獲取用戶聯絡資訊: {e}")
+
     return render(request, 'book.html', {
         'books': books,
         'form': form,
@@ -232,15 +577,166 @@ def book(request):
         'academic_grades': academic_grades,
         'departments': departments,
         'items_per_row': items_per_row,
+        'user_phone': user_phone,
+        'user_line_id': user_line_id,
     })
 
 def book_2(request):
     return render(request, 'book_2.html')
 
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def remove_book(request, pk):
+    """下架書籍"""
+    try:
+        logger.info(f"開始下架書籍 - 用戶: {request.user.email}, 書籍ID: {pk}")
+        
+        book = get_object_or_404(Book2, pk=pk)
+        logger.info(f"找到書籍: {book.title}, 賣家: {book.seller.email}")
+        
+        # 檢查是否為書籍擁有者
+        if request.user != book.seller:
+            logger.warning(f"權限不足 - 當前用戶: {request.user.email}, 書籍賣家: {book.seller.email}")
+            return JsonResponse({
+                'success': False,
+                'message': '您沒有權限下架此書籍'
+            }, status=403)
+        
+        # 檢查當前狀態
+        logger.info(f"書籍當前狀態: {book.status}")
+        
+        # 軟刪除：將狀態設為已下架
+        from .models import Status
+        try:
+            offline_status = Status.objects.get(name='已下架')
+            logger.info(f"找到已下架狀態: {offline_status}")
+        except Status.DoesNotExist:
+            logger.info("未找到已下架狀態，正在創建...")
+            # 如果沒有已下架狀態，創建一個
+            offline_status, created = Status.objects.get_or_create(
+                name='已下架',
+                defaults={'name': '已下架'}
+            )
+            logger.info(f"創建已下架狀態: {offline_status}, 是否新創建: {created}")
+        
+        # 更新書籍狀態
+        old_status = book.status
+        book.status = offline_status
+        book.save()
+        
+        logger.info(f"書籍狀態已更新 - 從 {old_status} 到 {book.status}")
+        logger.info(f"用戶 {request.user.email} 成功下架了書籍: {book.title} (ID: {book.pk})")
+        
+        return JsonResponse({
+            'success': True,
+            'message': '書籍已成功下架'
+        })
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"下架書籍失敗 - 用戶: {request.user.email}, 書籍ID: {pk}")
+        logger.error(f"錯誤詳情: {str(e)}")
+        logger.error(f"完整錯誤堆疊: {error_details}")
+        
+        return JsonResponse({
+            'success': False,
+            'message': f'下架失敗: {str(e)}',
+            'error_details': str(e)
+        }, status=500)
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def mark_book_sold(request, pk):
+    """標記書籍為已售出"""
+    try:
+        logger.info(f"開始標記已售出 - 用戶: {request.user.email}, 書籍ID: {pk}")
+        
+        book = get_object_or_404(Book2, pk=pk)
+        logger.info(f"找到書籍: {book.title}, 賣家: {book.seller.email}")
+        
+        # 檢查是否為書籍擁有者
+        if request.user != book.seller:
+            logger.warning(f"權限不足 - 當前用戶: {request.user.email}, 書籍賣家: {book.seller.email}")
+            return JsonResponse({
+                'success': False,
+                'message': '您沒有權限標記此書籍'
+            }, status=403)
+        
+        # 檢查當前狀態
+        logger.info(f"書籍當前狀態: {book.status}")
+        
+        # 設置為已售出狀態
+        from .models import Status
+        try:
+            sold_status = Status.objects.get(name='已售出')
+            logger.info(f"找到已售出狀態: {sold_status}")
+        except Status.DoesNotExist:
+            logger.info("未找到已售出狀態，正在創建...")
+            # 如果沒有已售出狀態，創建一個
+            sold_status, created = Status.objects.get_or_create(
+                name='已售出',
+                defaults={'name': '已售出'}
+            )
+            logger.info(f"創建已售出狀態: {sold_status}, 是否新創建: {created}")
+        
+        # 更新書籍狀態
+        old_status = book.status
+        book.status = sold_status
+        book.save()
+        
+        logger.info(f"書籍狀態已更新 - 從 {old_status} 到 {book.status}")
+        logger.info(f"用戶 {request.user.email} 成功標記書籍已售出: {book.title} (ID: {book.pk})")
+        
+        return JsonResponse({
+            'success': True,
+            'message': '書籍已標記為已售出'
+        })
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"標記已售出失敗 - 用戶: {request.user.email}, 書籍ID: {pk}")
+        logger.error(f"錯誤詳情: {str(e)}")
+        logger.error(f"完整錯誤堆疊: {error_details}")
+        
+        return JsonResponse({
+            'success': False,
+            'message': f'標記失敗: {str(e)}',
+            'error_details': str(e)
+        }, status=500)
+
+
 def book_detail(request, pk):
     book = get_object_or_404(Book2, pk=pk)
+    
+    # 檢查書籍狀態（只有擁有者可以查看已下架/已售出的書籍）
+    from .models import Status
+    try:
+        offline_status = Status.objects.get(name='已下架')
+        sold_status = Status.objects.get(name='已售出')
+        
+        # 如果書籍已下架且不是擁有者，返回404
+        if book.status == offline_status and (not request.user.is_authenticated or request.user != book.seller):
+            from django.http import Http404
+            raise Http404("此書籍已下架")
+            
+        # 如果書籍已售出且不是擁有者，返回404
+        if book.status == sold_status and (not request.user.is_authenticated or request.user != book.seller):
+            from django.http import Http404
+            raise Http404("此書籍已售出")
+            
+    except Status.DoesNotExist:
+        pass  # 如果沒有相關狀態，繼續正常流程
+    
     seller_user = book.seller
     seller_google_picture = None
+    seller_phone = None
+    seller_line_id = None
+    
+    # 獲取賣家的 Google 頭像
     try:
         if hasattr(seller_user, 'social_auth'):
             social = seller_user.social_auth.filter(provider='google-oauth2').first()
@@ -248,6 +744,20 @@ def book_detail(request, pk):
                 seller_google_picture = social.extra_data['picture']
     except Exception as e:
         print(f"Error getting seller social auth data: {e}")
+
+    # 獲取賣家的聯絡資訊（電話和LINE ID）
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT phone, LINE_ID
+                FROM `User`
+                WHERE mail = %s
+            """, [seller_user.email])
+            row = cursor.fetchone()
+            if row:
+                seller_phone, seller_line_id = row
+    except Exception as e:
+        logger.warning(f"無法獲取賣家聯絡資訊: {e}")
 
     related_books_query = Book2.objects.exclude(pk=pk).exclude(status__name__in=['已售出', '下架'])
     related_books = []
@@ -282,11 +792,17 @@ def book_detail(request, pk):
         remaining = 6 - len(related_books)
         related_books.extend(related_books_query.exclude(pk__in=[b.pk for b in related_books]).order_by('?')[:remaining])
 
+    # 判斷當前用戶是否為書籍擁有者
+    is_owner = request.user.is_authenticated and request.user == book.seller
+
     return render(request, 'book_detail.html', {
         'book': book,
         'seller_user': seller_user,
         'seller_google_picture': seller_google_picture,
-        'related_books': related_books[:6]
+        'seller_phone': seller_phone,
+        'seller_line_id': seller_line_id,
+        'related_books': related_books[:6],
+        'is_owner': is_owner,
     })
 
 def get_related_data(request):
@@ -369,7 +885,6 @@ def get_related_data(request):
             "error": error_msg
         }, status=500)
 
-from .utils.content_filter import contains_banned_content
 
 @login_required
 def upload_book2(request):
@@ -397,10 +912,36 @@ def upload_book2(request):
 
     form = Book2Form()
     academics = Academic.objects.all()
+    
+    # 獲取當前用戶的聯絡資訊
+    user_phone = None
+    user_line_id = None
+    user_email = None
+    if request.user.is_authenticated:
+        user_email = request.user.email
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT phone, LINE_ID
+                    FROM `User`
+                    WHERE mail = %s
+                """, [request.user.email])
+                row = cursor.fetchone()
+                if row:
+                    user_phone, user_line_id = row
+                    # 調試信息
+                    logger.info(f"用戶聯絡資訊查詢結果 - Email: {user_email}, Phone: {user_phone}, LINE: {user_line_id}")
+                else:
+                    logger.info(f"未找到用戶聯絡資訊 - Email: {user_email}")
+        except Exception as e:
+            logger.warning(f"無法獲取用戶聯絡資訊: {e}")
+    
     return render(request, 'book.html', {
         'form': form,
         'books': Book2.objects.all(),
         'academics': academics,
+        'user_phone': user_phone,
+        'user_line_id': user_line_id,
     })
 
 
@@ -408,12 +949,6 @@ def ask_page(request):
     return render(request, "ask.html")
 
 # 新增到 views.py 的內容
-import json
-import base64
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
 
 # 嘗試導入 vision_utils，如果失敗則設為 None
 try:
@@ -570,8 +1105,6 @@ def search_book_manual(request):
         }, status=500)
 #===================================
 
-from django.urls import reverse, NoReverseMatch
-from django.db.models import Count, Q
 
 def _safe_reverse(name: str, args=None, kwargs=None, fallback: str = "/") -> str:
     """有就用 url name，沒有就用備援字串。"""
@@ -684,26 +1217,7 @@ def index(request):
     })
 
 ############################################################
-# views.py — 課程評論「列表頁」產 JSON 給前端，顯示熱門評論的頭貼與姓名
-from django.conf import settings
-from django.db.models import Avg, Count, Max, Q, Subquery, OuterRef
-from django.db.models.functions import Coalesce
-from django.utils import timezone
-from datetime import timedelta
-import json
-
-from .models import (
-    Course, Departmentd, Academica, AcadeGrade, AcadeDepart,
-    CourseReview, ReviewLike,
-    User as LegacyUser,   # 你的主系統 User（review 外鍵就是它）
-)
-
-# 只用於「顯示頭貼」：透過 email 對應到 auth_user + social_django
-from django.contrib.auth import get_user_model
-from social_django.models import UserSocialAuth
-AuthUser = get_user_model()
-# 你家的 User
-from .models import User as LegacyUser  
+# views.py — 課程評論「列表頁」產 JSON 給前端，顯示熱門評論的頭貼與姓名  
 
 def get_legacy_user_id(request) -> int | None:
     """
@@ -829,18 +1343,10 @@ def _clean_teacher_name(val: str) -> str:
     return s.split()[-1]  # 直接取最後一個詞，去掉代號
 
 
-def _humanize(dt):
-    """簡單的時間轉文字，可依需求擴充"""
-    if not dt:
-        return ""
-    return dt.strftime("%Y-%m-%d %H:%M")
 
 # =========================
 # 列表頁（含動態統計 + 熱門評論頭貼/姓名）
 # =========================
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.db.models import Avg, Count, Max, Q, Subquery, OuterRef, F, Value, BooleanField, Case, When
-from django.db.models.functions import Coalesce
 
 @ensure_csrf_cookie
 def comment(request):
@@ -932,7 +1438,27 @@ def comment(request):
                 em = user_id_to_email.get(top_review.user_id)
                 if em:
                     avatar_url = pics_by_email.get(em) or "/static/image/anonymous.png"
-                    display_name = names_by_email.get(em) or em.split("@")[0]
+                    # 優先使用暱稱，如果暱稱為空則使用真實姓名
+                    try:
+                        with connection.cursor() as cursor:
+                            cursor.execute("""
+                                SELECT anonymous, name
+                                FROM `User`
+                                WHERE mail = %s
+                            """, [em])
+                            row = cursor.fetchone()
+                            if row:
+                                anonymous, name = row
+                                if anonymous and anonymous.strip():
+                                    display_name = anonymous.strip()
+                                elif name and name.strip():
+                                    display_name = name.strip()
+                                else:
+                                    display_name = names_by_email.get(em) or em.split("@")[0]
+                            else:
+                                display_name = names_by_email.get(em) or em.split("@")[0]
+                    except Exception:
+                        display_name = names_by_email.get(em) or em.split("@")[0]
 
             course_summary = {
                 "review_id": top_review.id,
@@ -961,6 +1487,10 @@ def comment(request):
         }
         payload.append(item)
 
+    # 獲取當前用戶的顯示名稱和頭像
+    current_user_name = get_user_display_name(request.user) if request.user.is_authenticated else "訪客"
+    current_user_avatar = _google_picture(request.user) if request.user.is_authenticated else "/static/image/anonymous.png"
+
     return render(request, "comment.html", {
         "academics": academics,
         "departments": departments,
@@ -968,6 +1498,8 @@ def comment(request):
         "departments_data": json.dumps(departments_data, ensure_ascii=False),
         "grades_data": json.dumps(grades_data, ensure_ascii=False),
         "courses_json": json.dumps(payload, ensure_ascii=False),
+        "current_user_name": current_user_name,
+        "current_user_avatar": current_user_avatar,
     })
 
 
@@ -1010,10 +1542,6 @@ def submit_rating_only(request, course_id):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
-from django.db.models import Avg, Count, Max, Q
-from django.contrib.auth import get_user_model
-from social_django.models import UserSocialAuth
-from .models import User
 
 @require_GET
 def get_courses(request):
@@ -1117,9 +1645,33 @@ def get_courses(request):
             if u and u.mail:
                 au = auth_users.get(u.mail)  # 可能拿不到（不同系統）
                 if au:
-                    # 名字：先姓+名，否則 username，再退回 mail
-                    full_name = f"{getattr(au, 'last_name', '')}{getattr(au, 'first_name', '')}".strip()
-                    display_name = full_name or getattr(au, "username", "") or u.mail
+                    # 優先使用暱稱，如果暱稱為空則使用真實姓名
+                    try:
+                        with connection.cursor() as cursor:
+                            cursor.execute("""
+                                SELECT anonymous, name
+                                FROM `User`
+                                WHERE mail = %s
+                            """, [u.mail])
+                            row = cursor.fetchone()
+                            if row:
+                                anonymous, name = row
+                                if anonymous and anonymous.strip():
+                                    display_name = anonymous.strip()
+                                elif name and name.strip():
+                                    display_name = name.strip()
+                                else:
+                                    # 如果自定義表沒有資料，使用 Django 用戶的姓名
+                                    full_name = f"{getattr(au, 'last_name', '')}{getattr(au, 'first_name', '')}".strip()
+                                    display_name = full_name or getattr(au, "username", "") or u.mail
+                            else:
+                                # 如果自定義表沒有資料，使用 Django 用戶的姓名
+                                full_name = f"{getattr(au, 'last_name', '')}{getattr(au, 'first_name', '')}".strip()
+                                display_name = full_name or getattr(au, "username", "") or u.mail
+                    except Exception:
+                        # 如果查詢失敗，使用 Django 用戶的姓名
+                        full_name = f"{getattr(au, 'last_name', '')}{getattr(au, 'first_name', '')}".strip()
+                        display_name = full_name or getattr(au, "username", "") or u.mail
 
                     # 頭貼
                     avatar_url = pic_map.get(au.id, avatar_url)
@@ -1225,6 +1777,7 @@ def add_comment_blank(request):
 
         "review": None,
         "google_picture": _google_picture(request.user),
+        "current_user_name": get_user_display_name(request.user),
 
         "selected_course": None,
         "selected_teacher": "",
@@ -1296,6 +1849,7 @@ def add_comment_page(request, course_id):
 
         "review": user_review,
         "google_picture": _google_picture(request.user),
+        "current_user_name": get_user_display_name(request.user),
         "selected_course": course,
         "selected_teacher": _clean_teacher_name(course.course_teacher) or "",
         "selected_academic": academics.first() if academics.exists() else None,
@@ -1305,7 +1859,6 @@ def add_comment_page(request, course_id):
     return render(request, "add_comment.html", context)
 
 
-from django.db import transaction, IntegrityError
 
 @login_required
 @require_http_methods(["POST"])
@@ -1361,13 +1914,9 @@ def delete_review(request, review_id):
     return JsonResponse({'success': True})
 
 
-
-from django.templatetags.static import static
-
 def comment_detail(request, id=None):
     course_id = id or request.GET.get('course_id')
     if not course_id:
-        from django.http import HttpResponseBadRequest
         return HttpResponseBadRequest("Missing course_id parameter")
 
     course = get_object_or_404(Course, id=course_id)
@@ -1406,10 +1955,37 @@ def comment_detail(request, id=None):
 
         if not rv.is_anonymous and getattr(rv.user, 'mail', None):
             au = u_by_email.get(rv.user.mail)
-            # 顯示姓名（優先姓+名，退而 username，再退 email）
+            # 顯示姓名（優先使用暱稱，如果暱稱為空則使用真實姓名）
             if au:
-                full = f"{au.last_name or ''}{au.first_name or ''}".strip()
-                display_name = full or au.username or rv.user.mail
+                # 嘗試從自定義 User 表獲取暱稱
+                try:
+                    with connection.cursor() as cursor:
+                        cursor.execute("""
+                            SELECT anonymous, name
+                            FROM `User`
+                            WHERE mail = %s
+                        """, [rv.user.mail])
+                        row = cursor.fetchone()
+                        if row:
+                            anonymous, name = row
+                            # 優先使用暱稱，如果為空則使用真實姓名
+                            if anonymous and anonymous.strip():
+                                display_name = anonymous.strip()
+                            elif name and name.strip():
+                                display_name = name.strip()
+                            else:
+                                # 如果自定義表沒有資料，使用 Django 用戶的姓名
+                                full = f"{au.last_name or ''}{au.first_name or ''}".strip()
+                                display_name = full or au.username or rv.user.mail
+                        else:
+                            # 如果自定義表沒有資料，使用 Django 用戶的姓名
+                            full = f"{au.last_name or ''}{au.first_name or ''}".strip()
+                            display_name = full or au.username or rv.user.mail
+                except Exception:
+                    # 如果查詢失敗，使用 Django 用戶的姓名
+                    full = f"{au.last_name or ''}{au.first_name or ''}".strip()
+                    display_name = full or au.username or rv.user.mail
+                
                 # 取 Google 頭貼
                 pic = pics_by_uid.get(getattr(au, 'id', None))
                 if pic:
@@ -1462,8 +2038,6 @@ def comment_detail(request, id=None):
     return render(request, "comment_detail.html", context)
 
 
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
 
 @login_required
 @require_POST
@@ -1651,7 +2225,6 @@ def get_grades(request):
 # =========================
 # CourseReview 專屬「按讚」API（使用 ReviewLike 表）
 # =========================
-from django.views.decorators.http import require_POST
 
 @csrf_exempt
 @login_required
@@ -1684,9 +2257,6 @@ def toggle_review_like(request, review_id):
     })
 
 # ===== AI Comment Optimization =====
-from django.views.decorators.http import require_POST
-from django.conf import settings
-import re, openai
 
 def _clean_input(text: str) -> str:
     text = re.sub(r"\r\n?", "\n", text or "")
@@ -1767,17 +2337,6 @@ def optimize_comment_ai(request):
 
 
 # web_app/views.py
-import json
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponseNotAllowed
-from django.views.decorators.csrf import csrf_exempt
-from .mongo import (
-    create_conversation,
-    add_message,
-    get_conversations,
-    get_messages
-)
-from .views_rag import ask_question
 
 def get_user_id(request):
     if request.user.is_authenticated:
@@ -1942,9 +2501,6 @@ def upload_zip(request):
     return JsonResponse({"error": "僅支援 POST 請求"}, status=405)
 
 # web_app/views.py
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponseNotAllowed
-from .mongo import delete_conversation, update_conversation_title
 
 @csrf_exempt
 def api_conversation_detail(request, convo_id):
@@ -1961,11 +2517,6 @@ def api_conversation_detail(request, convo_id):
     else:
         return HttpResponseNotAllowed(["PATCH", "DELETE"])
     
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
-import openpyxl
-from io import BytesIO
-from .mongo import get_messages
 
 @csrf_exempt
 def api_export_conversation(request, convo_id):
@@ -1989,35 +2540,8 @@ def api_export_conversation(request, convo_id):
     resp["Content-Disposition"] = f'attachment; filename="conversation_{convo_id}.xlsx"'
     return resp
 
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404
-import mimetypes
 
-def view_pdf(request, filename):
-    """顯示 PDF 檔案"""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    pdf_dir = os.path.join(current_dir, "..", "uploaded_files")
-    pdf_path = os.path.join(pdf_dir, filename)
-    
-    if not os.path.exists(pdf_path) or not filename.endswith('.pdf'):
-        return JsonResponse({"error": "檔案不存在"}, status=404)
-    
-    return FileResponse(
-        open(pdf_path, 'rb'),
-        content_type='application/pdf',
-        filename=filename
-    )
 
-import os
-import mimetypes
-from django.http import FileResponse, JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.clickjacking import xframe_options_exempt
-from django.utils.encoding import smart_str
-from urllib.parse import unquote
-import logging
-
-logger = logging.getLogger(__name__)
 
 @csrf_exempt
 @xframe_options_exempt  # 允許在 iframe 中顯示
@@ -2156,20 +2680,6 @@ def pdf_options(request, filename):
 
 # activities/views.py  或 你目前放活動 view 的檔案
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.db import models
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.db.models import Count, Q, F, Case, When, IntegerField, Prefetch, Avg
-from django.utils import timezone
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from datetime import date, datetime, timedelta
-import json  # ← 你有用到 json.loads，要記得匯入
-
-from .models import GroupActivity, ActivityParticipant, ActivityComment
-from .forms import ActivityForm
-
 # -----------------------
 # 列出活動
 # -----------------------
@@ -2225,6 +2735,11 @@ def activity_list(request):
     for a in activities:
         jp = getattr(a, 'joined_participants', []) or []
         a.cleaned_participants = [p for p in jp if p.user_id != a.user_id]
+        
+        # 為發起者和參與者添加顯示名稱
+        a.user_display_name = get_user_display_name(a.user)
+        for p in a.cleaned_participants:
+            p.user_display_name = get_user_display_name(p.user)
 
     # 只有登入用戶才需要取得參與/建立狀態
     joined_ids, created_ids = [], []
@@ -2296,6 +2811,17 @@ def activity_detail(request, pk):
             .order_by('-created_at')[: (3 - len(related_activities))]
         )
         related_activities.extend(other_activities)
+
+    # 為發起者、參與者和評論者添加顯示名稱
+    a.user_display_name = get_user_display_name(a.user)
+    
+    for participant in participants:
+        participant.user_display_name = get_user_display_name(participant.user)
+    
+    for comment in comments:
+        comment.user_display_name = get_user_display_name(comment.user)
+        for reply in comment.replies.all():
+            reply.user_display_name = get_user_display_name(reply.user)
 
     return render(request, 'join_detail.html', {
         'a': a,
@@ -2373,7 +2899,6 @@ def cancel_activity(request, pk):
 # -----------------------
 # 建立活動
 # -----------------------
-from .utils.content_filter import contains_banned_content, BANNED_WORDS  # 確保已建立並匯入
 
 @csrf_exempt
 @login_required
@@ -2483,7 +3008,6 @@ def activity_participants(request, pk):
 # -----------------------
 # 新增活動留言（不是課程評論）
 # -----------------------
-from .utils.content_filter import contains_banned_content
 
 def _parse_request_data(request):
     """優先解析 JSON，失敗時退回 POST（避免 Content-Type 與 body 不一致造成 400）"""
@@ -2535,9 +3059,7 @@ def add_comment(request, activity_id):
     )
 
     user_avatar = "/static/image/avatar24-01.jpg"
-    display_name = (getattr(request.user, "last_name", "") or "") + (getattr(request.user, "first_name", "") or "")
-    if not display_name:
-        display_name = getattr(request.user, "username", "") or "使用者"
+    display_name = get_user_display_name(request.user)
 
     return _json_ok({
         "comment": {

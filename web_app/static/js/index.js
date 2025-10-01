@@ -114,7 +114,7 @@ const shortcuts = [
       action: "redirect",
       target: "/book/",
       label: "上傳二手書",
-      popupToOpen: "uploadForm"  // 傳給 book.html 的彈窗ID
+      popupToOpen: "uploadFormModal2"  // 傳給 book.html 的彈窗ID
     },
     {
         intentSet: ["book"],
