@@ -270,6 +270,96 @@ h1, h2, h3 {
 .cshelf__spine{ writing-mode:vertical-rl; text-orientation:mixed; padding:14px 8px; font-weight:700; font-size:13px; text-shadow:1px 1px 2px rgba(0,0,0,.25) }
 .cshelf__empty{ background:rgba(255,255,255,.15); color:white; border:1px dashed rgba(255,255,255,.4); padding:14px 16px; border-radius:8px }
 
+/* ============== Book Status Badge ============== */
+.cshelf__status-badge{
+  position:absolute; bottom:4px; right:4px; font-size:10px; padding:2px 6px;
+  border-radius:10px; font-weight:600; text-shadow:none; line-height:1;
+  z-index:10; pointer-events:none;
+}
+.cshelf__status-badge.status-available{ background:#4CAF50; color:#fff; }
+.cshelf__status-badge.status-sold{ background:#FF5722; color:#fff; }
+.cshelf__status-badge.status-offline{ background:#9E9E9E; color:#fff; }
+.cshelf__status-badge.status-unknown{ background:#FFC107; color:#333; }
+
+/* ============== Book Status Text ============== */
+.book-status-text{
+  padding:4px 8px; border-radius:12px; font-size:12px; font-weight:600;
+}
+.book-status-text.status-available{ background:#E8F5E8; color:#4CAF50; }
+.book-status-text.status-sold{ background:#FFEBEE; color:#FF5722; }
+.book-status-text.status-offline{ background:#F5F5F5; color:#9E9E9E; }
+.book-status-text.status-unknown{ background:#FFF8E1; color:#FF8F00; }
+
+/* ============== Upload Book Link ============== */
+.upload-book-link{
+  color:#8B4513; text-decoration:none; font-weight:600; 
+  padding:8px 16px; border:2px solid #8B4513; border-radius:20px;
+  display:inline-block; margin-top:8px; transition:all 0.3s ease;
+  background:rgba(255,255,255,0.1);
+}
+.upload-book-link:hover{
+  background:#8B4513; color:#fff; text-decoration:none;
+  transform:translateY(-2px); box-shadow:0 4px 12px rgba(139,69,19,0.4);
+}
+
+/* ============== Book Detail Modal ============== */
+.book-detail-modal{ max-width:800px; width:95%; padding:20px }
+.book-detail-content{ display:flex; gap:20px; align-items:flex-start }
+.book-image-section{ flex:0 0 200px; position:relative }
+.book-cover-image{ width:100%; height:280px; object-fit:cover; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.2) }
+.book-status-badge-large{ 
+  position:absolute; top:10px; right:10px; padding:6px 12px; border-radius:15px; 
+  font-size:12px; font-weight:600; color:#fff; background:#4CAF50 
+}
+.book-info-section{ flex:1; min-width:0 }
+.book-info-section h2{ margin:0 0 20px 0; color:#333; font-size:24px }
+.book-details{ margin-bottom:20px }
+.book-details p{ margin:8px 0; color:#555 }
+.book-description{ margin-bottom:25px }
+.book-description h4{ margin:0 0 10px 0; color:#333; font-size:16px }
+.book-description p{ color:#666; line-height:1.6 }
+
+/* ============== Management Buttons ============== */
+.book-management-buttons{ display:flex; gap:12px; flex-wrap:wrap }
+.btn{ 
+  padding:10px 20px; border:none; border-radius:6px; font-weight:600; 
+  cursor:pointer; transition:all 0.3s ease; font-size:14px 
+}
+.btn-sold{ background:#FF5722; color:#fff }
+.btn-sold:hover{ background:#E64A19; transform:translateY(-2px); box-shadow:0 4px 12px rgba(255,87,34,0.3) }
+.btn-remove{ background:#9E9E9E; color:#fff }
+.btn-remove:hover{ background:#757575; transform:translateY(-2px); box-shadow:0 4px 12px rgba(158,158,158,0.3) }
+
+/* ============== Disabled Button States ============== */
+.btn-disabled{ 
+  background:#E0E0E0 !important; color:#9E9E9E !important; 
+  cursor:not-allowed !important; opacity:0.6;
+}
+.btn-disabled:hover{ 
+  background:#E0E0E0 !important; transform:none !important; 
+  box-shadow:none !important; 
+}
+
+/* ============== Activities Scrollable ============== */
+.activities-scrollable{
+  max-height:400px; overflow-y:auto; padding-right:8px;
+}
+.activities-scrollable::-webkit-scrollbar{ width:6px; }
+.activities-scrollable::-webkit-scrollbar-track{ background:#f1f1f1; border-radius:3px; }
+.activities-scrollable::-webkit-scrollbar-thumb{ background:#c1c1c1; border-radius:3px; }
+.activities-scrollable::-webkit-scrollbar-thumb:hover{ background:#a8a8a8; }
+
+/* ============== Show More Button ============== */
+.activities-show-more{ text-align:center; padding:15px 0; border-top:1px solid #eee; margin-top:10px; }
+.show-more-btn{ 
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; 
+  padding:8px 20px; border-radius:20px; cursor:pointer; font-size:14px; font-weight:600;
+  transition:all 0.3s ease; display:flex; align-items:center; gap:8px; margin:0 auto;
+}
+.show-more-btn:hover{ transform:translateY(-2px); box-shadow:0 4px 12px rgba(102,126,234,0.4); }
+.show-more-btn i{ transition:transform 0.3s ease; }
+.show-more-btn.expanded i{ transform:rotate(180deg); }
+
 /* ============== Bookshelf Modal ============== */
 .cshelf__modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:1000; justify-content:center; align-items:center; animation:cshelfFadeIn .25s ease }
 .cshelf__modal.is-open{ display:flex }
@@ -640,6 +730,18 @@ h1, h2, h3 {
   outline:none;
 }
 .user-name-input:focus{ border-color:#7C86E4; }
+
+/* ============== Profile Input Styles ============== */
+.profile-input{
+  width:100% !important;
+  padding:.5rem .6rem;
+  border:2px solid #93A0FF22;
+  border-radius:8px;
+  outline:none;
+  font-size:14px;
+  background:#fff;
+}
+.profile-input:focus{ border-color:#7C86E4; box-shadow:0 0 0 3px rgba(124,134,228,0.1); }
 
 
 
@@ -1618,7 +1720,7 @@ h1, h2, h3 {
 }
 
 /* 活動項目在待辦清單中的樣式 */
-.activity-item {
+.todo-list .activity-item {
     background-color: #f5f3f6 !important;
     border-left: 4px solid #AA9DA9;
     opacity: 0.9;
