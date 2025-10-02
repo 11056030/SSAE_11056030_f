@@ -161,16 +161,31 @@
                         {% if books %}
                         {% for b in books %}
                             <button class="cshelf__book"
+                                    data-id="{{ b.id }}"
                                     data-title="{{ b.title|default:'' }}"
                                     data-author="{{ b.author|default:'—' }}"
                                     data-publisher="{{ b.publisher|default:'—' }}"
                                     data-isbn="{{ b.isbn|default:'—' }}"
-                                    data-desc="{{ b.desc|default:'' }}">
+                                    data-desc="{{ b.desc|default:'' }}"
+                                    data-status="{{ b.status|default:'未知' }}"
+                                    data-cover="{{ b.cover|default:'' }}">
                             <div class="cshelf__spine">{{ b.title }}</div>
+                            {% if b.status %}
+                            <div class="cshelf__status-badge 
+                                {% if b.status == '在售' %}status-available
+                                {% elif b.status == '已售出' %}status-sold
+                                {% elif b.status == '已下架' %}status-offline
+                                {% else %}status-unknown{% endif %}">
+                                {{ b.status }}
+                            </div>
+                            {% endif %}
                             </button>
                         {% endfor %}
                         {% else %}
-                        <div class="cshelf__empty">還沒有書籍～去上架你的第一本書吧！</div>
+                        <div class="cshelf__empty">
+                            還沒有書籍～
+                            <a href="{% url 'upload_book2' %}" class="upload-book-link">去上架你的第一本書吧！</a>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -180,14 +195,39 @@
 
                 <!-- 書籍 Modal（共用一個） -->
                 <div class="cshelf__modal" id="cshelfBookModal" aria-hidden="true">
-                <div class="cshelf__modal-panel" role="dialog" aria-modal="true">
+                <div class="cshelf__modal-panel book-detail-modal" role="dialog" aria-modal="true">
                     <button class="cshelf__modal-close" id="cshelfCloseBtn" aria-label="關閉">&times;</button>
-                    <h2 id="cshelfBookTitle">書籍標題</h2>
-                    <p><strong>作者：</strong><span id="cshelfBookAuthor"></span></p>
-                    <p><strong>出版社：</strong><span id="cshelfBookPublisher"></span></p>
-                    <p><strong>ISBN：</strong><span id="cshelfBookISBN"></span></p>
-                    <p><strong>簡介：</strong></p>
-                    <p id="cshelfBookDesc"></p>
+                    
+                    <div class="book-detail-content">
+                        <!-- 左側：書籍圖片 -->
+                        <div class="book-image-section">
+                            <img id="cshelfBookCover" src="" alt="書籍封面" class="book-cover-image">
+                            <div class="book-status-badge-large" id="cshelfBookStatusBadge">在售</div>
+                        </div>
+                        
+                        <!-- 右側：書籍資訊 -->
+                        <div class="book-info-section">
+                            <h2 id="cshelfBookTitle">書籍標題</h2>
+                            
+                            <div class="book-details">
+                                <p><strong>作者：</strong><span id="cshelfBookAuthor"></span></p>
+                                <p><strong>出版社：</strong><span id="cshelfBookPublisher"></span></p>
+                                <p><strong>ISBN：</strong><span id="cshelfBookISBN"></span></p>
+                                <p><strong>狀態：</strong><span id="cshelfBookStatus" class="book-status-text"></span></p>
+                            </div>
+                            
+                            <div class="book-description">
+                                <h4>簡介：</h4>
+                                <p id="cshelfBookDesc"></p>
+                            </div>
+                            
+                            <!-- 管理按鈕 -->
+                            <div class="book-management-buttons">
+                                <button id="markSoldBtn" class="btn btn-sold">標記已售出</button>
+                                <button id="removeBookBtn" class="btn btn-remove">下架書籍</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 </div>
 
@@ -322,71 +362,81 @@
                     <div class="card-header">
                         <h2>我的活動</h2>
                     </div>
-                    <div class="activities-list">
+                    <div class="activities-list activities-scrollable">
                         {% if created_activities or joined_activities %}
-                            {# 先顯示我發起的活動 #}
-                            {% for a in created_activities %}
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    {% with a.type as t %}
-                                        {% if t == 'sport' %}
-                                            <i class="fas fa-running"></i>
-                                        {% elif t == 'food' %}
-                                            <i class="fas fa-utensils"></i>
-                                        {% elif t == 'movie' %}
-                                            <i class="fas fa-film"></i>
-                                        {% elif t == 'study' %}
-                                            <i class="fas fa-book"></i>
-                                        {% elif t == 'travel' %}
-                                            <i class="fas fa-plane"></i>
-                                        {% else %}
-                                            <i class="fas fa-users"></i>
-                                        {% endif %}
-                                    {% endwith %}
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">
-                                        <a href="{% url 'activity_detail' a.pk %}">{{ a.title }}</a>
-                                        <span style="margin-left:8px; font-size:12px; color:#fff; background:#6c63ff; padding:2px 8px; border-radius:12px;">我發起</span>
+                            <div id="activitiesContainer">
+                                {# 先顯示我發起的活動 #}
+                                {% for a in created_activities %}
+                                <div class="activity-item" data-index="{{ forloop.counter0 }}">
+                                    <div class="activity-icon">
+                                        {% with a.type as t %}
+                                            {% if t == 'sport' %}
+                                                <i class="fas fa-running"></i>
+                                            {% elif t == 'food' %}
+                                                <i class="fas fa-utensils"></i>
+                                            {% elif t == 'movie' %}
+                                                <i class="fas fa-film"></i>
+                                            {% elif t == 'study' %}
+                                                <i class="fas fa-book"></i>
+                                            {% elif t == 'travel' %}
+                                                <i class="fas fa-plane"></i>
+                                            {% else %}
+                                                <i class="fas fa-users"></i>
+                                            {% endif %}
+                                        {% endwith %}
                                     </div>
-                                    <div class="activity-details">
-                                        <span><i class="fas fa-map-marker-alt"></i> {{ a.location_short }}</span>
-                                        <span><i class="far fa-clock"></i> {{ a.date }} {{ a.time|time:"H:i" }}</span>
+                                    <div class="activity-content">
+                                        <div class="activity-title">
+                                            <a href="{% url 'activity_detail' a.pk %}">{{ a.title }}</a>
+                                            <span style="margin-left:8px; font-size:12px; color:#fff; background:#6c63ff; padding:2px 8px; border-radius:12px;">我發起</span>
+                                        </div>
+                                        <div class="activity-details">
+                                            <span><i class="fas fa-map-marker-alt"></i> {{ a.location_short }}</span>
+                                            <span><i class="far fa-clock"></i> {{ a.date }} {{ a.time|time:"H:i" }}</span>
+                                        </div>
                                     </div>
                                 </div>
+                                {% endfor %}
+                                {# 再顯示我參加的活動 #}
+                                {% for a in joined_activities %}
+                                <div class="activity-item" data-index="{{ forloop.counter0|add:created_activities|length }}">
+                                    <div class="activity-icon">
+                                        {% with a.type as t %}
+                                            {% if t == 'sport' %}
+                                                <i class="fas fa-running"></i>
+                                            {% elif t == 'food' %}
+                                                <i class="fas fa-utensils"></i>
+                                            {% elif t == 'movie' %}
+                                                <i class="fas fa-film"></i>
+                                            {% elif t == 'study' %}
+                                                <i class="fas fa-book"></i>
+                                            {% elif t == 'travel' %}
+                                                <i class="fas fa-plane"></i>
+                                            {% else %}
+                                                <i class="fas fa-users"></i>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">
+                                            <a href="{% url 'activity_detail' a.pk %}">{{ a.title }}</a>
+                                        </div>
+                                        <div class="activity-details">
+                                            <span><i class="fas fa-map-marker-alt"></i> {{ a.location_short }}</span>
+                                            <span><i class="far fa-clock"></i> {{ a.date }} {{ a.time|time:"H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
-                            {# 再顯示我參加的活動 #}
-                            {% for a in joined_activities %}
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    {% with a.type as t %}
-                                        {% if t == 'sport' %}
-                                            <i class="fas fa-running"></i>
-                                        {% elif t == 'food' %}
-                                            <i class="fas fa-utensils"></i>
-                                        {% elif t == 'movie' %}
-                                            <i class="fas fa-film"></i>
-                                        {% elif t == 'study' %}
-                                            <i class="fas fa-book"></i>
-                                        {% elif t == 'travel' %}
-                                            <i class="fas fa-plane"></i>
-                                        {% else %}
-                                            <i class="fas fa-users"></i>
-                                        {% endif %}
-                                    {% endwith %}
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">
-                                        <a href="{% url 'activity_detail' a.pk %}">{{ a.title }}</a>
-                                    </div>
-                                    <div class="activity-details">
-                                        <span><i class="fas fa-map-marker-alt"></i> {{ a.location_short }}</span>
-                                        <span><i class="far fa-clock"></i> {{ a.date }} {{ a.time|time:"H:i" }}</span>
-                                    </div>
-                                </div>
+                            
+                            <!-- 顯示更多按鈕 -->
+                            <div class="activities-show-more" id="activitiesShowMore" style="display:none;">
+                                <button class="show-more-btn" onclick="toggleActivities()">
+                                    <span id="showMoreText">顯示更多活動</span>
+                                    <i class="fas fa-chevron-down" id="showMoreIcon"></i>
+                                </button>
                             </div>
-                            {% endfor %}
                         {% else %}
                             <div class="activity-item">
                                 <div class="activity-icon"><i class="fas fa-info-circle"></i></div>
@@ -823,32 +873,209 @@ try {
 })();
 
 
+// ===== CSRF Token Helper =====
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 // ===== Books modal =====
 (function(){
   const modal = document.getElementById('cshelfBookModal');
   if (!modal) return;
   const closeBtn = document.getElementById('cshelfCloseBtn');
   const tTitle = document.getElementById('cshelfBookTitle');
+  const tStatus = document.getElementById('cshelfBookStatus');
   const tAuthor = document.getElementById('cshelfBookAuthor');
   const tPublisher = document.getElementById('cshelfBookPublisher');
   const tISBN = document.getElementById('cshelfBookISBN');
   const tDesc = document.getElementById('cshelfBookDesc');
+  const tCover = document.getElementById('cshelfBookCover');
+  const tStatusBadge = document.getElementById('cshelfBookStatusBadge');
+  const markSoldBtn = document.getElementById('markSoldBtn');
+  const removeBookBtn = document.getElementById('removeBookBtn');
+
+  let currentBookId = null;
+
+  // 根據書籍狀態更新按鈕狀態
+  function updateButtonStates(status) {
+    // 重置按鈕狀態
+    markSoldBtn.disabled = false;
+    removeBookBtn.disabled = false;
+    markSoldBtn.classList.remove('btn-disabled');
+    removeBookBtn.classList.remove('btn-disabled');
+    markSoldBtn.textContent = '標記已售出';
+    removeBookBtn.textContent = '下架書籍';
+    
+    if (status === '在售') {
+      // 在售：兩個按鈕都可用
+      // 保持預設狀態即可
+    } else if (status === '已售出') {
+      // 已售出：只能下架，不能再標記售出
+      markSoldBtn.disabled = true;
+      markSoldBtn.classList.add('btn-disabled');
+      markSoldBtn.textContent = '已售出';
+      // removeBookBtn 保持可用
+    } else if (status === '已下架') {
+      // 已下架：什麼都不能做（終結狀態）
+      markSoldBtn.disabled = true;
+      markSoldBtn.classList.add('btn-disabled');
+      markSoldBtn.textContent = '已下架';
+      removeBookBtn.disabled = true;
+      removeBookBtn.classList.add('btn-disabled');
+      removeBookBtn.textContent = '已下架';
+    }
+  }
 
   document.querySelectorAll('.cshelf__book').forEach(btn=>{
     btn.addEventListener('click', ()=>{
+      const status = btn.dataset.status || '未知';
+      currentBookId = btn.dataset.id || null;
+      
       tTitle.textContent = btn.dataset.title || '';
+      tStatus.textContent = status;
+      tStatusBadge.textContent = status;
+      
+      // 設置狀態樣式
+      tStatus.className = 'book-status-text';
+      tStatusBadge.className = 'book-status-badge-large';
+      
+      if (status === '在售') {
+        tStatus.classList.add('status-available');
+        tStatusBadge.style.background = '#4CAF50';
+      } else if (status === '已售出') {
+        tStatus.classList.add('status-sold');
+        tStatusBadge.style.background = '#FF5722';
+      } else if (status === '已下架') {
+        tStatus.classList.add('status-offline');
+        tStatusBadge.style.background = '#9E9E9E';
+      } else {
+        tStatus.classList.add('status-unknown');
+        tStatusBadge.style.background = '#FFC107';
+      }
+      
+      // 根據狀態調整按鈕顯示和可用性
+      updateButtonStates(status);
+      
       tAuthor.textContent = btn.dataset.author || '—';
       tPublisher.textContent = btn.dataset.publisher || '—';
       tISBN.textContent = btn.dataset.isbn || '—';
       tDesc.textContent = btn.dataset.desc || '';
+      
+      // 設置書籍封面
+      const cover = btn.dataset.cover || '';
+      if (cover) {
+        tCover.src = cover;
+        tCover.style.display = 'block';
+      } else {
+        tCover.src = '/static/image/default-book.png'; // 預設圖片
+        tCover.style.display = 'block';
+      }
+      
       modal.classList.add('is-open');
       modal.setAttribute('aria-hidden','false');
     });
   });
 
+  // 標記已售出按鈕
+  markSoldBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    if (!currentBookId || markSoldBtn.disabled) return;
+    
+    if (confirm('確定要標記這本書籍為已售出嗎？')) {
+      console.log('開始標記已售出，書籍ID:', currentBookId);
+      
+      fetch(`/book/${currentBookId}/mark-sold/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+      })
+      .then(response => {
+        console.log('收到響應，狀態:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('響應數據:', data);
+        if (data.success) {
+          alert('書籍已標記為已售出！');
+          location.reload(); // 重新載入頁面以更新狀態
+        } else {
+          console.error('標記失敗:', data);
+          alert('標記失敗：' + (data.message || '未知錯誤'));
+        }
+      })
+      .catch(error => {
+        console.error('請求錯誤:', error);
+        alert('標記失敗，請稍後再試。錯誤：' + error.message);
+      });
+    }
+  });
+
+  // 下架書籍按鈕
+  removeBookBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    if (!currentBookId || removeBookBtn.disabled) return;
+    
+    if (confirm('確定要下架這本書籍嗎？下架後其他用戶將無法看到此書籍。')) {
+      console.log('開始下架書籍，ID:', currentBookId);
+      
+      fetch(`/book/${currentBookId}/remove/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+      })
+      .then(response => {
+        console.log('收到響應，狀態:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('響應數據:', data);
+        if (data.success) {
+          alert('書籍已成功下架！');
+          location.reload(); // 重新載入頁面以更新狀態
+        } else {
+          console.error('下架失敗:', data);
+          alert('下架失敗：' + (data.message || '未知錯誤'));
+          if (data.error_details) {
+            console.error('錯誤詳情:', data.error_details);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('請求錯誤:', error);
+        alert('下架失敗，請稍後再試。錯誤：' + error.message);
+      });
+    }
+  });
+
   const close = ()=>{
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden','true');
+    currentBookId = null;
   };
   closeBtn.addEventListener('click', close);
   modal.addEventListener('click', (e)=>{ if (e.target === modal) close(); });
@@ -917,6 +1144,68 @@ try {
 
   closeBtn.addEventListener('click', close);
   modal.addEventListener('click', (e)=>{ if (e.target === modal) close(); });
+})();
+
+// ===== Activities Show More =====
+(function(){
+  const maxVisibleActivities = 5; // 最多顯示5個活動
+  const container = document.getElementById('activitiesContainer');
+  const showMoreBtn = document.getElementById('activitiesShowMore');
+  const showMoreText = document.getElementById('showMoreText');
+  const showMoreIcon = document.getElementById('showMoreIcon');
+  
+  if (!container) return;
+  
+  const activities = container.querySelectorAll('.activity-item');
+  let isExpanded = false;
+  
+  function initializeActivities() {
+    if (activities.length <= maxVisibleActivities) {
+      // 如果活動數量不超過限制，不顯示"顯示更多"按鈕
+      return;
+    }
+    
+    // 隱藏超過限制的活動
+    activities.forEach((activity, index) => {
+      if (index >= maxVisibleActivities) {
+        activity.style.display = 'none';
+      }
+    });
+    
+    // 顯示"顯示更多"按鈕
+    if (showMoreBtn) {
+      showMoreBtn.style.display = 'block';
+    }
+  }
+  
+  window.toggleActivities = function() {
+    isExpanded = !isExpanded;
+    
+    activities.forEach((activity, index) => {
+      if (index >= maxVisibleActivities) {
+        activity.style.display = isExpanded ? 'flex' : 'none';
+      }
+    });
+    
+    // 更新按鈕文字和圖標
+    if (showMoreText && showMoreIcon) {
+      showMoreText.textContent = isExpanded ? '顯示較少活動' : '顯示更多活動';
+      showMoreIcon.className = isExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+    }
+    
+    // 更新按鈕樣式
+    const btn = document.querySelector('.show-more-btn');
+    if (btn) {
+      if (isExpanded) {
+        btn.classList.add('expanded');
+      } else {
+        btn.classList.remove('expanded');
+      }
+    }
+  };
+  
+  // 初始化
+  initializeActivities();
 })();
 </script>
 <script src="{% static 'js/personal.js' %}?v=2"></script>
