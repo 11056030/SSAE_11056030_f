@@ -508,7 +508,6 @@ body {
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.3s, transform 0.3s;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     z-index: 1000;
 }
@@ -519,11 +518,17 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.section {
-    padding: 40px;
-    width: 100%;
-    clear: both;
-    overflow: hidden;
+/* 刪除按鈕樣式 */
+.fixed-cta.delete-btn {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.fixed-cta.delete-btn:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    transform: translateX(-50%) translateY(-3px);
+    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4);
 }
 
 .section:nth-child(odd) {
