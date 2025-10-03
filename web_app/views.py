@@ -1126,7 +1126,7 @@ def get_legacy_user_id(request) -> int | None:
         return None
 
     return (
-        LegacyUser.objects
+        User.objects
         .filter(mail=email)
         .values_list("user_id", flat=True)
         .first()
@@ -1313,7 +1313,7 @@ def comment(request):
 
     # 批量抓使用者 email
     user_ids = [tr.user_id for tr in top_review_map.values() if not tr.is_anonymous]
-    users = LegacyUser.objects.filter(user_id__in=user_ids).only('user_id', 'mail')
+    users = User.objects.filter(user_id__in=user_ids).only('user_id', 'mail')
     user_id_to_email = {u.user_id: u.mail for u in users if u.mail}
 
     # 批量查 avatar/name
@@ -2136,7 +2136,7 @@ def toggle_review_like(request, review_id):
         return JsonResponse({'error': '無法找到對應的使用者'}, status=403)
 
     review = get_object_or_404(CourseReview, id=review_id)
-    legacy_user = get_object_or_404(LegacyUser, user_id=legacy_uid)
+    legacy_user = get_object_or_404(User, user_id=legacy_uid)
 
     like = ReviewLike.objects.filter(review=review, user=legacy_user).first()
 

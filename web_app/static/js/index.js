@@ -1508,7 +1508,7 @@ function initTechParticles() {
 document.addEventListener("DOMContentLoaded", () => {
   initBlobs();
   initTechParticles();
-  initFeatureSvgAnimation();
+  // initFeatureSvgAnimation(); // 暫時註解掉，因為函數尚未實現
 });
 
 

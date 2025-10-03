@@ -486,7 +486,8 @@ function initializeAjaxForms() {
 
 // 更新活動按鈕狀態
 function updateActivityButton(activityCard, newStatus, activityId) {
-    const buttonContainer = activityCard.querySelector('.activity-card > div:last-child');
+    // 按鈕直接在 activity-card 下面，不在特定容器中
+    const buttonContainer = activityCard;
     
     let newButtonHTML = '';
     
@@ -508,13 +509,19 @@ function updateActivityButton(activityCard, newStatus, activityId) {
         `;
     }
     
-    // 更新按鈕HTML
-    const existingButton = buttonContainer.querySelector('form, button, a');
-    if (existingButton) {
-        existingButton.outerHTML = newButtonHTML;
+    // 更新按鈕HTML - 尋找具有 join-button 類別的按鈕或其父表單
+    const existingButton = buttonContainer.querySelector('.join-button') || 
+                          buttonContainer.querySelector('form.inline-form') ||
+                          buttonContainer.querySelector('a.join-button');
+    
+    if (existingButton && newButtonHTML) {
+        // 如果現有按鈕在表單中，替換整個表單；否則替換按鈕本身
+        const formParent = existingButton.closest('form.inline-form');
+        const targetElement = formParent || existingButton;
+        targetElement.outerHTML = newButtonHTML;
         
         // 重新初始化新按鈕的AJAX功能
-        const newForm = buttonContainer.querySelector('form');
+        const newForm = buttonContainer.querySelector('form.inline-form');
         if (newForm) {
             initializeFormAjax(newForm);
         }

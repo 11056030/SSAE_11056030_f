@@ -101,9 +101,9 @@
 
                     <div class="activity-image">
                         {% if a.cover_image %}
-                            <img src="{{ a.cover_image.url }}" alt="{{ a.title }}">
+                            <img src="{{ a.cover_image.url }}" alt="{{ a.title }}" class="activity-cover-img">
                         {% else %}
-                            <img src="{% static 'image/activity_test.jpg' %}" alt="{{ a.title }}">
+                            <img src="{% static 'image/activity_test.jpg' %}" alt="{{ a.title }}" class="activity-cover-img">
                         {% endif %}
 
                         {# 狀態標籤 #}
@@ -290,6 +290,7 @@
 
 {% block body_js %}
 <script src="{% static 'js/pop_window/join_pop.js' %}"></script>
+<script src="{% static 'js/contact_selector.js' %}"></script>
 <script src="{% static 'js/join.js' %}"></script>
 <script>
 // 分頁和顯示控制功能
@@ -542,6 +543,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     sessionStorage.removeItem('openPopup');
   }
+});
+
+// 處理活動封面圖片載入錯誤
+document.addEventListener('DOMContentLoaded', function() {
+    const coverImages = document.querySelectorAll('.activity-cover-img');
+    coverImages.forEach(img => {
+        img.addEventListener('error', function() {
+            this.src = '{% static "image/activity_test.jpg" %}';
+        });
+    });
 });
 </script>
 
