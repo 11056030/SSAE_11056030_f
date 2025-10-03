@@ -31,7 +31,7 @@ INSTALLED_APPS = [
 # ========================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # 靜態檔壓縮
+    # "whitenoise.middleware.WhiteNoiseMiddleware",  # 靜態檔壓縮 - 暫時停用
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -41,7 +41,7 @@ MIDDLEWARE = [
     "social_django.middleware.SocialAuthExceptionMiddleware",  # Google 登入錯誤處理
 ]
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"  # 暫時停用
 
 ROOT_URLCONF = 'django_system.urls'
 
