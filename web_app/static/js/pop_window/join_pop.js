@@ -1,7 +1,20 @@
 // join_pop.js - 發起揪團彈跳視窗功能（Leaflet + Nominatim 自動補全）
 // 修正版本 - 解決人數按鈕和地址自動補全問題
 
+// 防止重複初始化
+if (typeof window.joinPopInitialized === 'undefined') {
+    window.joinPopInitialized = false;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.joinPopInitialized) {
+        console.log('join_pop.js 已初始化，跳過重複初始化');
+        return;
+    }
+    
+    console.log('join_pop.js 開始初始化');
+    window.joinPopInitialized = true;
+    
     initCreateActivity();
     initPreview();
     initLocationAutocomplete(); // 修正函數名稱
