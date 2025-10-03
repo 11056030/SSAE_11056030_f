@@ -10,7 +10,7 @@
             <button class="close-btn" id="closeUploadBtn">&times;</button>
         </div>
         
-        <form id="create-group-form" enctype="multipart/form-data">
+        <form id="create-group-form" action="{% url 'create_activity' %}" method="post" enctype="multipart/form-data">
             <!-- 活動封面 -->
             <div class="form-group">
                 <label class="form-label">活動封面圖片（選填）</label>
