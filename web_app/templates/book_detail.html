@@ -7,6 +7,7 @@
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/book_detail.css' %}">
+<link rel="stylesheet" href="{% static 'css/line_modal.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 
@@ -318,14 +319,25 @@
                             </div>
                             <div class="method-details">
                                 {% if seller_line_id %}
-                                    <p>賣家LINE ID: <strong>{{ seller_line_id }}</strong></p>
-                                    <a href="https://line.me/ti/p/~{{ seller_line_id }}" target="_blank" class="add-line-btn">
-                                        <i class="fas fa-plus-circle"></i> 加入LINE好友
+                                    <div class="line-id-info">
+                                        <span>賣家LINE ID: </span>
+                                        <div class="line-id-container">
+                                            <strong>{{ seller_line_id }}</strong>
+                                            <button class="copy-line-id-btn" data-line-id="{{ seller_line_id }}" title="複製LINE ID">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <a href="https://line.me/ti/p/~{{ seller_line_id }}" 
+                                       target="_blank" 
+                                       class="add-line-btn"
+                                       data-line-id="{{ seller_line_id }}">
+                                        <i class="fab fa-line"></i> 加入LINE好友
                                     </a>
                                 {% else %}
                                     <p>賣家LINE ID: <strong>未提供</strong></p>
                                     <button class="add-line-btn" disabled style="opacity: 0.5;">
-                                        <i class="fas fa-plus-circle"></i> 賣家未提供LINE ID
+                                        <i class="fas fa-exclamation-circle"></i> 賣家未提供LINE ID
                                     </button>
                                 {% endif %}
                             </div>

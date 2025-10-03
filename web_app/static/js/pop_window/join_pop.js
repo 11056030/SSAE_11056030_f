@@ -10,12 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 會在需要顯示地圖時建立（initMapIfNeeded）。
 });
 
-// 全域變數
-let previewMap = null;
-let previewMarker = null;
-let mapInitialized = false;
+// 全域變數（防止重複聲明）
+if (typeof window.previewMap === 'undefined') {
+    window.previewMap = null;
+    window.previewMarker = null;
+    window.mapInitialized = false;
+}
+// 直接使用全域變數，不重複宣告
+var previewMap = window.previewMap;
+var previewMarker = window.previewMarker;
+var mapInitialized = window.mapInitialized;
 
-// ---------------- 初始化表單、開關、圖片、送出 ----------------
+// 初始化活動創建功能
 function initCreateActivity() {
     const uploadBtn = document.getElementById('uploadBtn');
     const uploadForm = document.getElementById('uploadForm');

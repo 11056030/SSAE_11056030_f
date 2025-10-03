@@ -31,20 +31,18 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.templatetags.static import static
 from django.conf import settings
 
-# Third-party imports
 from social_django.models import UserSocialAuth
 import openai
 
 # Local imports
 from .views_rag import ask_question, create_vector_store, load_pdf_documents, split_documents
 from .models import (
-    GroupActivity, ActivityParticipant, ActivityComment, Book2, Todo, User,
-    Department, Category, Academic, AcademicGrade, AcadeDepart, AcadeGrade,
-    Course, Departmentd, Academica, CourseReview, ReviewLike,
-    User as LegacyUser
+    GroupActivity, ActivityParticipant, ActivityComment, Book2, Department, 
+    AcademicGrade, Category, Status, Academic, User, Academica, Departmentd, 
+    AcadeGrade, AcadeDepart, CourseReview
 )
 from .forms import Book2Form, ActivityForm
-from .utils.content_filter import contains_banned_content, BANNED_WORDS
+from .utils.content_filter import contains_banned_content, BANNED_WORDS, debug_banned_content
 from .mongo import (
     create_conversation, add_message, get_conversations, get_messages,
     delete_conversation, update_conversation_title, get_conversation_by_id
@@ -401,11 +399,6 @@ def join(request):
 
 def join_create(request):
     return render(request, 'join_create.html')
-
-def join_detail(request):
-    return render(request, 'join_detail.html')
-
-
 
 def _parse_request_data(request):
     """同時支援 JSON 與 x-www-form-urlencoded"""
@@ -2644,6 +2637,12 @@ def activity_list(request):
         a.user_display_name = get_user_display_name(a.user)
         for p in a.cleaned_participants:
             p.user_display_name = get_user_display_name(p.user)
+            
+        # 設定顯示的聯絡資訊：有contact_info就用它，沒有就用email
+        if a.contact_info and a.contact_info.strip():
+            a.display_contact = a.contact_info
+        else:
+            a.display_contact = a.user.email if hasattr(a.user, 'email') else '無聯絡資訊'
 
     # 只有登入用戶才需要取得參與/建立狀態
     joined_ids, created_ids = [], []
@@ -2659,6 +2658,26 @@ def activity_list(request):
             .values_list('id', flat=True)
         )
 
+    # 獲取用戶聯絡資訊（用於彈窗發布活動）
+    user_phone = ''
+    user_line_id = ''
+    user_email = ''
+    if request.user.is_authenticated:
+        try:
+            # 嘗試通過email關聯自定義User模型
+            from .models import User
+            custom_user = User.objects.filter(mail=request.user.email).first()
+            if custom_user:
+                user_phone = custom_user.phone or ''
+                user_line_id = custom_user.LINE_ID or ''
+                user_email = custom_user.mail or request.user.email
+            else:
+                # 如果沒有找到自定義用戶，使用Django標準用戶的資料
+                user_email = request.user.email or ''
+        except Exception as e:
+            print(f"獲取用戶聯絡資訊失敗: {e}")
+            user_email = request.user.email or ''
+
     return render(request, 'join.html', {
         'activities': activities,
         'joined_ids': joined_ids,
@@ -2667,6 +2686,9 @@ def activity_list(request):
         'current_location_type': location_type,
         'current_time': time_filter,
         'current_search': search_query,
+        'user_phone': user_phone,
+        'user_line_id': user_line_id,
+        'user_email': user_email,
     })
 
 # -----------------------
@@ -2751,15 +2773,21 @@ def join_activity(request, pk):
 
     if a.is_deadline_passed:
         messages.error(request, '已超過報名截止時間')
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': '已超過報名截止時間'})
         return redirect('activity_detail', pk=pk)
     if current_joined_count >= (a.max_participants or 0):
         messages.error(request, '本活動已額滿')
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': '本活動已額滿'})
         return redirect('activity_detail', pk=pk)
 
     # 使用 auth_user（request.user）
     existing = ActivityParticipant.objects.filter(activity_id=a.id, user_id=request.user.id).first()
     if existing and existing.status == 'joined':
         messages.info(request, '您已經報名此活動')
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': '您已經報名此活動'})
         return redirect('activity_detail', pk=pk)
 
     ActivityParticipant.objects.update_or_create(
@@ -2771,7 +2799,13 @@ def join_activity(request, pk):
     messages.success(request, '報名成功！可至個人中心查看已參加的活動')
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'ok': True, 'participants': updated_joined_count, 'message': '報名成功！'})
+        return JsonResponse({
+            'success': True, 
+            'participants': updated_joined_count, 
+            'message': '報名成功！',
+            'new_status': 'joined',
+            'activity_id': a.id
+        })
     
     return redirect('activity_detail', pk=pk)
 
@@ -2787,6 +2821,8 @@ def cancel_activity(request, pk):
     participant = ActivityParticipant.objects.filter(activity_id=a.id, user_id=request.user.id, status='joined').first()
     if not participant:
         messages.warning(request, '您尚未報名此活動')
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': '您尚未報名此活動'})
         return redirect('activity_detail', pk=pk)
 
     participant.status = 'cancelled'
@@ -2796,9 +2832,49 @@ def cancel_activity(request, pk):
     messages.info(request, '已取消參加')
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'ok': True, 'participants': updated_joined_count, 'message': '已取消參加'})
+        return JsonResponse({
+            'success': True, 
+            'participants': updated_joined_count, 
+            'message': '已取消參加',
+            'new_status': 'not_joined',
+            'activity_id': a.id
+        })
     
     return redirect('activity_detail', pk=pk)
+
+# -----------------------
+# 刪除活動（僅發起者可刪除）
+# -----------------------
+@login_required
+def delete_activity(request, pk):
+    if request.method != 'POST':
+        return redirect('activity_detail', pk=pk)
+    
+    activity = get_object_or_404(GroupActivity, pk=pk)
+    
+    # 檢查是否為活動發起者
+    if request.user != activity.user:
+        messages.error(request, '您沒有權限刪除此活動')
+        return redirect('activity_detail', pk=pk)
+    
+    # 檢查是否有其他人已經參加
+    participant_count = ActivityParticipant.objects.filter(
+        activity=activity,
+        status='joined'
+    ).count()
+    
+    if participant_count > 0:
+        messages.error(request, '已有其他人參加此活動，無法刪除。請聯繫參加者或等待活動結束。')
+        return redirect('activity_detail', pk=pk)
+    
+    # 記錄活動標題用於顯示訊息
+    activity_title = activity.title
+    
+    # 刪除活動（會自動刪除相關的評論和參與記錄）
+    activity.delete()
+    
+    messages.success(request, f'活動「{activity_title}」已成功刪除')
+    return redirect('activity_list')
 
 # -----------------------
 # 建立活動
@@ -2811,15 +2887,34 @@ def create_activity(request):
         return req.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     def render_form(form_obj):
-        # ★ 無論 GET 或 POST 重新 render，都把禁用詞清單丟給模板
+        # ★ 無論 GET 或 POST 重新 render，都把禁用詞清單和用戶聯絡資訊丟給模板
+        user_phone = ''
+        user_line_id = ''
+        user_email = ''
+        try:
+            # 嘗試通過email關聯自定義User模型
+            from .models import User
+            custom_user = User.objects.filter(mail=request.user.email).first()
+            if custom_user:
+                user_phone = custom_user.phone or ''
+                user_line_id = custom_user.LINE_ID or ''
+                user_email = custom_user.mail or request.user.email
+            else:
+                user_email = request.user.email or ''
+        except Exception as e:
+            print(f"獲取用戶聯絡資訊失敗: {e}")
+            user_email = request.user.email or ''
+        
         return render(request, 'join_create.html', {
             'form': form_obj,
-            'banned_words': BANNED_WORDS(),
+            'banned_words': BANNED_WORDS,
+            'user_phone': user_phone,
+            'user_line_id': user_line_id,
+            'user_email': user_email,
         })
 
     if request.method == 'GET':
         return render_form(ActivityForm())
-
     elif request.method == 'POST':
         # ❶ 前置禁用詞檢查（不依賴 form.is_valid）
         #    覆蓋所有字串欄位：title / description / address / contact...
@@ -2837,6 +2932,31 @@ def create_activity(request):
             try:
                 activity = form.save(commit=False)
                 activity.user = request.user
+                
+                # 處理聯絡方式選擇
+                contact_method = request.POST.get('contact_method')
+                if contact_method:
+                    try:
+                        # 嘗試通過email關聯自定義User模型
+                        from .models import User
+                        custom_user = User.objects.filter(mail=request.user.email).first()
+                        
+                        if contact_method == 'phone' and custom_user and custom_user.phone:
+                            activity.contact_info = f"電話: {custom_user.phone}"
+                        elif contact_method == 'line' and custom_user and custom_user.LINE_ID:
+                            activity.contact_info = f"LINE: {custom_user.LINE_ID}"
+                        elif contact_method == 'email':
+                            email = (custom_user.mail if custom_user else '') or request.user.email
+                            if email:
+                                activity.contact_info = f"Email: {email}"
+                            else:
+                                activity.contact_info = "請聯絡發起者"
+                        else:
+                            activity.contact_info = "請聯絡發起者"
+                    except Exception as e:
+                        print(f"處理聯絡方式選擇失敗: {e}")
+                        activity.contact_info = "請聯絡發起者"
+                
                 activity.save()
                 if is_ajax(request):
                     return JsonResponse(
@@ -3002,6 +3122,31 @@ def toggle_like(request, comment_id):
         'likes_count': comment.likes.count()
     })
 
-
-
-
+# -----------------------
+# 調試禁用詞檢查
+# -----------------------
+@csrf_exempt
+def debug_content_filter(request):
+    """調試禁用詞過濾功能"""
+    if request.method != 'POST':
+        return JsonResponse({'error': '僅支援 POST 請求'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        text = data.get('text', '')
+        
+        if not text:
+            return JsonResponse({'error': '請提供要檢查的文字'}, status=400)
+        
+        debug_result = debug_banned_content(text)
+        
+        return JsonResponse({
+            'success': True,
+            'text': text,
+            'has_banned_content': debug_result['has_banned'],
+            'found_words': debug_result['found_words'],
+            'normalized_text': debug_result['normalized_text']
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': f'檢查失敗: {str(e)}'}, status=500)

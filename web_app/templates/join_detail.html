@@ -39,7 +39,10 @@
             <button class="fixed-cta" type="submit" id="cancel-activity-btn">取消參加</button>
         </form>
     {% elif is_creator %}
-        <button class="fixed-cta" disabled>您是發起人</button>
+        <form action="{% url 'delete_activity' a.id %}" method="post" class="fixed-cta-form" id="delete-activity-form">
+            {% csrf_token %}
+            <button class="fixed-cta delete-btn" type="submit" id="delete-activity-btn">刪除活動</button>
+        </form>
     {% else %}
         <form action="{% url 'join_activity' a.id %}" method="post" class="fixed-cta-form" id="join-activity-form">
             {% csrf_token %}
@@ -61,6 +64,14 @@
         if (cancelForm) {
             cancelForm.addEventListener('submit', function(e) {
                 if (!confirm('確定要取消參加嗎？')) {
+                    e.preventDefault();
+                }
+            });
+        }
+        var deleteForm = document.getElementById('delete-activity-form');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                if (!confirm('確定要刪除此活動嗎？刪除後無法復原，且只有在沒有其他人參加的情況下才能刪除。')) {
                     e.preventDefault();
                 }
             });
@@ -296,7 +307,7 @@
             <h2 class="section-title">相關活動推薦</h2>
             <div class="related-grid">
                 {% for activity in related_activities|slice:":2" %}
-                    <a href="{% url 'join_detail' activity.id %}" class="related-card">
+                    <a href="{% url 'activity_detail' activity.id %}" class="related-card">
                         <div class="related-image">
                             {% if activity.cover_image %}
                                 <img src="{{ activity.cover_image.url }}" alt="{{ activity.title }}">
