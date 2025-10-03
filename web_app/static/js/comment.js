@@ -48,22 +48,23 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeInteractions();
 });
 
-// 初始化篩選器事件監聽
+// 初始化篩選器事件
 function initializeFilters() {
   const educationSelect = document.getElementById('education-select');
   const majorSelect = document.getElementById('major-select');
   const gradeSelect = document.getElementById('grade-select');
+  const ratingSelect = document.getElementById('rating-select');
+  const reviewCountSelect = document.getElementById('review-count-select');
+  const sortSelect = document.getElementById('sort-select');
   const searchBox = document.querySelector('.search-box');
 
-  // 學制變更 → 更新科系
+  // 學制變更 → 更新科系選項 + 重渲染
   if (educationSelect) {
     educationSelect.addEventListener('change', function () {
       updateDepartmentOptions(this.value);
       filterAndRenderCourses();
     });
   }
-
-  // 科系/年級變更 → 重渲染
   if (majorSelect) {
     majorSelect.addEventListener('change', filterAndRenderCourses);
   }
@@ -71,10 +72,62 @@ function initializeFilters() {
     gradeSelect.addEventListener('change', filterAndRenderCourses);
   }
 
+  // 新增的篩選器
+  if (ratingSelect) {
+    ratingSelect.addEventListener('change', filterAndRenderCourses);
+  }
+  if (reviewCountSelect) {
+    reviewCountSelect.addEventListener('change', filterAndRenderCourses);
+  }
+  if (sortSelect) {
+    sortSelect.addEventListener('change', filterAndRenderCourses);
+  }
+
   // 搜尋框
   if (searchBox) {
     searchBox.addEventListener('input', debounce(filterAndRenderCourses, 300));
   }
+
+  // 清除篩選按鈕
+  const clearFiltersBtn = document.getElementById('clear-filters-btn');
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener('click', clearAllFilters);
+  }
+}
+
+// 清除所有篩選條件
+function clearAllFilters() {
+  // 重置所有下拉選單
+  const educationSelect = document.getElementById('education-select');
+  const majorSelect = document.getElementById('major-select');
+  const gradeSelect = document.getElementById('grade-select');
+  const ratingSelect = document.getElementById('rating-select');
+  const reviewCountSelect = document.getElementById('review-count-select');
+  const sortSelect = document.getElementById('sort-select');
+  const searchBox = document.querySelector('.search-box');
+  const clearBtn = document.getElementById('clear-filters-btn');
+
+  if (educationSelect) educationSelect.value = '';
+  if (majorSelect) {
+    majorSelect.innerHTML = '<option value="">所有科系</option>';
+    majorSelect.value = '';
+  }
+  if (gradeSelect) gradeSelect.value = '';
+  if (ratingSelect) ratingSelect.value = '';
+  if (reviewCountSelect) reviewCountSelect.value = '';
+  if (sortSelect) sortSelect.value = 'name';
+  if (searchBox) searchBox.value = '';
+
+  // 按鈕動畫反饋
+  if (clearBtn) {
+    clearBtn.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      clearBtn.style.transform = '';
+    }, 150);
+  }
+
+  // 重新渲染所有課程
+  filterAndRenderCourses();
 }
 
 // 更新科系選項（依學制）
@@ -143,20 +196,41 @@ function filterAndRenderCourses() {
   const educationSelect = document.getElementById('education-select');
   const majorSelect = document.getElementById('major-select');
   const gradeSelect = document.getElementById('grade-select');
+  const ratingSelect = document.getElementById('rating-select');
+  const reviewCountSelect = document.getElementById('review-count-select');
+  const sortSelect = document.getElementById('sort-select');
   const searchBox = document.querySelector('.search-box');
 
   const academicId = educationSelect ? educationSelect.value : '';
   const departmentId = majorSelect ? majorSelect.value : '';
   const grade = gradeSelect ? gradeSelect.value : '';
+  const minRating = ratingSelect ? parseFloat(ratingSelect.value) || 0 : 0;
+  const minReviewCount = reviewCountSelect ? parseInt(reviewCountSelect.value) || 0 : 0;
+  const sortBy = sortSelect ? sortSelect.value : 'name';
   const searchQuery = searchBox ? searchBox.value.trim().toLowerCase() : '';
 
-  const filteredCourses = allCourses.filter((course) => {
+
+  let filteredCourses = allCourses.filter((course) => {
+    // 原有篩選條件
     if (academicId && String(course.academic_id) !== String(academicId))
       return false;
     if (departmentId && String(course.department_id) !== String(departmentId))
       return false;
     if (grade && String(course.grade_level) !== String(grade)) return false;
 
+    // 新增評分篩選
+    const courseRating = parseFloat(course.avg_rating) || 0;
+    if (minRating > 0 && courseRating < minRating) {
+      return false;
+    }
+
+    // 新增評論數量篩選
+    const reviewCount = parseInt(course.review_count) || 0;
+    if (minReviewCount > 0 && reviewCount < minReviewCount) {
+      return false;
+    }
+
+    // 搜尋篩選
     if (searchQuery) {
       const inName = course.course_name
         ? course.course_name.toLowerCase().includes(searchQuery)
@@ -172,6 +246,23 @@ function filterAndRenderCourses() {
     }
 
     return true;
+  });
+
+  // 排序邏輯
+  filteredCourses.sort((a, b) => {
+    switch (sortBy) {
+      case 'rating-desc':
+        return (parseFloat(b.avg_rating) || 0) - (parseFloat(a.avg_rating) || 0);
+      case 'rating-asc':
+        return (parseFloat(a.avg_rating) || 0) - (parseFloat(b.avg_rating) || 0);
+      case 'review-count-desc':
+        return (parseInt(b.review_count) || 0) - (parseInt(a.review_count) || 0);
+      case 'review-count-asc':
+        return (parseInt(a.review_count) || 0) - (parseInt(b.review_count) || 0);
+      case 'name':
+      default:
+        return (a.course_name || '').localeCompare(b.course_name || '');
+    }
   });
 
   renderCourses(filteredCourses);
