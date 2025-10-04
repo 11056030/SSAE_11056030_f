@@ -311,6 +311,7 @@ def personal(request):
             if getattr(a, 'date', None):
                 weekday_zh = ['星期一','星期二','星期三','星期四','星期五','星期六','星期日'][a.date.weekday()]
                 month_num  = a.date.strftime('%m')
+                month_abbr  = (calendar.month_abbr[a.date.month] or '').capitalize()
                 date_num   = a.date.strftime('%d')
             else:
                 weekday_zh, month_num, date_num = '—','—','—'
@@ -321,6 +322,7 @@ def personal(request):
                 "desc": getattr(a, 'description', '活動說明稍後公布。'),
                 "location": getattr(a, 'location', '校園活動場地'),
                 "weekday": weekday_zh,
+                "month_abbr": month_abbr,
                 "month": month_num,
                 "date": date_num,
                 "time": a.time.strftime('%H:%M') if getattr(a, 'time', None) else '—',
