@@ -270,8 +270,8 @@ function renderConvos() {
         // 設定標題（存在就改）
         if (historyTitle) {
             historyTitle.textContent = isAuth
-                ? '---------------  對話歷史  --------------'
-                : '---------------  訪客模式  --------------';
+                ? '對話歷史'
+                : '訪客模式';
         }
 
         if (!isAuth) {
@@ -345,7 +345,7 @@ function renderConvos() {
     }
 
     // 有對話：設定標題
-    if (historyTitle) historyTitle.textContent = '---------------  對話歷史  --------------';
+    if (historyTitle) historyTitle.textContent = '對話歷史';
 
     // 原本的對話列表渲染邏輯（保持你既有內容）
     conversations.forEach(c => {
