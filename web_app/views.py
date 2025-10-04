@@ -39,7 +39,8 @@ from .views_rag import ask_question, create_vector_store, load_pdf_documents, sp
 from .models import (
     GroupActivity, ActivityParticipant, ActivityComment, Book2, Department, 
     AcademicGrade, Category, Status, Academic, User, Academica, Departmentd, 
-    AcadeGrade, AcadeDepart, Course, CourseReview, ReviewLike
+    AcadeGrade, AcadeDepart, CourseReview, Course, Departmentd, Academica, CourseReview, 
+    ReviewLike, User as LegacyUser
 )
 from .forms import Book2Form, ActivityForm
 from .utils.content_filter import contains_banned_content, BANNED_WORDS, debug_banned_content
