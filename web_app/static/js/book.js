@@ -142,76 +142,80 @@ window.addEventListener('DOMContentLoaded', () => {
             }
             } catch (err) {
             console.error('[upload_book2] error:', err);
-            showBookMsg('網路或系統錯誤，請稍後再試', false);
             } finally {
             if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '上傳書籍'; }
             }
         });
         }
-    // 關閉上傳表單
-    if (closeFormBtn && uploadFormEl) {
-        closeFormBtn.addEventListener('click', function() {
-            uploadFormEl.classList.remove('show');
-            unlockBodyScroll();
+    // 點擊預覽區域觸發文件選擇
+    if (imagePreview && imageUpload) {
+        imagePreview.addEventListener('click', function() {
+            imageUpload.click();
         });
     }
-
-    
-    // 點擊預覽區域觸發文件選擇
-    imagePreview.addEventListener('click', function() {
-        imageUpload.click();
-    });
     
     // 圖片上傳預覽
-    imageUpload.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                previewImage.style.display = 'block';
-                previewPlaceholder.style.display = 'none';
+    if (imageUpload) {
+        imageUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    if (previewImage && previewPlaceholder) {
+                        previewImage.src = e.target.result;
+                        previewImage.style.display = 'block';
+                        previewPlaceholder.style.display = 'none';
+                    }
+                }
+                
+                reader.readAsDataURL(this.files[0]);
             }
-            
-            reader.readAsDataURL(this.files[0]);
-        }
-    });
+        });
+    }
     
     // 拖放功能
     const previewContainer = document.querySelector('.preview-container');
     
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        previewContainer.addEventListener(eventName, preventDefaults, false);
-    });
+    if (previewContainer) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            previewContainer.addEventListener(eventName, preventDefaults, false);
+        });
+    }
     
     function preventDefaults(e) {
         e.preventDefault();
         e.stopPropagation();
     }
     
-    ['dragenter', 'dragover'].forEach(eventName => {
-        previewContainer.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        previewContainer.addEventListener(eventName, unhighlight, false);
-    });
+    if (previewContainer) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            previewContainer.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            previewContainer.addEventListener(eventName, unhighlight, false);
+        });
+        
+        previewContainer.addEventListener('drop', handleDrop, false);
+    }
     
     function highlight() {
-        previewContainer.classList.add('highlight');
+        if (previewContainer) {
+            previewContainer.classList.add('highlight');
+        }
     }
     
     function unhighlight() {
-        previewContainer.classList.remove('highlight');
+        if (previewContainer) {
+            previewContainer.classList.remove('highlight');
+        }
     }
-    
-    previewContainer.addEventListener('drop', handleDrop, false);
     
     function handleDrop(e) {
         const dt = e.dataTransfer;
         const files = dt.files;
         
-        if (files && files.length) {
+        if (files && files.length && imageUpload) {
             imageUpload.files = files;
             const event = new Event('change');
             imageUpload.dispatchEvent(event);

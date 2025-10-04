@@ -1,7 +1,20 @@
 // join_pop.js - 發起揪團彈跳視窗功能（Leaflet + Nominatim 自動補全）
 // 修正版本 - 解決人數按鈕和地址自動補全問題
 
+// 防止重複初始化
+if (typeof window.joinPopInitialized === 'undefined') {
+    window.joinPopInitialized = false;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.joinPopInitialized) {
+        console.log('join_pop.js 已初始化，跳過重複初始化');
+        return;
+    }
+    
+    console.log('join_pop.js 開始初始化');
+    window.joinPopInitialized = true;
+    
     initCreateActivity();
     initPreview();
     initLocationAutocomplete(); // 修正函數名稱
@@ -10,12 +23,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 會在需要顯示地圖時建立（initMapIfNeeded）。
 });
 
-// 全域變數
-let previewMap = null;
-let previewMarker = null;
-let mapInitialized = false;
+// 全域變數（防止重複聲明）
+if (typeof window.previewMap === 'undefined') {
+    window.previewMap = null;
+    window.previewMarker = null;
+    window.mapInitialized = false;
+}
+// 直接使用全域變數，不重複宣告
+var previewMap = window.previewMap;
+var previewMarker = window.previewMarker;
+var mapInitialized = window.mapInitialized;
 
-// ---------------- 初始化表單、開關、圖片、送出 ----------------
+// 初始化活動創建功能
 function initCreateActivity() {
     const uploadBtn = document.getElementById('uploadBtn');
     const uploadForm = document.getElementById('uploadForm');
@@ -61,7 +80,7 @@ function initCreateActivity() {
         }
     }
 
-    // ====== 審查相關：錯誤抽取 + 從模板讀禁用詞 ======
+    // ====== 審查相關：從伺服器訊息萃取一句可讀字串（不做預設禁用詞）======
     function extractOneMessage(data, raw='') {
         let msg = data?.message || '';
         if (!msg && data?.errors) {
@@ -74,21 +93,15 @@ function initCreateActivity() {
         if (!msg && raw) {
             msg = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
         }
-        if (/禁止|不當|禁用/.test(msg)) {
-            msg = '輸入內容包含禁止或不當詞彙，請重新編輯。';
-        } else if (/csrf|forbidden|禁止存取|驗證/i.test(msg)) {
-            msg = '驗證逾時或未登入，請重新登入後再試。';
-        }
-        return msg;
+        return msg || '';
     }
 
+    // （可選）從模板注入的禁用詞清單
     const BANNED_WORDS = (() => {
         try {
             const el = document.getElementById('bannedWords');
             return el ? JSON.parse(el.textContent) : [];
-        } catch (_) {
-            return [];
-        }
+        } catch (_) { return []; }
     })();
 
     const hitBanned = (text='') => {
@@ -119,7 +132,7 @@ function initCreateActivity() {
         e.preventDefault();
         if (!validateForm()) return;
 
-        // ★★★ 前端禁用詞審查：命中就顯示一句話並停止送出
+        // 前端簡單禁用詞審查（標題+描述）
         const title = document.getElementById('activity-title')?.value || '';
         const desc  = document.getElementById('activity-description')?.value || '';
         if (hitBanned(`${title}\n${desc}`)) {
@@ -127,7 +140,7 @@ function initCreateActivity() {
             return;
         }
 
-        // 若選校內，統一填 selected-address 為教室
+        // 選校內 → 寫 selected-address
         const locationRadio = document.querySelector('input[name="location_type"]:checked');
         const selectedAddress = document.getElementById('selected-address');
         if (locationRadio?.value === 'on_campus') {
@@ -137,29 +150,43 @@ function initCreateActivity() {
 
         const formData = new FormData(createGroupForm);
 
+        // ★★★ 送出路徑改用「表單 action」；取不到才用 fallback
+        const createUrl = (createGroupForm && createGroupForm.action) || '/activities/create/';
+
         try {
-            const res = await fetch('/activities/create/', {
+            const res = await fetch(createUrl, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
                 body: formData,
-                credentials: 'same-origin' // 帶 cookie，避免 CSRF 失敗
+                credentials: 'same-origin'
             });
 
-            let data = null;
-            let rawText = '';
+            let data = null, rawText = '';
             try { data = await res.json(); } catch { try { rawText = await res.text(); } catch {} }
 
-            // 失敗分支：只顯示一句話（統一處理）
+            // 判斷失敗
             if (!res.ok || !(data?.success ?? data?.ok)) {
-                let msg = extractOneMessage(data, rawText) || '輸入內容包含禁止或不當詞彙，請重新編輯。';
+                let msg = extractOneMessage(data, rawText);
+
+                // 僅在「明確」命中時才顯示禁用詞訊息
+                const looksBanned = (data && (data.code === 'BANNED' || data.code === 'BANNED_TITLE')) ||
+                                    /禁止|不當|禁用/.test(msg);
+                if (looksBanned) {
+                    msg = '輸入內容包含禁止或不當詞彙，請重新編輯。';
+                } else if (/csrf|forbidden|禁止存取|驗證/i.test((msg || '').toLowerCase())) {
+                    msg = '驗證逾時或未登入，請重新登入後再試。';
+                }
+                if (!msg) msg = '提交失敗，請稍後再試';
+
                 safeNotify('error', msg);
                 return;
             }
 
-            // 成功分支
+            // 成功
+            safeNotify('success', data?.message || '活動創建成功！');
             showSuccessMessage();
             setTimeout(() => { window.location.href = '/activities/'; }, 1200);
 

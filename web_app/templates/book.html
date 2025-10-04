@@ -11,90 +11,6 @@
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/book.css' %}">
 <link rel="stylesheet" href="{% static 'css/join.css' %}">
-<style>
-/* ===== 基本書卡動畫 ===== */
-.book-card { opacity: 0; transform: translateY(20px); transition: all 0.5s ease; }
-.book-card.visible { opacity: 1; transform: translateY(0); }
-.book-header,.book-tag,.book-meta-tag,.book-price { text-decoration: none; }
-/* ===== Filter Box ===== */
-.filter-box { padding: 80px; margin-bottom: 20px; }
-.filter-grid {
-  display: flex;           /* 改成水平排列 */
-  flex-wrap: wrap;         /* 超過寬度換行 */
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-.filter-grid-2 {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 150px; /* 每個篩選條件最小寬度150px，會自動撐開 */
-}
-.filter-label { color: #6F557D; font-weight: 500; margin-bottom: 5px; font-size: 14px; }
-
-.filter-select, .search-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 50px;  /* 圓角50 */
-  font-size: 14px;
-}
-.filter-select:focus, .search-input:focus { border-color: #9e8c9d; box-shadow: 0 0 0 2px rgba(111,85,125,0.1); }
-.search-container {
-  flex: 1 1 200px; /* 搜尋欄比其他略寬 */
-  position: relative;
-  height: 44px;
-}
-.search-input { padding-left: 40px; }
-.search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #6F557D; }
-.clear-filters-btn {
-    padding: 12px 25px;
-    border-radius: 50px;
-    background-color: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    font-size: 15px;
-    cursor: pointer;
-    transition: all 0.3s;
-    color: #666;
-}
-
-.clear-filters-btn:hover {
-    background-color: #ebebeb;
-    border-color: #d0d0d0;
-    transform: translateY(-2px);
-}
-
-/* 禁用狀態樣式 */
-.filter-select:disabled {
-    background-color: #f5f5f5;
-    color: #999;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-
-
-/* ===== 書卡樣式 ===== */
-.book-card {
-  background-color: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  overflow: hidden; transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column; height: 100%; width: 100%;
-}
-.book-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04); }
-.book-image-container { width: 100%; aspect-ratio: 3/4; overflow: hidden; background-color: #f3f4f6; }
-.book-image { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform 0.3s ease; }
-.book-card:hover .book-image { transform: scale(1.05); }
-.book-info { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
-.book-header { font-size: 1.25rem; font-weight: bold; color: #1a202c; margin-bottom: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.book-footer { display: flex; justify-content: flex-start; align-items: center; margin-top: auto; padding: 0; gap: 0.5rem; }
-.book-price { font-weight: bold; color: #6F557D; font-size: 1.1rem; margin-left: auto; }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -274,11 +190,68 @@
   <div class="deco-line"></div>
 </div>
 
-{% include 'book_upload_form2.html' %}
+{% include 'book_upload_form2.html' with user_phone=user_phone user_line_id=user_line_id %}
 {% endblock %}
 
 {% block body_js %}
 <script>
+// book.js —— 二手書頁面專用（與你 index / comment 的作法一致）
+(function () {
+  // 你實際的 modal/按鈕 id（若不同，改這裡就好）
+  const BOOK_MODAL_IDS = ['uploadFormModal2', 'centerUploadBtn', 'upload-form'];
+  const BOOK_PLUS_IDS  = ['centerUploadBtn2', 'centerUploadBtn']; // 右下角 + 的按鈕
+
+  function showBookModalById(id) {
+    // 1) 先用指定 id 找；2) 找不到就用備援列表找第一個存在的；3) 再不行就點「＋」
+    let el = document.getElementById(id);
+    if (!el) {
+      el = BOOK_MODAL_IDS.map(x => document.getElementById(x)).find(Boolean);
+    }
+    if (el) {
+      el.classList.add('active');      // 跟你現在的規則一致
+      if (!el.style.display) el.style.display = 'flex'; // 你 fallback 寫法
+      console.log('[book] 開啟彈窗:', el.id);
+      return true;
+    }
+    const plus = BOOK_PLUS_IDS.map(x => document.getElementById(x)).find(Boolean);
+    if (plus) {
+      plus.click();
+      // 若 + 會動態插入 modal，等一下再加 active
+      setTimeout(() => {
+        const injected = BOOK_MODAL_IDS.map(x => document.getElementById(x)).find(Boolean);
+        if (injected) {
+          injected.classList.add('active');
+          if (!injected.style.display) injected.style.display = 'flex';
+        }
+      }, 50);
+      return true;
+    }
+    console.warn('[book] 找不到彈窗或觸發按鈕');
+    return false;
+  }
+
+  // 與你 index 同步：讀 sessionStorage.openPopup 自動打開
+  window.addEventListener('DOMContentLoaded', () => {
+    const popupId = sessionStorage.getItem('openPopup');
+    if (popupId) {
+      if (!showBookModalById(popupId)) {
+        setTimeout(() => showBookModalById(popupId), 100);
+      }
+      sessionStorage.removeItem('openPopup');
+    }
+  });
+
+  // （可選）頁內的快捷開窗：.open-book-upload / .add-book
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.open-book-upload, .add-book');
+    if (!btn) return;
+    e.preventDefault();
+    const pid = btn.getAttribute('data-popup') || 'uploadFormModal2';
+    showBookModalById(pid);
+  });
+})();
+
+
   // 取得登入狀態
   function isUserAuthenticated() {
       const authAttr = document.querySelector('.page-container')?.getAttribute('data-user-authenticated');
@@ -455,7 +428,7 @@
     const categoryFilter = document.getElementById('categoryFilter');
     const conditionFilter = document.getElementById('conditionFilter');
     const priceFilter = document.getElementById('priceFilter');
-    const filterResult = document.getElementById('filterResult');
+    const filterResult = document.getElementById('total-activities');
     const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
     // 根據學制載入科系和年級
