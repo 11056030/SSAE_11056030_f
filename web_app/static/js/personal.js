@@ -135,22 +135,27 @@ try {
   modal.addEventListener('click', (e)=>{ if (e.target === modal) close(); });
 })();
 
+
 // ===== Tickets flip & gentle float =====
 (function(){
   const tickets = document.querySelectorAll('.cticket');
   tickets.forEach((el, idx)=>{
-    el.addEventListener('click', ()=> el.classList.toggle('is-flipped'));
+    const inner = el.querySelector('.cticket__inner');
 
-    // gentle float: 每 3~4.5 秒輕微改變 rotate 角度
-    const base = el.style.transform || '';
-    const getRot = ()=>{
-      const m = base.match(/rotate\(([-\d.]+)deg\)/);
-      return m ? parseFloat(m[1]) : 0;
-    };
-    let baseDeg = getRot();
+    // 點擊 -> 翻面
+    el.addEventListener('click', ()=>{
+      el.classList.toggle('flipped');
+    });
+
+    // 設定初始角度（基礎角度 + 隨機）
+    const base = (parseFloat(el.dataset.baseDeg || '0') || 0) + (Math.random() * 8 - 4); // -4~+4度
+    el.style.setProperty('--tilt', `${base.toFixed(2)}deg`);
+
+    // 每隔幾秒微微晃動（隨機 ±1 度）
     setInterval(()=>{
-      const random = (Math.random() - 0.5) * 2; // -1 ~ +1 度
-      el.style.transform = base.replace(/rotate\([-\d.]+deg\)/, `rotate(${(baseDeg + random).toFixed(2)}deg)`);
+      const random = (Math.random() - 0.5) * 2; // -1~+1 度
+      const next = (base + random).toFixed(2);
+      el.style.setProperty('--tilt', `${next}deg`);
     }, 3000 + idx*400);
   });
 })();
@@ -179,6 +184,7 @@ try {
     btn.addEventListener('click', ()=>{
       const title = btn.dataset.title || '活動';
       const weekday = btn.dataset.weekday || '';
+      const month = btn.dataset.month || '';
       const date = btn.dataset.date || '';
       const time = btn.dataset.time || '';
       const location = btn.dataset.location || '—';
@@ -187,7 +193,7 @@ try {
       const desc = btn.dataset.desc || '';
 
       elTitle.textContent = title;
-      elWhen.textContent  = `${weekday} ${date} 日 ${time}`;
+      elWhen.textContent  = `${month}/${date} ${weekday} ${time}`;
       elWhere.textContent = location;
       elPeople.textContent= `${total}/${max} 人`;
       elDesc.textContent  = desc;
