@@ -130,7 +130,7 @@ h1, h2, h3 {
 }
 
 .event {
-  max-width: 50px;
+  max-width: 60px;
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -1210,7 +1210,7 @@ h1, h2, h3 {
     border-radius: 4px;
     padding: 2px 4px;
     margin-top: 4px;
-    font-size: 0.8rem;
+    font-size: 0.6rem;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
@@ -1757,12 +1757,6 @@ h1, h2, h3 {
     }
 
 
-    .event {
-        font-size: 0.6rem;
-    }
-
-
-
 .todo-item.completed label {
     color: #aaa;
     text-decoration: line-through;
@@ -1798,14 +1792,15 @@ h1, h2, h3 {
 
 /* 活動事件樣式 */
 .event-activity {
-    background-color: #AA9DA9 !important;
-    color: white !important;
-    border-left: 3px solid #8a7788;
+    width: 60px;
+    background-color: #8a7788 !important;
+    color: rgb(244, 229, 245) !important;
+    border-left: 3px solid ;
     position: relative;
 }
 
 .event-activity::before {
-    content: "📅";
+    /* content: "📅"; */
     position: absolute;
     left: 2px;
     top: 50%;
