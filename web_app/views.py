@@ -3116,12 +3116,40 @@ def create_activity(request):
                 messages.error(request, msg)
                 return render_form(form)
 
-        # ❸ 表單驗證失敗（非禁用詞）
-        generic_msg = '表單填寫有誤，請檢查後重試'
+        # ❸ 表單驗證失敗（非禁用詞）- 返回詳細錯誤訊息
         if is_ajax(request):
-            # 只回一句話（不再丟整包 form.errors）
-            return JsonResponse({'ok': False, 'success': False, 'message': generic_msg}, status=400)
-        messages.error(request, generic_msg)
+            # 將 form.errors 轉換為友善的錯誤訊息
+            error_messages = []
+            field_names = {
+                'title': '活動標題',
+                'activity_type': '活動類型',
+                'description': '活動說明',
+                'date': '活動日期',
+                'time': '活動時間',
+                'address': '活動地點',
+                'max_participants': '參加人數上限',
+                'cover_image': '封面圖片',
+                'contact_info': '聯絡方式',
+            }
+            
+            for field, errors in form.errors.items():
+                field_label = field_names.get(field, field)
+                for error in errors:
+                    error_messages.append(f"{field_label}: {error}")
+            
+            final_message = '\n'.join(error_messages) if error_messages else '表單填寫有誤，請檢查後重試'
+            
+            return JsonResponse({
+                'ok': False, 
+                'success': False, 
+                'message': final_message,
+                'errors': form.errors  # 保留原始錯誤結構供前端使用
+            }, status=400)
+
+        # 非 AJAX 請求時，將錯誤顯示給用戶
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f"{field}: {error}")
         return render_form(form)
 
     # 其他 HTTP 方法
