@@ -113,7 +113,7 @@
         
 
         <div class="total-count">
-          共 <span id="total-activities">{{ books.paginator.count }}</span> 本書
+          共搜尋到 <span id="total-activities">{{ books.paginator.count }}</span> 本書
           <span class="page-info">(第 <span id="current-page">1</span> 頁，共 <span id="total-pages">1</span> 頁)</span>
       </div>
     </div>
@@ -588,7 +588,7 @@
         }
       });
 
-      filterResult.textContent = `共搜尋到 ${visibleCount} 本書`;
+      filterResult.textContent = ` ${visibleCount} `;
     }
 
     // 監聽所有篩選條件變化

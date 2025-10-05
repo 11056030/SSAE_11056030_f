@@ -15,6 +15,9 @@ body {
     position: relative;
     z-index: 1;
 }
+.ai-comment-content {
+  white-space: pre-line;
+}
 
 .stars-avg {
   --size: 22px;           /* 調整整體大小 */
