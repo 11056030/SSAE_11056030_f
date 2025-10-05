@@ -2156,19 +2156,62 @@ def toggle_review_like(request, review_id):
         'review_id': review.id,
     })
 
-# ===== AI Comment Optimization =====
+import re
+import logging
+import openai
+from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+# 設定日誌記錄器
+logger = logging.getLogger(__name__)
+
+# ============================================================
+# AI 評論優化功能
+# ============================================================
+# 功能說明:
+# 1. 接收使用者輸入的課程評論
+# 2. 使用 Azure OpenAI API 進行語意優化
+# 3. 保持原意但改善語氣,使其更友善、清晰
+# 4. 在評論末尾加上改進建議 (🦉：開頭)
+# ============================================================
+
 
 def _clean_input(text: str) -> str:
-    text = re.sub(r"\r\n?", "\n", text or "")
+    """
+    清理輸入文字
+    
+    處理步驟:
+    1. 統一換行符號 (\r\n 或 \r 轉為 \n)
+    2. 壓縮多餘空白 (連續空格/Tab 轉為單一空格)
+    3. 去除頭尾空白
+    
+    Args:
+        text: 原始輸入文字
+    
+    Returns:
+        str: 清理後的文字
+    """
+    # 處理可能的 None 值
+    text = text or ""
+    
+    # 統一換行符號
+    text = re.sub(r"\r\n?", "\n", text)
+    
+    # 壓縮空白字元
     text = re.sub(r"[ \t]+", " ", text)
+    
     return text.strip()
 
+
+# AI 系統提示詞 (System Prompt)
 SYSTEM_PROMPT = (
     "You help polish course reviews. Keep the user's original meaning almost completely. "
     "Only fix words if they are super harsh or offensive, but make the wording funny, casual, and easy to read—like a real person talking. "
     "Everything else should stay as close to the original as possible. "
-    "At the end of the review, add a short, natural improvement suggestion prefixed with 🦉：, and start it on a new line using a literal \\n (so the 🦉 part is always on its own line). "
-    "1) Don’t add or remove details the user didn’t mention, except for the improvement suggestion; "
+    "At the end of the review, add a short, natural improvement suggestion prefixed with 🦉：, and start it on a new line using a literal (so the 🦉 part is always on its own line). "
+    "1) Don't add or remove details the user didn't mention, except for the improvement suggestion; "
     "2) Only swap out offensive words while keeping the same strong opinion; "
     "3) Make the smallest edits needed, no over-polishing; "
     "4) Just output the final review text, no explanations; "
@@ -2179,59 +2222,157 @@ SYSTEM_PROMPT = (
 @csrf_exempt
 @require_POST
 def optimize_comment_ai(request):
-    api_key    = settings.AZURE_OPENAI_API_KEY
-    endpoint   = settings.AZURE_OPENAI_ENDPOINT
-    api_ver    = settings.AZURE_OPENAI_API_VERSION
+    """
+    AI 評論優化 API 端點
+    
+    請求方式: POST
+    請求參數:
+        - content (str): 使用者輸入的原始評論內容
+    
+    回應格式:
+        成功: {"result": "優化後的評論內容"}
+        失敗: {"error": "錯誤訊息"}, status=4xx/5xx
+    """
+    
+    logger.info("=== AI 評論優化請求開始 ===")
+    
+    # ===== 步驟 1: 載入 Azure OpenAI 設定 =====
+    api_key = settings.AZURE_OPENAI_API_KEY
+    endpoint = settings.AZURE_OPENAI_ENDPOINT
+    api_ver = settings.AZURE_OPENAI_API_VERSION
     deployment = settings.AZURE_OPENAI_DEPLOYMENT_NAME
-
-    if not (api_key and endpoint and deployment):
-        return JsonResponse({"error": "Azure OpenAI not configured"}, status=503)
-
-    raw = _clean_input(request.POST.get("content", ""))
-    if not raw:
+    
+    logger.info(f"Azure OpenAI 端點: {endpoint}")
+    logger.info(f"部署名稱: {deployment}")
+    logger.info(f"API 版本: {api_ver}")
+    
+    # 檢查必要設定是否完整
+    if not all([api_key, endpoint, deployment]):
+        logger.error("❌ Azure OpenAI 設定不完整")
+        return JsonResponse(
+            {"error": "Azure OpenAI not configured"}, 
+            status=503
+        )
+    
+    # ===== 步驟 2: 取得並清理使用者輸入 =====
+    raw_content = request.POST.get("content", "")
+    logger.info(f"原始輸入長度: {len(raw_content)} 字元")
+    
+    cleaned_content = _clean_input(raw_content)
+    logger.info(f"清理後長度: {len(cleaned_content)} 字元")
+    
+    # 空內容直接回傳
+    if not cleaned_content:
+        logger.warning("⚠️  輸入內容為空")
         return JsonResponse({"result": ""})
-
-    short = raw.replace("\n", "").strip()
-    if len(short) < 6:
+    
+    # ===== 步驟 3: 檢查內容長度 =====
+    # 移除換行後檢查實際字數
+    content_without_newlines = cleaned_content.replace("\n", "").strip()
+    
+    if len(content_without_newlines) < 6:
+        logger.warning(f"⚠️  內容過短 (僅 {len(content_without_newlines)} 字元)")
         return JsonResponse({
-            "result": "（內容過短）目前的評論資訊不足，無法進行語意優化與送出。"
-                     "請補充具體細節（例如：單元/作業類型/上課節奏/評分標準/時間點等），再按「轉換」。"
+            "result": (
+                "（內容過短）目前的評論資訊不足,無法進行語意優化與送出。"
+                "請補充具體細節（例如：單元/作業類型/上課節奏/評分標準/時間點等）,再按「轉換」。"
+            )
         })
-
+    
+    # ===== 步驟 4: 呼叫 Azure OpenAI API =====
     try:
+        logger.info("📡 正在呼叫 Azure OpenAI API...")
+        
+        # 初始化 OpenAI 客戶端
         client = openai.AzureOpenAI(
             api_key=api_key,
             api_version=api_ver,
             azure_endpoint=endpoint,
         )
-
-        msg_user = (
-            "請將以下評論改寫為可直接提交的中性評論文本，避免對話式與流程說明：\n\n"
-            f"{raw}\n\n"
+        
+        # 建構使用者訊息
+        user_message = (
+            "請將以下評論改寫為可直接提交的中性評論文本,避免對話式與流程說明：\n\n"
+            f"{cleaned_content}\n\n"
             "注意：只輸出改寫後的最終評論內容；不要出現道歉、無法處理、需要更多資訊等字樣。"
         )
-
-        resp = client.chat.completions.create(
+        
+        logger.info("📤 發送請求到 OpenAI...")
+        
+        # 發送 API 請求
+        response = client.chat.completions.create(
             model=deployment,
-            temperature=0.2,
+            temperature=0.2,  # 較低溫度確保輸出穩定
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": msg_user},
+                {"role": "user", "content": user_message},
             ],
-            max_tokens=400,
+            max_tokens=400,  # 限制回應長度
         )
-
-        text = (resp.choices[0].message.content or "").strip()
-
-        blacklist = ["無法", "需要更多資訊", "不便", "抱歉", "無法進行有效", "建議您提供"]
-        if any(k in text for k in blacklist) or len(text) < 6:
-            text = "課程整體品質仍有進步空間；期望在教學重點與作業說明上更清楚，並提供更多實作示例以提升理解。"
-
-        return JsonResponse({"result": text})
-
+        
+        # 取得 AI 回應內容
+        optimized_text = (response.choices[0].message.content or "").strip()
+        logger.info(f"📥 收到 AI 回應,長度: {len(optimized_text)} 字元")
+        
+        # ===== 步驟 5: 驗證 AI 回應品質 =====
+        # 黑名單關鍵字 (避免 AI 回應無效內容)
+        blacklist_keywords = [
+            "無法", 
+            "需要更多資訊", 
+            "不便", 
+            "抱歉", 
+            "無法進行有效", 
+            "建議您提供"
+        ]
+        
+        # 檢查是否包含黑名單關鍵字或內容過短
+        has_blacklist = any(keyword in optimized_text for keyword in blacklist_keywords)
+        is_too_short = len(optimized_text) < 6
+        
+        if has_blacklist or is_too_short:
+            logger.warning("⚠️  AI 回應品質不佳,使用預設回應")
+            optimized_text = (
+                "課程整體品質仍有進步空間；期望在教學重點與作業說明上更清楚,"
+                "並提供更多實作示例以提升理解。"
+            )
+        else:
+            logger.info("✅ AI 優化成功")
+        
+        return JsonResponse({"result": optimized_text})
+    
+    except openai.APIError as e:
+        # OpenAI API 錯誤
+        logger.error(f"❌ OpenAI API 錯誤: {str(e)}")
+        return JsonResponse(
+            {"error": f"OpenAI API 錯誤: {str(e)}"}, 
+            status=500
+        )
+    
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-# ===== end AI Comment Optimization =====
+        # 其他未預期錯誤
+        logger.error(f"❌ 未預期錯誤: {str(e)}", exc_info=True)
+        return JsonResponse(
+            {"error": f"系統錯誤: {str(e)}"}, 
+            status=500
+        )
+    
+    finally:
+        logger.info("=== AI 評論優化請求結束 ===\n")
+
+
+# ============================================================
+# 使用範例
+# ============================================================
+# POST /api/optimize-comment/
+# Content-Type: application/x-www-form-urlencoded
+# 
+# content=這門課真的爛透了老師都在講廢話
+#
+# 回應:
+# {
+#   "result": "這門課的教學內容還有很大的改進空間,老師的講解方式可以更精簡有效。\n🦉：建議課程設計時可以加入更多實作練習,讓理論與實務結合得更好。"
+# }
+# ============================================================
 
 #############################課程評論區##############################
 
