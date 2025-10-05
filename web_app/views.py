@@ -1927,8 +1927,8 @@ def comment_detail(request, id=None):
         'review_items': review_items,
         'avg_rating': round(avg_rating, 1),
         'avg_fill_percent': avg_fill_percent,
-        'review_count': len([rv for rv in raw_qs if (rv.content or '').strip()]),  # 有文字的
-        'total_ratings': stats_qs.count(),                                         # 含純評分
+        'review_count': len([rv for rv in raw_qs if (rv.content or '').strip()]),  # 有文字的評論
+        'total_ratings': len([rv for rv in raw_qs if not (rv.content or '').strip()]),  # 純評分（無文字）
         'academic': course.academica,
         'department': course.departmentd,
         'star_distribution': star_distribution,

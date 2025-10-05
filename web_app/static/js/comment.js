@@ -29,6 +29,23 @@ document.addEventListener('DOMContentLoaded', () => {
     sessionStorage.removeItem('openPopup');
   }
 
+  // 檢查是否需要刷新評星數據（檢查兩種存儲方式）
+  const needRefreshSession = sessionStorage.getItem('needRefreshRatings');
+  const needRefreshLocal = localStorage.getItem('needRefreshRatings');
+  
+  if (needRefreshSession || needRefreshLocal) {
+    console.log('檢測到需要刷新評星數據');
+    
+    // 清除標記
+    sessionStorage.removeItem('needRefreshRatings');
+    localStorage.removeItem('needRefreshRatings');
+    
+    // 延遲一點時間確保頁面完全載入後再刷新
+    setTimeout(() => {
+      refreshCourseData();
+    }, 300);
+  }
+
   // 2) 從頁面載入課程資料
   try {
     const coursesData = document.getElementById('courses-data');
@@ -46,6 +63,27 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeParallax();
   initializeScrollAnimations();
   initializeInteractions();
+});
+
+// 監聽頁面顯示事件，處理從其他頁面返回的情況
+window.addEventListener('pageshow', (event) => {
+  console.log('pageshow 事件觸發，persisted:', event.persisted);
+  
+  // 檢查是否需要刷新（不管是否從快取載入）
+  const needRefreshSession = sessionStorage.getItem('needRefreshRatings');
+  const needRefreshLocal = localStorage.getItem('needRefreshRatings');
+  
+  if (needRefreshSession || needRefreshLocal) {
+    console.log('檢測到需要刷新評星數據（pageshow事件）');
+    
+    // 清除標記
+    sessionStorage.removeItem('needRefreshRatings');
+    localStorage.removeItem('needRefreshRatings');
+    
+    setTimeout(() => {
+      refreshCourseData();
+    }, 300);
+  }
 });
 
 // 初始化篩選器事件
@@ -355,6 +393,47 @@ function renderCourses(courses) {
   });
 
   initializeStarRatings();
+}
+
+// 刷新課程數據
+async function refreshCourseData() {
+  console.log('🔄 正在刷新課程數據...');
+  
+  try {
+    // 重新從伺服器獲取最新的課程數據
+    console.log('📡 發送請求到 /get_courses/');
+    const response = await fetch('/get_courses/');
+    
+    if (response.ok) {
+      const freshCourses = await response.json();
+      const oldCount = allCourses.length;
+      allCourses = freshCourses;
+      
+      console.log('✅ 已刷新課程資料:', allCourses.length, '筆 (原本:', oldCount, '筆)');
+      
+      // 重新渲染課程列表
+      filterAndRenderCourses();
+      
+      console.log('🎯 課程列表已重新渲染完成');
+    } else {
+      console.error('❌ 刷新課程數據失敗:', response.status, response.statusText);
+      // 如果請求失敗，至少重新渲染現有數據
+      filterAndRenderCourses();
+    }
+  } catch (error) {
+    console.error('💥 刷新課程數據時發生錯誤:', error);
+    
+    // 如果網路請求失敗，至少重新渲染現有數據
+    console.log('🔄 網路請求失敗，使用現有數據重新渲染');
+    filterAndRenderCourses();
+  }
+  
+  // 確保透明度恢復正常（無論成功或失敗）
+  const container = document.querySelector('.activity-grid');
+  if (container) {
+    container.style.opacity = '';  // 移除 inline style，恢復 CSS 預設值
+    container.style.transition = '';  // 移除過渡效果
+  }
 }
 
 

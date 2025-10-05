@@ -52,7 +52,6 @@ urlpatterns = [
     path('book_2/', views.book_2, name='book_2'),
     path('test/', views.ask_page, name='ask_page'),
     path('navbar2/' , views.navbar2),
-
     # 統一檔案上傳路由 (支援 PDF 和 ZIP)
     path('upload_files/', views.upload_files, name='upload_files'),
     # 向後相容的 ZIP 上傳路由
@@ -66,6 +65,7 @@ urlpatterns = [
     path('add_comment/<int:course_id>/', views.add_comment_page, name='add_comment'),
     path('add_comment/<int:course_id>/submit/', views.add_comment_submit, name='add_comment_submit'),
     path('comment/review/<int:id>/delete/', views.comment_review_delete, name='comment_review_delete'),
+    path('get_courses/', views.get_courses, name='get_courses'),
     path('api/courses/<int:course_id>/reviews/', views.create_course_review, name='create_course_review'),
     path('api/courses/<int:course_id>/reviews/<int:review_id>/', views.update_course_review, name='update_course_review'),
     path('api/courses/<int:course_id>/reviews/<int:review_id>/delete/', views.delete_course_review, name='delete_course_review'),
@@ -76,7 +76,6 @@ urlpatterns = [
     # 對話/RAG/檔案
     path('api/conversations/', views.api_conversations),
     path('api/messages/<str:convo_id>/', views.api_messages),
-    path('api/ask/', views.api_ask),
     path('api/conversations/<str:convo_id>/', views.api_conversation_detail),
     path('api/export/<str:convo_id>/', views.api_export_conversation),
     path('auth/', include('social_django.urls', namespace='social')),
