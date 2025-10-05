@@ -212,7 +212,6 @@
   gap: 8px;
   justify-content: center;
   align-items: center;
-  margin-top: 16px;
   flex-wrap: wrap;
 }
 
@@ -250,131 +249,141 @@
   .book-detail-content { flex-direction: column; }
   .book-info-section { margin-top: 16px; margin-left: auto; margin-right: auto; }
   .book-management-buttons{ justify-content: center; }
-  .cshelf__shelf{ gap: 6px; }
+  #bookshelf.cshelf__shelf {
+    gap: 6px;
+  }
 }
 
 
 
-/* ============== Bookshelf ============== */
+
+/* === Bookshelf: wood tone + diagonal book stripes (優先生效，請放在分隔線上方) === */
+
 .cshelf__bookshelf{
+  --plank-w: 70px;               /* 每塊木板的寬度 */
+  --gap-w:   1px;                /* 木板縫隙寬 */
+  --gap-d:   rgba(0,0,0,.18);    /* 縫隙顏色（深） */
+  --gap-l:   rgba(255,255,255,.12); /* 縫隙高光（可略） */
+
+  position: relative;
+  border-radius: 16px;
+  padding: 32px 24px;
+
+  /* 外觀陰影與邊框（保留木頭立體感） */
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.20),
+    inset 0 -2px 6px rgba(0,0,0,0.28),
+    0 12px 32px rgba(0,0,0,.18);
+  border: 1px solid rgba(75,56,34,.35);
+
+  /* 背景（最底層：整體木頭的上下明暗） */
   background:
-    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,.015) 2px, rgba(0,0,0,.015) 4px),
-    linear-gradient(165deg, #d4c4c0 0%, #c4b4b0 100%);
-  border-radius:16px; padding:32px 24px;
-  box-shadow:0 12px 32px rgba(170,157,169,.25), inset 0 1px 0 rgba(255,255,255,.4);
-  position:relative; margin-bottom:24px;
-  border:1px solid rgba(42, 37, 42, 0.2);
+    /* 細縫 + 高光：每 80px 1px 深色，緊接 0.5px 淡亮（讓縫隙更立體） */
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(var(--plank-w) - var(--gap-w)),
+      var(--gap-d) calc(var(--plank-w) - var(--gap-w)) var(--plank-w),
+      var(--gap-l) var(--plank-w) calc(var(--plank-w) + 0.5px),
+      transparent calc(var(--plank-w) + 0.5px) calc(2*var(--plank-w))
+    ),
+    /* 單塊木板的上下漸層色（可調整色感） */
+    linear-gradient(180deg, #e6d6ba 0%, #c7ad91 55%, #b09276 100%);
+  overflow: hidden; /* 讓內部裝飾的 ::before/::after 不外溢 */
 }
+
+
 .cshelf__bookshelf::before{
   content:''; position:absolute; top:0; left:0; right:0; height:8px;
-  background:
-    repeating-linear-gradient(90deg, #AA9DA9 0%, #b8a8b4 3%, #AA9DA9 6%),
-    linear-gradient(180deg, #b8a8b4 0%, #9d918fff 100%);
+  background: linear-gradient(180deg, #baa086 0%, #8c7761 100%);
   border-radius:16px 16px 0 0;
-  box-shadow:0 2px 6px rgba(170,157,169,.35), inset 0 1px 0 rgba(255,255,255,.3);
+  box-shadow:0 2px 6px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
 }
+
+/* 層板：微透明木色、內凹陰影 */
 .cshelf__shelf{
-  display:flex; gap:16px; margin-bottom:38px; padding:20px;
-  background:
-    repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(170,157,169,.03) 1px, rgba(170,157,169,.03) 2px),
-    repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(170,157,169,.03) 1px, rgba(170,157,169,.03) 2px),
-    rgba(170,157,169,.08);
+  display:flex; gap:10px; margin-bottom:38px; padding:20px;
+  background: rgba(60,44,30,.18);
   border-radius:12px;
-  position:relative; flex-wrap:wrap; justify-content: center;
-  border:1px solid rgba(170,157,169,.15);
-  box-shadow:inset 0 2px 4px rgba(170,157,169,.1);
+  position:relative; flex-wrap:wrap; justify-content:center;
+  border:1px solid rgba(60,44,30,.28);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.18);
 }
 .cshelf__shelf::after{
-  content:''; position:absolute; bottom:-14px; left:8px; right:8px; height:14px;
-  background:
-    repeating-linear-gradient(90deg, #9d8f9c 0%, #b8aea8ff 2%, #9d8f9c 4%),
-    linear-gradient(180deg, #b8a8b4 0%, #9d938fff 100%);
-  border-radius:0 0 6px 6px; 
-  box-shadow:0 4px 12px rgba(170,157,169,.3), inset 0 1px 0 rgba(255,255,255,.25);
+  content:''; position:absolute; top:220px; left:20px; right:20px; height:10px;
+  background: linear-gradient(180deg,#8c7761 0%, #6a533d 100%);
+  border-radius:0 0 6px 6px;
+  box-shadow:0 4px 12px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.15);
 }
+
+/* 書：改成「斜線」紋理（45°），去掉橫線；帶輕微高光 */
 .cshelf__book{
-  width:80px; height:200px; border:0; border-radius:6px;
+  width:70px; height:200px; border:0; border-radius:6px;
   cursor:pointer; position:relative;
-  box-shadow:2px 5px 10px rgba(170,157,169,.35), inset -1px 0 2px rgba(0,0,0,.15);
+  box-shadow:2px 5px 10px rgba(0,0,0,.28), inset -1px 0 2px rgba(0,0,0,.12);
   transform-origin:bottom; transition:transform .3s, box-shadow .3s;
-  background:
-    repeating-linear-gradient(60deg, transparent, transparent 3px, rgba(255,255,255,.08) 3px, rgba(255,255,255,.08) 10px),
-    linear-gradient(135deg,#9d8ba5 0%,#8a7993 100%);
-    
+
+  /* 斜向條紋（fabric/皮革感） */
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(255,255,255,.10) 0px, rgba(255,255,255,.10) 2px,
+      rgba(255,255,255,0)   2px, rgba(255,255,255,0)   6px);
+  background-blend-mode: overlay;
+
   color:#fff;
-  border-left:2px solid rgba(255,255,255,.2);
+  border-left:2px solid rgba(255,255,255,.18);
 }
-.cshelf__book:nth-child(2){ 
-  background:
-    repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(255,255,255,.08) 3px, rgba(255,255,255,.08) 6px),
-    linear-gradient(135deg,#8fa5b0 0%,#7a8f9a 100%)
+.cshelf__book::before{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,.18), transparent 30%, rgba(0,0,0,.08));
+  pointer-events:none; mix-blend-mode:soft-light;
 }
-.cshelf__book:nth-child(3){ 
-  background:
-    repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(255,255,255,.08) 3px, rgba(255,255,255,.08) 6px),
-    linear-gradient(135deg,#b89daa 0%,#a58795 100%)
+.cshelf__book:hover{
+  transform:translateY(-10px) scale(1.05) rotateZ(1.5deg);
+  box-shadow:4px 10px 20px rgba(0,0,0,.35);
 }
-.cshelf__book:nth-child(4){ 
-  background:
-    repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(255,255,255,.08) 3px, rgba(255,255,255,.08) 6px),
-    linear-gradient(135deg,#95b5c0 0%,#7f9faa 100%)
+
+/* 書色盤：復古又不刺眼（可自行增減 nth-child） */
+/* .cshelf__book:nth-child(1){  background-color:#c98967; } 
+.cshelf__book:nth-child(2){  background-color:#a15e5a; } 
+.cshelf__book:nth-child(3){  background-color:#6f8990; } 
+.cshelf__book:nth-child(4){  background-color:#86a56a; } 
+.cshelf__book:nth-child(5){  background-color:#c7a75e; }
+.cshelf__book:nth-child(6){  background-color:#7297bd; } 
+.cshelf__book:nth-child(7){  background-color:#a37ab0; } 
+.cshelf__book:nth-child(8){  background-color:#d07f6e; } 
+.cshelf__book:nth-child(9){  background-color:#6b8f7b; } 
+.cshelf__book:nth-child(10){ background-color:#b5a06a; } */
+
+.cshelf__book:nth-child(5){  background-color:#b5a06a; } 
+.cshelf__book:nth-child(4){  background-color:#d08c60; } 
+.cshelf__book:nth-child(3){  background-color:#e9c46a; } 
+.cshelf__book:nth-child(2){  background-color:#c1957a; } 
+.cshelf__book:nth-child(1){  background-color:#9bc7c5; }
+.cshelf__book:nth-child(8){  background-color:#b5a06a; } 
+.cshelf__book:nth-child(9){  background-color:#d08c60; } 
+.cshelf__book:nth-child(7){  background-color:#e9c46a; } 
+.cshelf__book:nth-child(10){  background-color:#c1957a; } 
+.cshelf__book:nth-child(6){  background-color:#9bc7c5; }
+.cshelf__book:nth-child(11){  background-color:#b5a06a; } 
+.cshelf__book:nth-child(12){  background-color:#d08c60; } 
+.cshelf__book:nth-child(13){  background-color:#e9c46a; } 
+.cshelf__book:nth-child(14){  background-color:#c1957a; } 
+.cshelf__book:nth-child(15){  background-color:#9bc7c5; }
+
+/* 書脊字：維持你原本的直排設定（微調陰影即可） */
+.cshelf__spine{
+  writing-mode:vertical-rl; text-orientation:mixed; padding:14px 8px;
+  font-weight:700; font-size:13px; text-shadow:1px 2px 3px rgba(0,0,0,.3); letter-spacing:.5px;
 }
-.cshelf__book:nth-child(5){ 
-  background:
-    repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(255,255,255,.08) 3px, rgba(255,255,255,.08) 6px),
-    linear-gradient(135deg,#a0b5a0 0%,#8a9f8a 100%)
-}
-.cshelf__book:nth-child(6){ 
-  background:
-    repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(255,255,255,.08) 3px, rgba(255,255,255,.08) 6px),
-    linear-gradient(135deg,#c8b5a0 0%,#b29f8a 100%)
-}
-.cshelf__book:nth-child(7){ 
-  background:
-    repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(255,255,255,.08) 3px, rgba(255,255,255,.08) 6px),
-    linear-gradient(135deg,#8595a5 0%,#6f7f8f 100%)
-}
-.cshelf__book:nth-child(8){ 
-  background:
-    repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(255,255,255,.08) 3px, rgba(255,255,255,.08) 6px),
-    linear-gradient(135deg,#a595b0 0%,#8f7f9a 100%)
-}
-.cshelf__book:hover{ transform:translateY(-10px) scale(1.05) rotateZ(2deg); box-shadow:4px 10px 20px rgba(170,157,169,.45), inset -1px 0 2px rgba(0,0,0,.2) }
-.cshelf__spine{ writing-mode:vertical-rl; text-orientation:mixed; padding:14px 8px; font-weight:700; font-size:13px; text-shadow:1px 2px 3px rgba(0,0,0,.3); letter-spacing:0.5px }
+
+/* 空位：也改成斜線紋路，保持整體一致性 */
 .cshelf__empty{ 
-  background:
-    repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(170,157,169,.05) 5px, rgba(170,157,169,.05) 10px),
-    rgba(255,255,255,.3); 
-  color:#8a7788; border:2px dashed rgba(170,157,169,.3); padding:14px 16px; border-radius:8px; font-style:italic 
+  background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,.08) 5px, rgba(255,255,255,.08) 10px),
+              rgba(255,255,255,.25); 
+  color:#3f2f23; border:2px dashed rgba(255,255,255,.35); padding:14px 16px; border-radius:8px; font-style:italic;
 }
 
-/* ================= 書本樣式 ================= */
-.cshelf__book {
-  width: 70px;   
-}
-.cshelf__book:hover {
-  transform: perspective(400px) rotateY(0deg) scale(1.05);
-  box-shadow: 4px 8px 14px rgba(0,0,0,0.35);
-}
-
-.cshelf__spine {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  padding: 12px 6px;
-  font-weight: 700;
-  font-size: 12px;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-
-/* 書籍顏色 */
-.cshelf__book:nth-child(1){ --book-color: #2a4d69; }
-.cshelf__book:nth-child(2){ --book-color: #4b86b4; }
-.cshelf__book:nth-child(3){ --book-color: #adcbe3; }
-.cshelf__book:nth-child(4){ --book-color: #e7eff6; }
-.cshelf__book:nth-child(5){ --book-color: #63ace5; }
-.cshelf__book:nth-child(6){ --book-color: #c94c4c; }
-.cshelf__book:nth-child(7){ --book-color: #ff6f61; }
-.cshelf__book:nth-child(8){ --book-color: #6b4226; }
 
 /* ================= 小旗樣式 ================= */
 .gflag__flag {
@@ -440,10 +449,13 @@
           <!-- 左側課表區塊 -->
           <div class="card course-schedule">
             <div class="card-header">
-              <h2>活動票卷及二手書</h2>
+              <h2>這些事我在忙</h2>
             </div>
 
             <!-- 課表票券 -->
+            <div class="cshelf__title">
+              <i class="fa-solid fa-ticket"></i><span>我的票夾</span>
+            </div>
             <div class="cshelf__tickets">
               {% if tickets %}
                 {% for t in tickets %}
@@ -500,7 +512,7 @@
 
             <!-- 小旗：我發起的活動 -->
             <div class="cshelf__title">
-              <i class="fa-solid fa-flag"></i><span></span>
+              <i class="fa-solid fa-flag"></i><span>我來帶路</span>
             </div>
 
             <div class="gflag-board">
@@ -535,7 +547,7 @@
 
             <!-- 書架 -->
             <div class="cshelf__title">
-              <i class="fa-solid fa-book"></i><span></span>
+              <i class="fa-solid fa-book"></i><span>書攤子 出清中...</span>
             </div>
 
             <div class="cshelf__bookshelf">
