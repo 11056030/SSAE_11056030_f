@@ -81,6 +81,7 @@ urlpatterns = [
     path('auth/', include('social_django.urls', namespace='social')),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('api/pdf/<str:filename>/', views.view_pdf, name='view_pdf'),
+    path('api/ask/', views.api_ask),
 
     # 活動系統
     path('activities/', views.activity_list, name='activity_list'),
