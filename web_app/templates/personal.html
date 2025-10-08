@@ -133,8 +133,8 @@
   transform:rotateY(180deg); padding:24px;
   display:flex; flex-direction:column; justify-content:center; text-align:center;
 }
-.cticket__back h3{ font-size:22px; color:#5a4a3a; margin-bottom:12px }
-.cticket__back-txt{ color:#6d5d4b; line-height:1.6; margin-bottom:12px }
+.cticket__back h3{ font-size:22px; color:#5a4a3a; margin-bottom:0; }
+.cticket__back-txt{ color:#6d5d4b; line-height:1.6; margin-bottom:12px;   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
 .cticket__back-meta{ display:flex; flex-direction:column; gap:8px; font-size:14px; color:#8b7355 }
 .cticket__back-meta i{ margin-right:8px; color:#d4a574 }
 
@@ -172,8 +172,13 @@
   }
 
   .cticket__back h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    cursor: pointer;
     font-size: 1rem;                 /* 標題字小一點 */
-    margin-bottom: 6px;              /* 標題和內文間距縮小 */
+    margin-bottom:0;              /* 標題和內文間距縮小 */
   }
 
   .cticket__back .cticket__back-meta {
@@ -472,7 +477,10 @@
                     data-capacity="{{ t.max_participants }}"
                     data-host="{{ t.host|escape }}"
                     data-desc="{{ t.desc|escape }}"
-                    data-icon="{{ t.icon|default:'fa-solid fa-ticket' }}">
+                    data-icon="{{ t.icon|default:'fa-solid fa-ticket' }}"
+                    data-id="{{ t.id }}"
+                    data-url="{% url 'activity_detail' t.id %}">
+
                     <div class="cticket__inner">
                       <div class="cticket__front">
                         <div class="cticket__left">
