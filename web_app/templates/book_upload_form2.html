@@ -471,103 +471,174 @@ function updateContactReminder(phone, lineId) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const closeBtn = document.querySelector('.upload-modal2 .close-btn');
-    if (closeBtn) closeBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); closeForm2(); });
-    const modal = document.getElementById('uploadFormModal2');
-    if (modal) modal.addEventListener('click', function(e){ if (e.target === modal) closeForm2(); });
-    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { const m = document.getElementById('uploadFormModal2'); if (m && m.style.display === 'flex') closeForm2(); } });
+  const modal = document.getElementById('uploadFormModal2');
+  const closeBtn = document.querySelector('.upload-modal2 .close-btn');
+  const bookForm = document.getElementById('bookForm2');
 
-    const academicSelect = document.getElementById('id_academic');
-    const deptSelect = document.getElementById('id_department');
-    const gradeSelect = document.getElementById('id_grade');
-    if (academicSelect) {
-        academicSelect.addEventListener('change', function() {
-            const academicId = this.value;
-            resetDepartmentAndGrade();
-            if (!academicId) { deptSelect.disabled = true; gradeSelect.disabled = true; return; }
-            showLoadingState(); isLoadingData = true;
-            fetch(`/get-related-data/?academic_id=${academicId}`, { method: 'GET', headers: { 'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json' } })
-            .then(response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
-            .then(data => { updateDepartmentOptions(data.departments); updateGradeOptions(data.grades); deptSelect.disabled=false; gradeSelect.disabled=false; })
-            .catch(error => { console.error('載入失敗:', error); showErrorState(error.message); })
-            .finally(() => { isLoadingData = false; });
-        });
+  // === ① 進頁自動開窗（從 index 帶 popupToOpen:'uploadFormModal2'） ===
+  try {
+    const popupId = sessionStorage.getItem('openPopup');
+    if (popupId === 'uploadFormModal2' && typeof window.openBookUploadModal2 === 'function') {
+      window.openBookUploadModal2();
+      sessionStorage.removeItem('openPopup');
     }
-    
-    const bookForm = document.getElementById('bookForm2');
-    if (bookForm) {
-        bookForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const titleVal = (document.getElementById('id_title')?.value || '').trim();
-            if (!titleVal){ setTitleError('請輸入書名'); return; }
-            if (containsBannedTitle(titleVal)){ setTitleError('輸入內容包含禁止或不當詞彙，請重新編輯。'); return; }
-            if (isLoadingData) { alert('正在載入資料，請稍候再提交'); return; }
-            if (isSubmitting)   { return; }
-            isSubmitting = true;
+  } catch (_) {}
 
-            const formData = new FormData(this);
-            if (selectedFile) formData.set('cover_image', selectedFile);
-
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-
-            const price = formData.get('price');
-            if (!price || parseFloat(price) < 0) { setTitleError(''); alert('請輸入有效的價格'); isSubmitting=false; return; }
-
-            submitBtn.textContent = '上架中...'; submitBtn.disabled = true;
-
-            const extractMsg = (data, rawText) => {
-                let msg = (data && (data.message || data.error)) || '';
-                if (!msg && data && data.errors) {
-                    const first =
-                      (Array.isArray(data.errors) && data.errors[0]) ||
-                      (Array.isArray(data.errors.title) && data.errors.title[0]) ||
-                      (data.errors.general && Array.isArray(data.errors.general) && data.errors.general[0]) ||
-                      (Object.values(data.errors)[0] && Object.values(data.errors)[0][0]);
-                    if (first) msg = first;
-                }
-                if (!msg && rawText) msg = rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-                return msg || '';
-            };
-
-            let uploadSuccess = false;
-            try {
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    credentials: 'same-origin'
-                });
-                let data = null, rawText = '';
-                try { data = await response.json(); } catch { try { rawText = await response.text(); } catch(_){} }
-
-                if (response.ok && data && data.success) {
-                    uploadSuccess = true;
-                    showSuccessModal(); closeForm2();
-                    setTimeout(() => { hideSuccessModal(); window.location.reload(); }, 2000);
-                    return;
-                }
-
-                const msg = extractMsg(data, rawText);
-                const looksBanned = (data && (data.code === 'BANNED' || data.code === 'BANNED_TITLE')) || /禁止|不當|禁用/.test(msg);
-                if (looksBanned) {
-                    setTitleError('輸入內容包含禁止或不當詞彙，請重新編輯。');
-                } else {
-                    setTitleError('');
-                    alert(msg || '上架失敗，請稍後再試');
-                }
-            } catch (error) {
-                console.error('網路錯誤:', error);
-                setTitleError('網路錯誤，請稍後再試');
-            } finally {
-                if (!uploadSuccess) {
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                    isSubmitting = false;
-                }
-            }
-        });
+  // === ② 關閉事件：叉叉 / 點背景 / Esc ===
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      if (typeof window.closeForm2 === 'function') window.closeForm2();
+    });
+  }
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal && typeof window.closeForm2 === 'function') window.closeForm2();
+    });
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const m = document.getElementById('uploadFormModal2');
+      if (m && getComputedStyle(m).display === 'flex' && typeof window.closeForm2 === 'function') {
+        window.closeForm2();
+      }
     }
+  });
+
+  // === ③ 學制 → 載入科系/年級 ===
+  const academicSelect = document.getElementById('id_academic');
+  const deptSelect = document.getElementById('id_department');
+  const gradeSelect = document.getElementById('id_grade');
+
+  if (academicSelect) {
+    academicSelect.addEventListener('change', function () {
+      const academicId = this.value;
+      if (typeof resetDepartmentAndGrade === 'function') resetDepartmentAndGrade();
+
+      if (!academicId) {
+        if (deptSelect) deptSelect.disabled = true;
+        if (gradeSelect) gradeSelect.disabled = true;
+        return;
+      }
+
+      if (typeof showLoadingState === 'function') showLoadingState();
+      window.isLoadingData = true;
+
+      const relatedUrl = (bookForm && bookForm.getAttribute('data-related-url')) || '/get-related-data/';
+      const url = `${relatedUrl}?academic_id=${encodeURIComponent(academicId)}`;
+
+      fetch(url, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' }
+      })
+      .then(resp => {
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return resp.json();
+      })
+      .then(data => {
+        if (typeof updateDepartmentOptions === 'function') updateDepartmentOptions(data.departments || []);
+        if (typeof updateGradeOptions === 'function') updateGradeOptions(data.grades || []);
+        if (deptSelect) deptSelect.disabled = false;
+        if (gradeSelect) gradeSelect.disabled = false;
+      })
+      .catch(err => {
+        console.error('載入失敗:', err);
+        if (typeof showErrorState === 'function') showErrorState(err.message || '資料載入失敗');
+      })
+      .finally(() => { window.isLoadingData = false; });
+    });
+  }
+
+  // === ④ 表單提交（走 bookForm2.action） ===
+  if (bookForm) {
+    bookForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const titleInput = document.getElementById('id_title');
+      const titleVal = (titleInput?.value || '').trim();
+      if (!titleVal) { if (typeof setTitleError === 'function') setTitleError('請輸入書名'); return; }
+      if (typeof containsBannedTitle === 'function' && containsBannedTitle(titleVal)) {
+        if (typeof setTitleError === 'function') setTitleError('輸入內容包含禁止或不當詞彙，請重新編輯。');
+        return;
+      }
+      if (window.isLoadingData) { alert('正在載入資料，請稍候再提交'); return; }
+      if (window.isSubmitting)   { return; }
+      window.isSubmitting = true;
+
+      const formData = new FormData(this);
+      if (window.selectedFile) formData.set('cover_image', window.selectedFile);
+
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : '';
+
+      const price = formData.get('price');
+      if (!price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
+        if (typeof setTitleError === 'function') setTitleError('');
+        alert('請輸入有效的價格');
+        window.isSubmitting = false;
+        return;
+      }
+
+      if (submitBtn) { submitBtn.textContent = '上架中...'; submitBtn.disabled = true; }
+
+      const extractMsg = (data, rawText) => {
+        let msg = (data && (data.message || data.error)) || '';
+        if (!msg && data && data.errors) {
+          const first =
+            (Array.isArray(data.errors) && data.errors[0]) ||
+            (Array.isArray(data.errors.title) && data.errors.title[0]) ||
+            (data.errors.general && Array.isArray(data.errors.general) && data.errors.general[0]) ||
+            (Object.values(data.errors)[0] && Array.isArray(Object.values(data.errors)[0]) && Object.values(data.errors)[0][0]);
+          if (first) msg = first;
+        }
+        if (!msg && rawText) msg = rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        return msg || '';
+      };
+
+      let uploadSuccess = false;
+      try {
+        const resp = await fetch(this.action, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin'
+        });
+
+        let data = null, rawText = '';
+        try { data = await resp.json(); }
+        catch { try { rawText = await resp.text(); } catch(_){} }
+
+        if (resp.ok && data && data.success) {
+          uploadSuccess = true;
+          if (typeof showSuccessModal === 'function') showSuccessModal();
+          if (typeof closeForm2 === 'function') closeForm2();
+          setTimeout(() => {
+            if (typeof hideSuccessModal === 'function') hideSuccessModal();
+            window.location.reload();
+          }, 2000);
+          return;
+        }
+
+        const msg = extractMsg(data, rawText);
+        const looksBanned = (data && (data.code === 'BANNED' || data.code === 'BANNED_TITLE')) || /禁止|不當|禁用/.test(msg);
+        if (looksBanned) {
+          if (typeof setTitleError === 'function') setTitleError('輸入內容包含禁止或不當詞彙，請重新編輯。');
+        } else {
+          if (typeof setTitleError === 'function') setTitleError('');
+          alert(msg || '上架失敗，請稍後再試');
+        }
+      } catch (error) {
+        console.error('網路錯誤:', error);
+        if (typeof setTitleError === 'function') setTitleError('網路錯誤，請稍後再試');
+      } finally {
+        if (!uploadSuccess && submitBtn) {
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+        }
+        if (!uploadSuccess) window.isSubmitting = false;
+      }
+    });
+  }
 });
 
 function resetDepartmentAndGrade() {

@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (popupId) {
     const popup = document.getElementById(popupId);
     if (popup) {
-      popup.classList.add('active');
+      openModal(popup);
       console.log(`自動開啟彈窗: ${popupId}`);
     }
     sessionStorage.removeItem('openPopup');
@@ -454,7 +454,7 @@ function initializeStarRatings() {
 
 // 滾動動畫（可選）
 function initializeScrollAnimations() {
-  const allCards = document.querySelectorAll('.activity-card');
+  const allCards = document.querySelectorAll('.course-card');
 
   function checkVisibility() {
     const h = window.innerHeight;
@@ -480,6 +480,52 @@ function initializeParallax() {
   window.addEventListener('scroll', parallaxScroll);
 }
 
+
+// ---- 統一的開/關 Modal 工具 ----
+function openModal(modal) {
+  if (!modal) return;
+  modal.classList.add('show');                 // 統一用 .show 控制狀態
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  // 可選：若有 backdrop
+  const backdrop = document.querySelector('.modal-backdrop');
+  if (backdrop) backdrop.classList.add('show');
+}
+
+function closeModal(modal) {
+  if (!modal) return;
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+
+  const backdrop = document.querySelector('.modal-backdrop.show');
+  if (backdrop) backdrop.classList.remove('show');
+}
+
+// 全域一次性委派（叉叉/取消/遮罩/ESC）
+document.addEventListener('click', (e) => {
+  // 叉叉或任何 data-modal-close
+  const closer = e.target.closest('[data-modal-close], .modal__close, .btn-close');
+  if (closer) {
+    const modal = closer.closest('.modal');
+    if (modal) closeModal(modal);
+    return;
+  }
+  // 點 backdrop（外層 .modal）關閉
+  if (e.target.classList?.contains('modal') && e.target.classList.contains('show')) {
+    closeModal(e.target);
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const opened = document.querySelector('.modal.show');
+    if (opened) closeModal(opened);
+  }
+});
+
+
 // 互動初始化（包含導頁）
 function initializeInteractions() {
   // 事件委派：課程卡片的「新增評論」→ 顯示彈窗
@@ -491,11 +537,11 @@ function initializeInteractions() {
     if (window.CommentPopup && typeof window.CommentPopup.showSimpleCommentModal === 'function') {
       window.CommentPopup.showSimpleCommentModal(btn);
     } else {
-      const fallback = document.querySelector('#simple-comment-modal, .modal');
-      if (fallback) {
-        fallback.classList.add('active');
-        fallback.style.display = 'flex';
-      }
+      // ✅ 改走統一的 openModal，而不是 active + inline style
+      const modal =
+        document.getElementById('simple-comment-modal') ||
+        document.querySelector('.modal'); // 若 id 不存在，退而求其次
+      openModal(modal);
     }
   });
 }

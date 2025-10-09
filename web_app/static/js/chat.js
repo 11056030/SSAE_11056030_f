@@ -36,58 +36,131 @@ function initBlobs() {
     });
 }
 
+// —— 校規問題跨頁帶入工具 —— //
+let _prefillApplied = false;
 
+function _getPrefillFromStorageOrURL() {
+  // 1) 先看 sessionStorage（index 帶過來）
+  const KEY = 'rules_prefill';
+  let text = sessionStorage.getItem(KEY) || '';
+  if (text) sessionStorage.removeItem(KEY);
 
-// 當前對話ID
-let currentId = null;
-let conversations = [];
-let nextSeq = 1;
+  // 2) 再看 URL ?prefill=... &autoAsk=1
+  const usp = new URLSearchParams(window.location.search);
+  const urlText = usp.get('prefill');
+  const autoAsk = usp.get('autoAsk') === '1';
 
-// DOM元素
-const sidebar = document.getElementById('sidebar');
-const menuBtn = document.getElementById('menuBtn');
-const mainContent = document.getElementById('mainContent');
-const currentChatTitle = document.getElementById('currentChatTitle');
-const newChatBtn = document.getElementById('newChatBtn');
-const chatHistoryEl = document.getElementById('chatHistory');
-const chatContainer = document.getElementById('chatContainer');
-const noMessagesEl = document.getElementById('noMessages');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
+  if (!text && urlText) text = decodeURIComponent(urlText);
 
-// 建立統一檔案上傳按鈕
-const headerArea = currentChatTitle.parentElement;
-const uploadContainer = document.createElement('div');
-uploadContainer.className = 'upload-container';
-uploadContainer.innerHTML = `
-    <label for="fileUpload" class="upload-btn">
+  // 清掉網址上的 prefill/autoAsk 參數，保持乾淨
+  if (urlText || autoAsk) {
+    usp.delete('prefill');
+    usp.delete('autoAsk');
+    const clean = `${location.pathname}${usp.toString() ? '?' + usp.toString() : ''}${location.hash || ''}`;
+    history.replaceState(null, '', clean);
+  }
+
+  return { text: (text || '').trim(), autoAsk };
+}
+
+async function _maybeApplyPrefill() {
+  if (_prefillApplied) return;               // 只灌一次
+  const { text, autoAsk } = _getPrefillFromStorageOrURL();
+  if (!text) return;
+
+  const field = messageInput || document.getElementById('messageInput');
+  if (!field) return;
+  field.value = text;
+  adjustTextareaHeight(field);
+  field.dispatchEvent(new Event('input', { bubbles: true }));
+  field.focus();
+
+  if (autoAsk && currentId) {
+    // 直接送出（沿用你的 sendQuestion）
+    await sendQuestion();
+  }
+
+  _prefillApplied = true;
+}
+
+// 👉 直接貼上，完整取代你現在的那段
+document.addEventListener('DOMContentLoaded', () => {
+  // ⚠️ 不在這裡重新宣告 currentId / conversations / nextSeq
+  // 這些請用檔案上方既有的全域變數
+
+  // 將 DOM 元素「賦值給全域變數」，避免陰影遮蔽
+  sidebar          = document.getElementById('sidebar');
+  menuBtn          = document.getElementById('menuBtn');
+  mainContent      = document.getElementById('mainContent');
+  currentChatTitle = document.getElementById('currentChatTitle');
+  newChatBtn       = document.getElementById('newChatBtn');
+  chatHistoryEl    = document.getElementById('chatHistory');
+  chatContainer    = document.getElementById('chatContainer');
+  noMessagesEl     = document.getElementById('noMessages');
+  messageInput     = document.getElementById('messageInput');
+  sendBtn          = document.getElementById('sendBtn');
+
+  // === 建立統一檔案上傳按鈕（放在標題右側） ===
+  if (currentChatTitle && currentChatTitle.parentElement) {
+    const headerArea = currentChatTitle.parentElement;
+    const uploadContainer = document.createElement('div');
+    uploadContainer.className = 'upload-container';
+    uploadContainer.innerHTML = `
+      <label for="fileUpload" class="upload-btn">
         <i class="fa-solid fa-upload"></i>
         <span>上傳檔案</span>
-    </label>
-    <input type="file" id="fileUpload" accept=".pdf,.zip" style="display:none" />
-    
-    <div id="floating-progress" style="display:none; position:absolute; top:120%; left:80%; margin-left:10px; background:white; border:1px solid #ccc; padding:15px; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.15); z-index:1000; width:280px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+      </label>
+      <input type="file" id="fileUpload" accept=".pdf,.zip" style="display:none" />
+      <div id="floating-progress" style="display:none; position:absolute; top:120%; left:80%; margin-left:10px; background:white; border:1px solid #ccc; padding:15px; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.15); z-index:1000; width:280px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
         <div id="progressText" style="font-size:14px; color:#333; margin-bottom:8px;">準備上傳...</div>
         <div style="background:#f0f0f0; height:8px; border-radius:4px; overflow:hidden;">
-            <div id="progressBar" style="background:linear-gradient(90deg, #4CAF50, #45a049); height:100%; width:0%; border-radius:4px; transition:width 0.3s ease;"></div>
+          <div id="progressBar" style="background:linear-gradient(90deg, #4CAF50, #45a049); height:100%; width:0%; border-radius:4px; transition:width 0.3s ease;"></div>
         </div>
         <div id="fileInfo" style="font-size:12px; color:#666; margin-top:5px;"></div>
-    </div>
-`;
+      </div>
+    `;
 
-// 插入到標題區域的右側
-headerArea.style.display = 'flex';
-headerArea.style.justifyContent = 'space-between';
-headerArea.style.alignItems = 'center';
-headerArea.appendChild(uploadContainer);
+    headerArea.style.display = 'flex';
+    headerArea.style.justifyContent = 'space-between';
+    headerArea.style.alignItems = 'center';
+    headerArea.appendChild(uploadContainer);
 
-// 綁定檔案選擇事件
-document.getElementById('fileUpload').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        uploadFile(file);
+    // 綁定檔案選擇事件（放這裡最安全）
+    const fileInput = uploadContainer.querySelector('#fileUpload');
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (file) uploadFile(file);
+      });
     }
+  } else {
+    console.warn('[chat] 找不到 currentChatTitle 或其 parentElement，略過上傳按鈕插入。');
+  }
+
+  // === 發問送出事件 ===
+  if (sendBtn && messageInput) {
+    // 直接使用你的 sendQuestion()
+    sendBtn.addEventListener('click', sendQuestion);
+
+    // Enter 送出（Shift+Enter 換行）
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendQuestion();
+      }
+    });
+
+    // 自適應高度（若你已有 adjustTextareaHeight，就會生效）
+    messageInput.addEventListener('input', () => {
+      try { adjustTextareaHeight(messageInput); } catch { /* 兼容舊版 */ adjustTextareaHeight?.(); }
+    });
+  }
+
+  // === 進頁後嘗試把 index 帶來的問題灌入（並在已有對話且 autoAsk=1 時自動送出）===
+  try { _maybeApplyPrefill(); } catch (e) { console.warn('_maybeApplyPrefill 執行失敗：', e); }
 });
+
+
 
 // 統一檔案上傳函數
 function uploadFile(file) {
@@ -419,6 +492,7 @@ async function selectConvo(id) {
         const res = await fetch(`/api/messages/${id}/`);
         const data = await res.json();
         renderMessages(data.messages);
+        await _maybeApplyPrefill();   // ← 新增：選好對話後嘗試灌字／自動送出
         
         // 更新標題
         const convo = conversations.find(c => c.id === id);
@@ -500,7 +574,7 @@ newChatBtn.addEventListener('click', async () => {
     }
 });
 
-// 發送訊息
+
 // 發送訊息
 async function sendQuestion() {
     const questionEl = document.getElementById('messageInput');
@@ -1032,24 +1106,6 @@ function showPDFModal(pdfUrl, filename) {
     tryLoadPDF();
 }
 
-// 發送按鈕點擊事件
-sendBtn.addEventListener('click', sendQuestion);
-
-// Enter鍵發送(Shift+Enter換行)
-messageInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendQuestion();
-    }
-});
-
-// 自適應文本輸入框高度
-function adjustTextareaHeight() {
-    messageInput.style.height = 'auto';
-    messageInput.style.height = (messageInput.scrollHeight) + 'px';
-}
-
-messageInput.addEventListener('input', adjustTextareaHeight);
 
 // 初始化
 (async () => {
@@ -1076,6 +1132,7 @@ messageInput.addEventListener('input', adjustTextareaHeight);
     menuBtn.classList.remove('open');
     document.body.classList.add('sidebar-collapsed');
     sidebarOpen = false;
+    _maybeApplyPrefill();
 })();
 
 // 窗口大小調整時的行為
@@ -1085,5 +1142,7 @@ window.addEventListener('resize', () => {
         menuBtn.classList.remove('open');
         document.body.classList.add('sidebar-collapsed');
         sidebarOpen = false;
+
+        _maybeApplyPrefill();
     }
 });

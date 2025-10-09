@@ -31,6 +31,15 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.templatetags.static import static
 from django.conf import settings
 
+# views.py (module import 區)
+from django.db.models import Q, F
+from django.db.models import Count as DJCount
+from django.db.models import Value as DJValue
+from django.db.models import IntegerField as DJIntegerField
+from django.db.models.functions import Coalesce
+import logging
+logger = logging.getLogger(__name__)
+
 from social_django.models import UserSocialAuth
 import openai
 
@@ -1079,16 +1088,30 @@ def index(request):
     try:
         a_hot = (
             GroupActivity.objects
-            .annotate(joined_count=Count("participants", filter=Q(participants__status="joined")))
-            .order_by("-joined_count", "-created_at")
+            .annotate(
+                participants_count_q=Coalesce(
+                    DJCount(
+                        'participants',
+                        filter=Q(participants__status='joined'),
+                        distinct=True,
+                    ),
+                    0,
+                )
+            )
+            .annotate(
+                total_count_q=F('participants_count_q') + DJValue(1, output_field=DJIntegerField())
+            )
+            .order_by('-total_count_q', '-created_at')
             .first()
         )
+
         if a_hot:
             title = f"🔥 活動︰{_shorten(a_hot.title)}"
             url = _safe_reverse("activity_detail", args=[a_hot.pk], fallback=f"/activity/{a_hot.pk}/")
             activity_hot_item = {"title": title, "url": url}
+
     except Exception:
-        pass
+        logger.exception("計算熱門活動失敗")
 
     # ====== 組裝給前端 ======
     # 桌機：左邊 3 個（最新：課程／二手書／活動），右邊 3 個（熱門：課程／二手書／活動）
