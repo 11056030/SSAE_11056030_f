@@ -55,7 +55,7 @@ body {
 .book-content-layout {
     display: flex;
     align-items: center;
-    gap: 30px;
+    /* gap: 30px; */
 }
 
 /* 放大預覽遮罩 */
@@ -212,13 +212,13 @@ body {
     margin-bottom: 25px;
     padding-left: 15px;
     position: relative;
-    border-left: 4px solid #6F557D;
+    /* border-left: 4px solid #6F557D; */
 }
 
 /* Book info section */
 .book-info {
     flex: 1;
-    padding: 40px;
+    padding: 30px;
     position: relative;
     z-index: 1;
     display: flex;
@@ -479,75 +479,142 @@ body {
     background-color: #593C68;
 }
 
-/* Related books */
+/* 相關書籍推薦 - 輪播設計 */
+.related-books-container {
+    position: relative;
+    margin-top: 20px;
+}
+
 .related-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 20px;
+    display: flex;
+    gap: 25px;
+    overflow: hidden;
+    scroll-behavior: smooth;
+    padding: 0 50px;
 }
 
 .related-book-card {
-    background-color: #f8f9fa;
-    border-radius: 8px;
+    flex: 0 0 calc(33.333% - 17px);
+    max-width: calc(33.333% - 17px);
+    background: white;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease;
+    text-decoration: none;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    border: 1px solid rgba(111, 85, 125, 0.1);
 }
 
 .related-book-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(111, 85, 125, 0.15);
+    border-color: rgba(111, 85, 125, 0.2);
 }
 
 .related-book-image {
-    height: 150px;
+    height: 180px;
     overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, #f8f6f9 0%, #f0ebf2 100%);
 }
 
 .related-book-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.related-book-card:hover .related-book-image img {
+    transform: scale(1.05);
 }
 
 .related-book-info {
-    padding: 15px;
+    padding: 20px;
+    position: relative;
 }
 
 .related-book-info h3 {
-    font-size: 14px;
-    margin-bottom: 5px;
+    font-size: 16px;
+    margin-bottom: 8px;
     color: #333;
+    font-weight: 600;
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    line-clamp: 2;
     -webkit-box-orient: vertical;
+    line-clamp: 2;
     overflow: hidden;
+    line-height: 1.4;
+    min-height: 44px;
 }
 
 .related-book-price {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 18px;
+    font-weight: 700;
     color: #6F557D;
-    margin: 0;
+    margin-bottom: 10px;
 }
 
-/* Fixed CTA button */
-.fixed-cta {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #6F557D;
+.related-book-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #888;
+}
+
+.related-book-condition {
+    background: linear-gradient(135deg, #6F557D 0%, #8a6b8f 100%);
     color: white;
-    border: none;
-    border-radius: 50px;
-    padding: 8px 18px;
-    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
     font-weight: 500;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 輪播箭頭 */
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    border: 2px solid #6F557D;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    z-index: 100;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(111, 85, 125, 0.15);
+}
+
+.carousel-arrow:hover {
+    background: #6F557D;
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 16px rgba(111, 85, 125, 0.25);
+}
+
+.carousel-arrow.prev {
+    left: 10px;
+}
+
+.carousel-arrow.next {
+    right: 10px;
+}
+
+.carousel-arrow i {
+    font-size: 16px;
+    color: #6F557D;
+    transition: color 0.3s ease;
+}
+
+.carousel-arrow:hover i {
+    color: white;
 }
 
 .fixed-cta:hover {
@@ -1037,7 +1104,43 @@ body {
     }
     
     .related-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        padding: 0 20px;
+        gap: 15px;
+    }
+    
+    .related-book-card {
+        flex: 0 0 calc(50% - 8px);
+        max-width: calc(50% - 8px);
+    }
+    
+    .related-book-image {
+        height: 140px;
+    }
+    
+    .related-book-info {
+        padding: 15px;
+    }
+    
+    .related-book-info h3 {
+        font-size: 14px;
+        min-height: 36px;
+    }
+    
+    .related-book-price {
+        font-size: 16px;
+    }
+    
+    .carousel-arrow {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .carousel-arrow.prev {
+        left: 5px;
+    }
+    
+    .carousel-arrow.next {
+        right: 5px;
     }
     
     .modal-content {
@@ -1673,7 +1776,7 @@ body {
     cursor: pointer;
 }
 
-/* Related books */
+/* 舊的相關書籍樣式 - 已註解
 .related-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1728,6 +1831,7 @@ body {
     color: #666;
     font-size: 14px;
 }
+*/
 
 /* Responsive styles */
 @media (max-width: 768px) {
@@ -1747,9 +1851,11 @@ body {
         max-width: 250px;
     }
     
+    /* 舊的響應式樣式 - 已註解
     .related-grid {
         grid-template-columns: 1fr;
     }
+    */
     
     .info-card:not(:last-child)::after {
         display: none;
