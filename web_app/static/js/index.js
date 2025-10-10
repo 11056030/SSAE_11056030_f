@@ -75,18 +75,23 @@ const keywordMap = [
     { keywords: "課本", intent: "book" },
     { keywords: "查", intent: "rules" },
     { keywords: "問", intent: "rules" },
+    { keywords: "怎麼", intent: "rules" },
     { keywords: "規", intent: "rules" },
     { keywords: "學分", intent: "rules" },
     { keywords: "畢業", intent: "rules" },
     { keywords: "門檻", intent: "rules" },
     { keywords: "舉辦", intent: "hold" },
+    { keywords: "邀請", intent: "hold" },
     { keywords: "發起", intent: "hold" },
     { keywords: "揪", intent: "hold" },
     { keywords: "創", intent: "hold" },
+    { keywords: "參", intent: "event" },
     { keywords: "活動", intent: "event" },
     { keywords: "團", intent: "event" },
     { keywords: "會", intent: "event" },
     { keywords: "評", intent: "review" },
+    { keywords: "抱怨", intent: "review" },
+    { keywords: "稱讚", intent: "review" },
     { keywords: "寫", intent: "review" },
     { keywords: "看", intent: "look" },
     { keywords: "課", intent: "course" },
@@ -169,6 +174,7 @@ function getIntentsFromInput(input) {
     return Array.from(result);
 }
 
+
 function showMessage(text, type = 'error') {
     const messageEl = document.getElementById('message');
     messageEl.textContent = text;
@@ -198,14 +204,37 @@ function closeModal() {
 }
 
 function confirmAction() {
-    if (currentShortcut) {
-        if (currentShortcut.action === "redirect") {
-            if (currentShortcut.popupToOpen) {
-                sessionStorage.setItem('openPopup', currentShortcut.popupToOpen);
-            }
-            window.location.href = currentShortcut.target;
-        }
-    }
+  if (currentShortcut) {
+      if (currentShortcut.action === "redirect") {
+          if (currentShortcut.popupToOpen) {
+              sessionStorage.setItem('openPopup', currentShortcut.popupToOpen);
+          }
+          let target = currentShortcut.target;
+          if (target === '/chat/' && sessionStorage.getItem('rules_prefill')) {
+              target = '/chat/?autoAsk=1';
+          }
+          window.location.href = target;
+      }
+  }
+}
+
+// 例：你原本拿到使用者輸入的地方
+function onAskSubmit() {
+  const inputEl = document.querySelector('#askInput'); // ← 你的詢問框 selector
+  const raw = (inputEl?.value || '').trim();
+  if (!raw) return;
+
+  const intents = getIntentsFromInput(raw);
+  const shortcut = pickShortcutByIntents(intents); // ← 你原本決定 shortcuts 的方法
+
+  // 重要：若要前往校規頁面，先把原句問題塞進 sessionStorage
+  if (shortcut && shortcut.action === 'redirect' && shortcut.target === '/chat/') {
+    sessionStorage.setItem('rules_prefill', raw);
+  }
+
+  // 照你原本流程跑
+  currentShortcut = shortcut;
+  confirmAction();
 }
 
 
@@ -225,6 +254,11 @@ function handleInput() {
             intents.includes(intent)
         );
         if (isMatch) {
+          // ★ 若要前往校規頁面：先把原句問題存起來
+          if (shortcut.action === "redirect" && shortcut.target === "/chat/") {
+               sessionStorage.setItem('rules_prefill', inputValue);
+          }
+
             let title = `前往「${shortcut.label || inputValue}」?`;
             let content = '';
 

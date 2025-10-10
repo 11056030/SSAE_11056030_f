@@ -1,10 +1,57 @@
+function openModal(modal) {
+  if (!modal) return;
+  if (modal.classList.contains('upload-modal2')) {
+    modal.style.display = 'flex';            // ✅ 顯示
+  }
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  document.body.style.height = '100%';
+
+  const backdrop = document.querySelector('.modal-backdrop');
+  if (backdrop) backdrop.classList.add('show');
+}
+
+function closeModal(modal) {
+  if (!modal) return;
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden', 'true');
+  if (modal.classList.contains('upload-modal2')) {
+    modal.style.display = 'none';            // ✅ 關閉
+  }
+  document.body.style.overflow = '';
+  document.body.style.height = '';
+
+  const backdrop = document.querySelector('.modal-backdrop.show');
+  if (backdrop) backdrop.classList.remove('show');
+}
+
+// 事件委派：叉叉 / 遮罩 / ESC
+document.addEventListener('click', (e) => {
+  const closer = e.target.closest('[data-modal-close], .modal__close, .btn-close');
+  if (closer) {
+    const modal = closer.closest('.modal');
+    if (modal) closeModal(modal);
+    return;
+  }
+  if (e.target.classList?.contains('modal') && e.target.classList.contains('show')) {
+    closeModal(e.target);
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const opened = document.querySelector('.modal.show');
+    if (opened) closeModal(opened);
+  }
+});
+
 //book.js
 window.addEventListener('DOMContentLoaded', () => {
     const popupId = sessionStorage.getItem('openPopup');
     if (popupId) {
         const popup = document.getElementById(popupId);
         if (popup) {
-            popup.classList.add('show-popup');
+            openModal(popup);
             console.log(`開啟彈窗: ${popupId}`);
         } else {
             console.warn(`找不到彈窗 ID: ${popupId}`);
@@ -14,13 +61,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 修正：將＋按鈕事件註冊放在這裡，確保元素都已渲染
     const centerUploadBtn = document.getElementById('centerUploadBtn');
-    const uploadFormModal = document.getElementById('uploadForm');
-    const uploadFormEl = document.querySelector('#uploadForm form');
+    const uploadFormModal = document.getElementById('uploadFormModal2');
+    const uploadFormEl = document.querySelector('#bookForm2');
     if (centerUploadBtn && uploadFormModal) {
         centerUploadBtn.addEventListener('click', function() {
-            uploadFormModal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-            document.body.style.height = '100%';
+            openModal(uploadFormModal); 
         });
     }
 

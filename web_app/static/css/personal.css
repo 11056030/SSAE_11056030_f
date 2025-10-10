@@ -621,6 +621,13 @@ h1, h2, h3 {
   word-break:break-word;
 }
 
+.cticket__back h3{
+  text-decoration: underline;
+}
+.cticket__back h3:hover{
+  color: #8A7695;
+}
+
 .cticket__subtitle{ font-size:13px; color:#8b7355; text-transform:uppercase; letter-spacing:2px }
 .cticket__stars{ color:#d4a574; font-size:13px; letter-spacing:3px }
 .cticket__stars::before { content: "★ ★ ★ ★ ★ ★ ★ ★ ★"; }
