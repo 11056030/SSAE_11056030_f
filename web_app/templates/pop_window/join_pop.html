@@ -24,7 +24,7 @@
             
             <!-- 標題 -->
             <div class="form-group">
-                <label for="activity-title" class="form-label" style="margin-top: 20px;">活動標題*</label>
+                <label for="activity-title" class="form-label" style="margin-top: 20px;">活動標題 <span class="required-star">*</span></label>
                 <input type="text" id="activity-title" name="title" class="form-input" placeholder="請輸入活動標題（最多30字）" maxlength="30" required>
             </div>
             
@@ -32,7 +32,7 @@
             <div class="form-row">
                 <div class="form-col">
                     <div class="form-group">
-                        <label for="activity-type" class="form-label">活動類型*</label>
+                        <label for="activity-type" class="form-label">活動類型 <span class="required-star">*</span></label>
                         <select id="activity-type" name="type" class="form-select" required>
                             <option value="" disabled selected>請選擇活動類型</option>
                             <option value="food">美食</option>
@@ -46,7 +46,7 @@
                 </div>
                 <div class="form-col">
                     <div class="form-group">
-                        <label class="form-label">地點類型*</label>
+                        <label class="form-label">地點類型 <span class="required-star">*</span></label>
                         <div class="radio-group">
                             <label class="radio-option">
                                 <input type="radio" name="location_type" value="on_campus">
@@ -63,13 +63,13 @@
 
             <!-- 校內教室 -->
             <div class="form-group" id="classroom-field" style="display:none;">
-                <label for="classroom" class="form-label">教室*</label>
+                <label for="classroom" class="form-label">教室 <span class="required-star">*</span></label>
                 <input type="text" id="classroom" class="form-input" placeholder="例如：承曦樓505、圖書館討論室1">
             </div>
 
             <!-- 校外地點 -->
             <div class="form-group" id="location-field" style="display:none;">
-                <label for="activity-location" class="form-label">活動地點*</label>
+                <label for="activity-location" class="form-label">活動地點 <span class="required-star">*</span></label>
                 <div class="location-input-container">
                     <input type="text" id="activity-location" class="form-input" placeholder="搜尋地點（例：好樂迪）">
                     <div id="location-suggestions" class="location-suggestions"></div>
@@ -84,7 +84,7 @@
 
             <!-- 活動說明 -->
             <div class="form-group">
-                <label for="activity-description" class="form-label">活動說明*</label>
+                <label for="activity-description" class="form-label">活動說明 <span class="required-star">*</span></label>
                 <textarea id="activity-description" name="description" class="form-textarea" placeholder="請詳細描述活動內容、準備物品、費用說明等資訊..." required></textarea>
             </div>
             
@@ -92,13 +92,13 @@
             <div class="form-row">
                 <div class="form-col">
                     <div class="form-group">
-                        <label for="activity-date" class="form-label">活動日期*</label>
+                        <label for="activity-date" class="form-label">活動日期 <span class="required-star">*</span></label>
                         <input type="date" id="activity-date" name="date" class="form-input" required>
                     </div>
                 </div>
                 <div class="form-col">
                     <div class="form-group">
-                        <label for="activity-time" class="form-label">活動時間*</label>
+                        <label for="activity-time" class="form-label">活動時間 <span class="required-star">*</span></label>
                         <input type="time" id="activity-time" name="time" class="form-input" required>
                     </div>
                 </div>
@@ -106,29 +106,53 @@
 
             <!-- 報名截止 -->
             <div class="form-group">
-                <label for="activity-deadline" class="form-label">報名截止日期*</label>
+                <label for="activity-deadline" class="form-label">報名截止日期 <span class="required-star">*</span></label>
                 <input type="date" id="activity-deadline" name="deadline" class="form-input" required>
             </div>
 
-            <!-- 人數 -->
-            <div class="form-row">
-                <div class="form-col">
-                    <div class="form-group">
-                        <label for="min-participants" class="form-label">最少參加人數*</label>
-                        <div class="number-input-group">
-                            <button type="button" class="num-btn minus-btn" data-target="min-participants">-</button>
-                            <input type="number" id="min-participants" name="min_participants" class="form-input number-input" min="2" max="50" value="2" required>
-                            <button type="button" class="num-btn plus-btn" data-target="min-participants">+</button>
+            <!-- 人數設定 -->
+            <div class="form-group">
+                <label class="form-label">參加人數設定 <span class="required-star">*</span></label>
+                <div class="participants-container">
+                    <div class="participant-item">
+                        <div class="participant-label">
+                            <i class="fas fa-user-minus"></i>
+                            <span>最少人數</span>
+                        </div>
+                        <div class="participant-control">
+                            <button type="button" class="control-btn minus" data-target="min-participants">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <div class="number-display">
+                                <input type="number" id="min-participants" name="min_participants" value="2" min="2" max="50" required>
+                                <span class="unit">人</span>
+                            </div>
+                            <button type="button" class="control-btn plus" data-target="min-participants">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
                     </div>
-                </div>
-                <div class="form-col">
-                    <div class="form-group">
-                        <label for="max-participants" class="form-label">最多參加人數*</label>
-                        <div class="number-input-group">
-                            <button type="button" class="num-btn minus-btn" data-target="max-participants">-</button>
-                            <input type="number" id="max-participants" name="max_participants" class="form-input number-input" min="2" value="10" required>
-                            <button type="button" class="num-btn plus-btn" data-target="max-participants">+</button>
+                    
+                    <div class="participant-divider">
+                        <span class="divider-dash">—</span>
+                    </div>
+                    
+                    <div class="participant-item">
+                        <div class="participant-label">
+                            <i class="fas fa-user-plus"></i>
+                            <span>最多人數</span>
+                        </div>
+                        <div class="participant-control">
+                            <button type="button" class="control-btn minus" data-target="max-participants">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <div class="number-display">
+                                <input type="number" id="max-participants" name="max_participants" value="10" min="2" required>
+                                <span class="unit">人</span>
+                            </div>
+                            <button type="button" class="control-btn plus" data-target="max-participants">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -186,7 +210,7 @@
                 </div>
             </div>
 
-            <div class="preview-section">
+            <!-- <div class="preview-section">
                 <div class="preview-title">
                     <span class="preview-icon">👁</span>
                     預覽效果
@@ -212,7 +236,7 @@
                         <div id="preview-map" style="width:100%; height:200px; margin-top:10px; border-radius:8px; overflow:hidden; display:none;"></div>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
             <div class="buttons-container">
                 <button type="button" class="cancel-btn" id="cancel-create-btn">取消</button>
