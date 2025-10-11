@@ -1,3 +1,20 @@
+// 全域變數定義
+let currentId = null;
+let conversations = [];
+let nextSeq = 1;
+let sidebar, menuBtn, mainContent, currentChatTitle, newChatBtn, chatHistoryEl, chatContainer, noMessagesEl, messageInput, sendBtn;
+
+// 文字區域自適應高度函數
+function adjustTextareaHeight(textarea) {
+    if (!textarea) {
+        textarea = messageInput || document.getElementById('messageInput');
+    }
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+}
+
 // 隨機數產生器（可重現）
 function randomNumber(min, max, seed) {
     const x = Math.sin(seed) * 10000;
@@ -156,6 +173,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // === 側邊欄切換功能 ===
+  if (menuBtn && sidebar) {
+    menuBtn.addEventListener('click', () => {
+      sidebarOpen = !sidebarOpen;
+      if (sidebarOpen) {
+        sidebar.classList.remove('collapsed');
+        menuBtn.classList.add('open');
+        document.body.classList.remove('sidebar-collapsed');
+      } else {
+        sidebar.classList.add('collapsed');
+        menuBtn.classList.remove('open');
+        document.body.classList.add('sidebar-collapsed');
+      }
+    });
+  }
+
+  // === 新對話按鈕事件 ===
+  if (newChatBtn) {
+    newChatBtn.addEventListener('click', createNewChat);
+  }
+
   // === 進頁後嘗試把 index 帶來的問題灌入（並在已有對話且 autoAsk=1 時自動送出）===
   try { _maybeApplyPrefill(); } catch (e) { console.warn('_maybeApplyPrefill 執行失敗：', e); }
 });
@@ -301,20 +339,8 @@ function initDragAndDrop() {
     });
 }
 
-// 側邊欄切換
+// 側邊欄切換變數
 let sidebarOpen = false;
-menuBtn.addEventListener('click', () => {
-    sidebarOpen = !sidebarOpen;
-    if (sidebarOpen) {
-        sidebar.classList.remove('collapsed');
-        menuBtn.classList.add('open');
-        document.body.classList.remove('sidebar-collapsed');
-    } else {
-        sidebar.classList.add('collapsed');
-        menuBtn.classList.remove('open');
-        document.body.classList.add('sidebar-collapsed');
-    }
-});
 
 // 從API載入對話列表（修正版：失敗時顯示訪客提示）
 async function loadConvos() {
@@ -555,8 +581,8 @@ function renderMessages(messages) {
 }
 
 
-// 建立新對話
-newChatBtn.addEventListener('click', async () => {
+// 建立新對話函數
+async function createNewChat() {
     try {
         const title = `新對話${nextSeq++}`;
         const res = await fetch("/api/conversations/", {
@@ -572,7 +598,7 @@ newChatBtn.addEventListener('click', async () => {
     } catch (error) {
         console.error('建立新對話失敗:', error);
     }
-});
+}
 
 
 // 發送訊息
@@ -1122,7 +1148,7 @@ function showPDFModal(pdfUrl, filename) {
     } else {
         if (window.IS_AUTH) {
             // 登入使用者 → 自動新建一個對話
-            newChatBtn.click();
+            await createNewChat();
         }
         // 否則：訪客 → 保持 renderConvos() 的提示
     }
