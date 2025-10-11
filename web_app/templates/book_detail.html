@@ -26,7 +26,7 @@
         <!-- 書籍基本資訊 -->
         <div class="book-info">
             <div class="book-content-layout">
-                <div class="book-image-container" style="height:350px;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;">
+                <div class="book-image-container" style="height:350px;display:flex;align-items:center;justify-content:center;position:relative;">
                     {% if book.cover_image %}
                         <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="book-image">
                     {% else %}
@@ -109,25 +109,42 @@
     <!-- 相關書籍推薦區域 -->
     <div class="section">
         <h2 class="section-title">相關書籍推薦</h2>
-        <div class="related-grid">
-            {% for related_book in related_books %}
-                <a href="{% url 'book_detail' related_book.pk %}" class="related-book-card">
-                    <div class="related-book-image">
-                        {% if related_book.cover_image %}
-                            <img src="{{ related_book.cover_image.url }}" alt="{{ related_book.title }}">
-                        {% else %}
-                            <img src="{% static 'image/placeholder.png' %}" alt="no image">
-                        {% endif %}
-                    </div>
-                    <div class="related-book-info">
-                        <h3>{{ related_book.title }}</h3>
-                        <p class="related-book-price">NT${{ related_book.price }}</p>
-                    </div>
-                </a>
-            {% empty %}
-                <p>暫無相關書籍</p>
-            {% endfor %}
+        {% if related_books %}
+        <div class="related-books-container">
+            <div class="carousel-arrow prev" onclick="scrollCarousel('prev')">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            <div class="related-grid" id="relatedBooksGrid">
+                {% for related_book in related_books %}
+                    <a href="{% url 'book_detail' related_book.pk %}" class="related-book-card">
+                        <div class="related-book-image">
+                            {% if related_book.cover_image %}
+                                <img src="{{ related_book.cover_image.url }}" alt="{{ related_book.title }}">
+                            {% else %}
+                                <img src="{% static 'image/placeholder.png' %}" alt="no image">
+                            {% endif %}
+                        </div>
+                        <div class="related-book-info">
+                            <h3>{{ related_book.title }}</h3>
+                            <div class="related-book-price">NT${{ related_book.price }}</div>
+                            <div class="related-book-meta">
+                                <span>{{ related_book.category }}</span>
+                                <span class="related-book-condition">{{ related_book.get_condition_display }}</span>
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+            <div class="carousel-arrow next" onclick="scrollCarousel('next')">
+                <i class="fas fa-chevron-right"></i>
+            </div>
         </div>
+        {% else %}
+            <p>暫無相關書籍</p>
+        {% endif %}
+    </div>
+    <div class="block-hahahaha" style="height: 100px;">
+            
     </div>
     
     <!-- 固定在下方的按鈕 -->
@@ -682,4 +699,49 @@
 
 {% block body_js %}
 <script src="{% static 'js/book_detail.js' %}"></script>
+<script>
+// 相關書籍輪播功能
+function scrollCarousel(direction) {
+    const grid = document.getElementById('relatedBooksGrid');
+    const cardWidth = grid.querySelector('.related-book-card').offsetWidth;
+    const gap = 25; // CSS中定義的gap
+    const scrollAmount = cardWidth + gap;
+    
+    if (direction === 'next') {
+        grid.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+    } else {
+        grid.scrollBy({
+            left: -scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// 初始化輪播箭頭顯示/隱藏
+document.addEventListener('DOMContentLoaded', function() {
+    const grid = document.getElementById('relatedBooksGrid');
+    const prevArrow = document.querySelector('.carousel-arrow.prev');
+    const nextArrow = document.querySelector('.carousel-arrow.next');
+    
+    if (grid) {
+        // 檢查是否需要顯示箭頭
+        function updateArrows() {
+            const isScrollable = grid.scrollWidth > grid.clientWidth;
+            if (isScrollable) {
+                prevArrow.style.display = 'flex';
+                nextArrow.style.display = 'flex';
+            } else {
+                prevArrow.style.display = 'none';
+                nextArrow.style.display = 'none';
+            }
+        }
+        
+        updateArrows();
+        window.addEventListener('resize', updateArrows);
+    }
+});
+</script>
 {% endblock %}
