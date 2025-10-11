@@ -8,10 +8,17 @@ from google.auth.transport.requests import Request
 from typing import Dict, Optional, List
 import os
 from django.conf import settings
+from PIL import Image, ImageEnhance
+import io
 
 logger = logging.getLogger(__name__)
 
 class GoogleVisionService:
+    # 配置常數
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB (Google Vision API 限制)
+    TARGET_COMPRESSED_SIZE = 8 * 1024 * 1024  # 壓縮目標 8MB (留緩衝)
+    ENABLE_AUTO_COMPRESS = True  # 啟用自動壓縮
+    
     def __init__(self):
         """初始化 Google Vision API 服務"""
         self.credentials = None
@@ -77,9 +84,131 @@ class GoogleVisionService:
             logger.error(f"獲取訪問令牌失敗: {e}")
             return None
 
+    def _compress_image(self, image_data: bytes, target_size: int = None, 
+                       max_dimension: int = 4096) -> bytes:
+        """
+        智能壓縮圖片
+        
+        參數:
+            image_data: 原始圖片數據
+            target_size: 目標大小（bytes），None 則使用默認值
+            max_dimension: 最大邊長（像素）
+        
+        返回:
+            壓縮後的圖片數據
+        """
+        if target_size is None:
+            target_size = self.TARGET_COMPRESSED_SIZE
+            
+        try:
+            original_size = len(image_data)
+            logger.info(f"開始壓縮圖片: 原始大小 {original_size/1024/1024:.2f}MB")
+            
+            # 如果已經小於目標大小，直接返回
+            if original_size <= target_size:
+                logger.info("圖片已符合大小要求，無需壓縮")
+                return image_data
+            
+            # 開啟圖片
+            img = Image.open(io.BytesIO(image_data))
+            original_format = img.format or 'PNG'
+            
+            # 轉換 RGBA 為 RGB (JPEG 不支援透明度)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # 計算需要縮小的比例
+            width, height = img.size
+            max_current = max(width, height)
+            
+            # 如果圖片太大，先按尺寸縮小
+            if max_current > max_dimension:
+                scale = max_dimension / max_current
+                new_size = (int(width * scale), int(height * scale))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+                logger.info(f"按尺寸縮小: {width}x{height} -> {new_size[0]}x{new_size[1]}")
+            
+            # 嘗試不同的質量設置來達到目標大小
+            quality = 95
+            min_quality = 50
+            
+            while quality >= min_quality:
+                output = io.BytesIO()
+                img.save(output, format='JPEG', quality=quality, optimize=True)
+                compressed_data = output.getvalue()
+                compressed_size = len(compressed_data)
+                
+                logger.info(f"質量 {quality}: {compressed_size/1024/1024:.2f}MB")
+                
+                # 如果達到目標大小，返回
+                if compressed_size <= target_size:
+                    logger.info(f"壓縮成功: {original_size/1024/1024:.2f}MB -> {compressed_size/1024/1024:.2f}MB (質量: {quality})")
+                    return compressed_data
+                
+                # 降低質量繼續嘗試
+                quality -= 10
+            
+            # 如果還是太大，進一步縮小尺寸
+            current_width, current_height = img.size
+            scale_factor = 0.8
+            
+            while len(compressed_data) > target_size and current_width > 800:
+                new_width = int(current_width * scale_factor)
+                new_height = int(current_height * scale_factor)
+                img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                output = io.BytesIO()
+                img_resized.save(output, format='JPEG', quality=85, optimize=True)
+                compressed_data = output.getvalue()
+                
+                logger.info(f"進一步縮小: {new_width}x{new_height} -> {len(compressed_data)/1024/1024:.2f}MB")
+                
+                current_width, current_height = new_width, new_height
+                img = img_resized
+                
+                if len(compressed_data) <= target_size:
+                    break
+            
+            final_size = len(compressed_data)
+            logger.info(f"最終壓縮: {original_size/1024/1024:.2f}MB -> {final_size/1024/1024:.2f}MB")
+            
+            return compressed_data
+            
+        except Exception as e:
+            logger.error(f"圖片壓縮失敗: {e}", exc_info=True)
+            # 壓縮失敗時返回原圖
+            return image_data
+
     def detect_text(self, image_data: bytes) -> Dict:
         """使用 Google Vision API 進行文字檢測"""
         try:
+            original_size = len(image_data)
+            logger.info(f"檢測文字 - 圖片大小: {original_size/1024/1024:.2f}MB")
+            
+            # 檢查並壓縮圖片
+            if original_size > self.MAX_IMAGE_SIZE:
+                if self.ENABLE_AUTO_COMPRESS:
+                    logger.warning(f"圖片超過 {self.MAX_IMAGE_SIZE/1024/1024}MB，啟動自動壓縮...")
+                    image_data = self._compress_image(image_data)
+                    
+                    # 壓縮後再次檢查
+                    if len(image_data) > self.MAX_IMAGE_SIZE:
+                        return {
+                            'success': False,
+                            'error': f'圖片過大 ({original_size/1024/1024:.2f}MB)，壓縮後仍超過限制'
+                        }
+                else:
+                    return {
+                        'success': False,
+                        'error': f'圖片過大 ({original_size/1024/1024:.2f}MB)，請使用小於 {self.MAX_IMAGE_SIZE/1024/1024}MB 的圖片'
+                    }
+            
             access_token = self._get_access_token()
             if not access_token:
                 return {
@@ -117,12 +246,12 @@ class GoogleVisionService:
                 }]
             }
 
-            # 發送請求
+            # 發送請求（增加 timeout）
             response = requests.post(
                 self.vision_api_url,
                 headers=headers,
                 json=request_data,
-                timeout=30
+                timeout=60  # 從 30 秒增加到 60 秒
             )
 
             if response.status_code == 200:
@@ -249,11 +378,17 @@ class GoogleVisionService:
         return list(set(isbn_candidates))
 
     def detect_text_with_preprocessing(self, image_data: bytes) -> Dict:
-        """帶預處理的文字檢測"""
-        from PIL import Image, ImageEnhance
-        import io
-        
+        """帶預處理的文字檢測（支援大圖片）"""
         try:
+            original_size = len(image_data)
+            logger.info(f"預處理文字檢測 - 原始大小: {original_size/1024/1024:.2f}MB")
+            
+            # 如果圖片太大，先壓縮
+            if original_size > self.MAX_IMAGE_SIZE and self.ENABLE_AUTO_COMPRESS:
+                logger.info("圖片過大，先進行壓縮...")
+                image_data = self._compress_image(image_data)
+                logger.info(f"壓縮後大小: {len(image_data)/1024/1024:.2f}MB")
+            
             # 原始圖像檢測
             original_result = self.detect_text(image_data)
             
@@ -277,6 +412,10 @@ class GoogleVisionService:
                 output = io.BytesIO()
                 sharp_img.save(output, format='PNG')
                 processed_image_data = output.getvalue()
+                
+                # 如果處理後的圖片也太大，壓縮它
+                if len(processed_image_data) > self.MAX_IMAGE_SIZE:
+                    processed_image_data = self._compress_image(processed_image_data)
                 
                 # 對處理後的圖像進行檢測
                 processed_result = self.detect_text(processed_image_data)
