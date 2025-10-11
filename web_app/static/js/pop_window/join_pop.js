@@ -232,7 +232,7 @@ function handleImageUpload(event) {
 }
 
 function initNumberButtons() {
-    document.querySelectorAll('.num-btn').forEach(btn => {
+    document.querySelectorAll('.control-btn').forEach(btn => {
         btn.addEventListener('click', function (ev) {
             ev.preventDefault();
             ev.stopPropagation();
@@ -248,9 +248,9 @@ function initNumberButtons() {
             const min = parseInt(input.min) || 1;
             const max = parseInt(input.max) || 999;
             
-            if (this.classList.contains('plus-btn')) {
+            if (this.classList.contains('plus')) {
                 v++;
-            } else if (this.classList.contains('minus-btn')) {
+            } else if (this.classList.contains('minus')) {
                 v--;
             }
             

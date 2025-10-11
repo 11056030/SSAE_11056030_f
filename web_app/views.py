@@ -44,7 +44,16 @@ from social_django.models import UserSocialAuth
 import openai
 
 # Local imports
-from .views_rag import ask_question, create_vector_store, load_pdf_documents, split_documents
+# from .views_rag import ask_question, create_vector_store, load_pdf_documents, split_documents
+try:
+    from .views_rag import ask_question, create_vector_store, load_pdf_documents, split_documents
+    RAG_AVAILABLE = True
+except Exception as e:
+    logger.warning(f"RAG功能不可用: {e}")
+    RAG_AVAILABLE = False
+    # 創建假的函數避免錯誤
+    def ask_question(question, history=None):
+        return {"answer": "抱歉，校規查詢功能暫時不可用，請稍後再試。", "sources": []}
 from .models import (
     GroupActivity, ActivityParticipant, ActivityComment, Book2, Department, 
     AcademicGrade, Category, Status, Academic, User, Academica, Departmentd, 
@@ -431,12 +440,70 @@ def book(request):
     try:
         offline_status = Status.objects.get(name='已下架')
         sold_status = Status.objects.get(name='已售出')
-        books_list = Book2.objects.exclude(
+        books_queryset = Book2.objects.exclude(
             status__in=[offline_status, sold_status]
-        ).order_by('-created_at')
+        ).select_related('academic', 'department', 'grade', 'category', 'status')
     except Status.DoesNotExist:
         # 如果沒有相關狀態，顯示所有書籍
-        books_list = Book2.objects.all().order_by('-created_at')
+        books_queryset = Book2.objects.all().select_related('academic', 'department', 'grade', 'category', 'status')
+
+    # 應用篩選條件
+    search_term = request.GET.get('search', '').strip()
+    academic_id = request.GET.get('academic_id', '')
+    department_id = request.GET.get('department_id', '')
+    grade_level = request.GET.get('grade_level', '')
+    category_name = request.GET.get('category', '')
+    condition = request.GET.get('condition', '')
+    price_range = request.GET.get('price_range', '')
+
+    # 搜尋詞篩選
+    if search_term:
+        books_queryset = books_queryset.filter(
+            Q(title__icontains=search_term) | 
+            Q(author__icontains=search_term) |
+            Q(description__icontains=search_term)
+        )
+
+    # 學制篩選
+    if academic_id:
+        books_queryset = books_queryset.filter(academic_id=academic_id)
+
+    # 系所篩選
+    if department_id:
+        books_queryset = books_queryset.filter(department_id=department_id)
+
+    # 年級篩選
+    if grade_level:
+        books_queryset = books_queryset.filter(grade__grade_level=grade_level)
+
+    # 分類篩選
+    if category_name:
+        books_queryset = books_queryset.filter(category__name=category_name)
+
+    # 書況篩選 - 需要將顯示文字轉換為數字值
+    if condition:
+        # 建立書況對應表
+        condition_mapping = {
+            '全新': 'new',
+            '近全新': 'like_new', 
+            '良好': 'good',
+            '普通': 'fair',
+            '需要修復': 'poor'
+        }
+        condition_value = condition_mapping.get(condition)
+        if condition_value:
+            books_queryset = books_queryset.filter(condition=condition_value)
+
+    # 價格範圍篩選
+    if price_range:
+        try:
+            min_price, max_price = map(int, price_range.split('-'))
+            books_queryset = books_queryset.filter(price__gte=min_price, price__lte=max_price)
+        except (ValueError, AttributeError):
+            pass
+
+    # 排序
+    books_list = books_queryset.order_by('-created_at')
 
     # 每行顯示數量（URL參數，預設4）
     items_per_row = int(request.GET.get('items_per_row', 4))
@@ -454,9 +521,29 @@ def book(request):
     form = Book2Form()
     categories = Category.objects.all()
     academics = Academic.objects.all()
-    # 只傳遞學制，科系和年級透過 AJAX 動態載入
-    departments = []  # 空的科系列表
-    academic_grades = []  # 空的年級列表
+    
+    # 如果有選擇學制，載入對應的科系和年級
+    departments = []
+    academic_grades = []
+    if academic_id:
+        try:
+            # 載入該學制下的科系
+            academic_departments = AcadeDepart.objects.filter(
+                academica_id=academic_id
+            ).select_related("departmentd")
+            departments = [{"id": ad.departmentd.id, "name": ad.departmentd.name} 
+                          for ad in academic_departments]
+            
+            # 載入該學制下的年級
+            academic_grades_qs = AcadeGrade.objects.filter(
+                academica_id=academic_id
+            ).order_by('id')
+            academic_grades = [{"id": ag.id, "grade_level": ag.grade_level} 
+                              for ag in academic_grades_qs]
+        except Exception as e:
+            logger.warning(f"載入科系年級失敗: {e}")
+            departments = []
+            academic_grades = []
 
     # 獲取當前用戶的聯絡資訊
     user_phone = None
@@ -488,6 +575,14 @@ def book(request):
         'items_per_row': items_per_row,
         'user_phone': user_phone,
         'user_line_id': user_line_id,
+        # 傳遞當前篩選值給模板
+        'current_search': search_term,
+        'current_academic_id': academic_id,
+        'current_department_id': department_id,
+        'current_grade_level': grade_level,
+        'current_category': category_name,
+        'current_condition': condition,
+        'current_price_range': price_range,
     })
 
 def book_2(request):

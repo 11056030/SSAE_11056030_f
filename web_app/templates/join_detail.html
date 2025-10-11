@@ -84,59 +84,69 @@
             <a href="#">返回</a>
         </div>
 
-        <div class="section ">
-            <div class="activity-title ">
-                <h2 class="section-title">{{ a.title }}</h2>
-            </div>
-        </div>
-
-        <!-- 活動資訊卡 -->
-        <div class="section">
-            <div class="event-info-cards">
-                <div class="info-card">
-                    <div class="info-icon-circle">
-                        <span class="info-icon"><i class="fa-solid fa-map-pin"></i></span>
-                    </div>
-                    <div class="info-content">
-                        <h3 class="info-title">活動地點</h3>
-                        <p class="info-value">{{ a.location_short }}</p>
-                        {% if a.address and a.address != a.location %}
-                            <p class="info-address">{{ a.address }}</p>
+        <!-- 活動主要資訊區域 - 參考二手書頁面設計 -->
+        <div class="activity-main-section">
+            <div class="activity-info">
+                <div class="activity-content-layout">
+                    <div class="activity-image-container">
+                        {% if a.cover_image %}
+                            <img src="{{ a.cover_image.url }}" alt="{{ a.title }}" class="activity-image">
+                        {% else %}
+                            <img src="{% static 'image/default_cover.jpg' %}" alt="活動圖片" class="activity-image">
                         {% endif %}
                     </div>
-                </div>
+                    <div class="activity-details-container">
+                        <div class="activity-title-container">
+                            <h1 class="activity-title">{{ a.title }}</h1>
+                        </div>
+                        <div class="event-info-cards">
+                            <div class="info-card">
+                                <div class="info-icon-circle">
+                                    <span class="info-icon"><i class="fa-solid fa-map-pin"></i></span>
+                                </div>
+                                <div class="info-content">
+                                    <h3 class="info-title">活動地點</h3>
+                                    <p class="info-value">{{ a.location_short }}</p>
+                                    {% if a.address and a.address != a.location %}
+                                        <p class="info-address">{{ a.address }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
 
-                <div class="info-card">
-                    <div class="info-icon-circle">
-                        <span class="info-icon"><i class="fa-solid fa-clock"></i></span>
-                    </div>
-                    <div class="info-content">
-                        <h3 class="info-title">活動時間</h3>
-                        <p class="info-value">{{ a.date|date:"m/d" }}（{{ a.date|date:"D" }}）{{ a.time|time:"H:i" }}</p>
-                    </div>
-                </div>
+                            <div class="info-card">
+                                <div class="info-icon-circle">
+                                    <span class="info-icon"><i class="fa-solid fa-clock"></i></span>
+                                </div>
+                                <div class="info-content">
+                                    <h3 class="info-title">活動時間</h3>
+                                    <p class="info-value">{{ a.date|date:"m/d" }}（{{ a.date|date:"D" }}）{{ a.time|time:"H:i" }}</p>
+                                </div>
+                            </div>
 
-                <div class="info-card">
-                    <div class="info-icon-circle">
-                        <span class="info-icon"><i class="fa-solid fa-person"></i></span>
-                    </div>
-                    <div class="info-content">
-                        <h3 class="info-title">參加人數</h3>
-                        <p class="info-value">{{ total_participants }}/{{ a.max_participants }}人</p>
-                    </div>
-                </div>
+                            <div class="info-card">
+                                <div class="info-icon-circle">
+                                    <span class="info-icon"><i class="fa-solid fa-person"></i></span>
+                                </div>
+                                <div class="info-content">
+                                    <h3 class="info-title">參加人數</h3>
+                                    <p class="info-value">{{ total_participants }}/{{ a.max_participants }}人</p>
+                                </div>
+                            </div>
 
-                {% if a.contact_info %}
-                <div class="info-card">
-                    <div class="info-icon-circle">
-                        <span class="info-icon"><i class="fa-solid fa-phone"></i></span>
-                    </div>
-                    <div class="info-content">
-                        <h3 class="info-title">聯絡方式</h3>
-                        <p class="info-value">{{ a.contact_info }}</p>
+                            {% if a.contact_info %}
+                            <div class="info-card">
+                                <div class="info-icon-circle">
+                                    <span class="info-icon"><i class="fa-solid fa-phone"></i></span>
+                                </div>
+                                <div class="info-content">
+                                    <h3 class="info-title">聯絡方式</h3>
+                                    <p class="info-value">{{ a.contact_info }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-                {% endif %}
             </div>
         </div>
 

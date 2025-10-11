@@ -21,7 +21,7 @@
             <form id="create-group-form" enctype="multipart/form-data">
                 <!-- 活動標題 -->
                 <div class="form-group">
-                    <label for="activity-title" class="form-label">活動標題</label>
+                    <label for="activity-title" class="form-label">活動標題 <span class="required-star">*</span></label>
                     <input type="text" id="activity-title" name="title" class="form-input" placeholder="請輸入活動標題（最多30字）" maxlength="30" required>
                 </div>
 
@@ -29,7 +29,7 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="activity-type" class="form-label">活動類型</label>
+                            <label for="activity-type" class="form-label">活動類型 <span class="required-star">*</span></label>
                             <select id="activity-type" name="type" class="form-select" required>
                                 <option value="" disabled selected>請選擇活動類型</option>
                                 <option value="美食">美食</option>
@@ -72,13 +72,13 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="activity-date" class="form-label">活動日期</label>
+                            <label for="activity-date" class="form-label">活動日期 <span class="required-star">*</span></label>
                             <input type="date" id="activity-date" name="date" class="form-input" required>
                         </div>
                     </div>
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="activity-time" class="form-label">活動時間</label>
+                            <label for="activity-time" class="form-label">活動時間 <span class="required-star">*</span></label>
                             <input type="time" id="activity-time" name="time" class="form-input" required>
                         </div>
                     </div>
@@ -88,13 +88,13 @@
                 <div class="form-row">
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="min-participants" class="form-label">最少參加人數</label>
+                            <label for="min-participants" class="form-label">最少參加人數 <span class="required-star">*</span></label>
                             <input type="number" id="min-participants" name="min_participants" class="form-input" min="1" value="2" required>
                         </div>
                     </div>
                     <div class="form-col">
                         <div class="form-group">
-                            <label for="max-participants" class="form-label">最多參加人數</label>
+                            <label for="max-participants" class="form-label">最多參加人數 <span class="required-star">*</span></label>
                             <input type="number" id="max-participants" name="max_participants" class="form-input" min="1" value="10" required>
                         </div>
                     </div>
@@ -102,7 +102,7 @@
 
                 <!-- 活動說明 -->
                 <div class="form-group">
-                    <label for="activity-description" class="form-label">活動說明</label>
+                    <label for="activity-description" class="form-label">活動說明 <span class="required-star">*</span></label>
                     <textarea id="activity-description" name="description" class="form-textarea" placeholder="請詳細描述活動內容、準備物品、費用說明等資訊..." required></textarea>
                 </div>
 
@@ -171,12 +171,12 @@
 
                 <!-- 報名截止日期 -->
                 <div class="form-group">
-                    <label for="activity-deadline" class="form-label">報名截止日期</label>
+                    <label for="activity-deadline" class="form-label">報名截止日期 <span class="required-star">*</span></label>
                     <input type="date" id="activity-deadline" name="deadline" class="form-input" required>
                 </div>
 
                 <div class="buttons-container">
-                    <a href="{% url 'activities_list' %}" class="cancel-btn">取消</a>
+                    <a href="{% url 'activity_list' %}" class="cancel-btn">取消</a>
                     <button type="submit" class="submit-btn">發布活動</button>
                 </div>
             </form>
