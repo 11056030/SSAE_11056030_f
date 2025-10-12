@@ -426,6 +426,96 @@
   box-shadow: 0 4px 10px rgba(0,0,0,.18), inset 0 0 4px rgba(255,255,255,.25);
 }
 
+/* 外層容器：保持排版 */
+.value-with-progress {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-bar {
+  width: 150px;
+  height: 16px;
+  background-color: #dbdfe4;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-segment {
+  height: 100%;
+  float: left;
+  position: relative;
+  width: 0;                       /* 初始 0 */
+  transition: width 1.2s ease;    /* 用 transition 推到目標寬度 */
+}
+
+.progress-segment.animate {
+  width: var(--target-width);     /* 套上 .animate 就會從 0 過渡到這裡 */
+}
+
+.progress-segment.required { background: #219ebc; }
+.progress-segment.elective { background: #023047; }
+.progress-segment.major    { background: #ffb703; }
+.progress-segment.general  { background: #fb8500; }
+
+/* 進場動畫：從0→var(--target-width) */
+@keyframes slideIn {
+    0% { width: 0; }
+    100% { width: var(--target-width); }
+}
+
+
+.progress-segment:hover {
+    filter: brightness(1.1);
+    z-index: 2;
+}
+
+
+/* 讓這層成為 tooltip 的定位父層 */
+.value-with-progress { position: relative; }
+
+/* 改為絕對定位；預設以 left 為中心，向下 8px */
+.tooltip {
+  position: absolute;
+  left: 0; top: 0;
+  transform: translateX(-90%) translateY(20px);
+  background: rgba(0,0,0,0.9);
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, visibility .18s ease;
+  pointer-events: none;
+  max-width: 220px;
+}
+
+/* 只控制可見性，不再改 transform（避免被推走） */
+.tooltip.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 小箭頭：在上緣、朝上（因為 tooltip 在進度條下方） */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent rgba(0,0,0,0.9) transparent;
+}
+
+
 
 </style>
 {% endblock %}
@@ -644,6 +734,27 @@
                   <div class="profile-item"><div class="label">Email</div><div class="value">{{ user_data.mail|default:user.email }}</div></div>
                   <div class="profile-item"><div class="label">電話</div><div class="value">{{ user_data.phone|default:'未設定' }}</div></div>
                   <div class="profile-item"><div class="label">LINE</div><div class="value">{{ user_data.LINE_ID|default:'未設定' }}</div></div>
+                  <div class="profile-item">
+                    <div class="label">學分</div>
+                    <div class="value-with-progress">
+                        <div class="progress-bar" id="progressBar">
+                            <div class="progress-segment required animate" 
+                                style="--target-width: 37.73%;" 
+                                data-tooltip="必修：83學分"></div>
+                            <div class="progress-segment elective animate" 
+                                style="--target-width: 0%;" 
+                                data-tooltip="選修：2學分"></div>
+                            <div class="progress-segment major animate" 
+                                style="--target-width: 12.27%;" 
+                                data-tooltip="專選：27學分"></div>
+                            <div class="progress-segment general animate" 
+                                style="--target-width: 30%;" 
+                                data-tooltip="通識：66學分"></div>
+                        </div>
+                        <div class="value">已修196</div>
+                        <div class="tooltip" id="tooltip"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
