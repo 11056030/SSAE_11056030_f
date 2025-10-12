@@ -233,13 +233,21 @@ try {
 
 
 // 學分進度條
-const segments = document.querySelectorAll('.progress-segment');
-const tooltip = document.getElementById('tooltip');
+document.addEventListener('DOMContentLoaded', function() {
+    const segments = document.querySelectorAll('.progress-segment');
+    const tooltip = document.getElementById('tooltip');
 
-segments.forEach(segment => {
-    segment.addEventListener('mouseenter', function(e) {
-        const tooltipText = this.getAttribute('data-tooltip');
-        if (tooltipText && this.style.width !== '0%') {
+    // 啟動動畫（逐段延遲）
+    segments.forEach((seg, index) => {
+        seg.classList.remove('animate');
+        setTimeout(() => seg.classList.add('animate'), index * 200);
+    });
+
+    // Tooltip 顯示
+    segments.forEach(segment => {
+        segment.addEventListener('mouseenter', function() {
+            const tooltipText = this.getAttribute('data-tooltip');
+            if (tooltipText && this.style.width !== '0%') {
             tooltip.textContent = tooltipText;
             tooltip.classList.add('show');
             
@@ -251,14 +259,12 @@ segments.forEach(segment => {
             tooltip.style.left = left + 'px';
             tooltip.style.transform = `translateX(-90%) translateY(6px)`;
         }
-    });
-    
-    segment.addEventListener('mouseleave', function() {
-        tooltip.classList.remove('show');
+     });
+        segment.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
     });
 });
 
-// 页面加载时触发动画
+// 頁面加載觸發動畫
 window.addEventListener('load', function() {
     const segments = document.querySelectorAll('.progress-segment.animate');
     segments.forEach((segment, index) => {
@@ -269,10 +275,9 @@ window.addEventListener('load', function() {
 });
 document.addEventListener('DOMContentLoaded', function() {
     segments.forEach(segment => {
-        if (segment.style.width === '0%') {
-            segment.style.pointerEvents = 'none';
-        }
-    });
+        const w = parseFloat(getComputedStyle(segment).width);
+            if (w <= 1) segment.style.pointerEvents = 'none';
+        });
 });
 
 

@@ -78,9 +78,9 @@ const keywordMap = [
     { keywords: "怎麼", intent: "rules" },
     { keywords: "知道", intent: "rules" },
     { keywords: "規", intent: "rules" },
-    { keywords: "學分", intent: "rules" },
     { keywords: "畢業", intent: "rules" },
     { keywords: "門檻", intent: "rules" },
+    { keywords: "學分", intent: "ntub" },
     { keywords: "舉辦", intent: "hold" },
     { keywords: "邀請", intent: "hold" },
     { keywords: "發起", intent: "hold" },
@@ -103,6 +103,12 @@ const keywordMap = [
 
 // 每個捷徑定義需要包含哪些 intent
 const shortcuts = [
+    {
+      intentSet: ["rules", "ntub"],
+      action: "external",  // 自定義一個表示「開啟外部連結」的行為
+      target: "https://acad.ntub.edu.tw/p/412-1004-1718.php",
+      label: "課程科目表"
+    },
     {
         intentSet: ["hold", "event"],
         action: "redirect",
@@ -154,6 +160,7 @@ const shortcuts = [
         target: "/comment/",
         label: "課程評論區"
     },
+
     
     // {
     //     intentSet: ["event"],
@@ -206,19 +213,23 @@ function closeModal() {
 }
 
 function confirmAction() {
-  if (currentShortcut) {
-      if (currentShortcut.action === "redirect") {
-          if (currentShortcut.popupToOpen) {
-              sessionStorage.setItem('openPopup', currentShortcut.popupToOpen);
-          }
-          let target = currentShortcut.target;
-          if (target === '/chat/' && sessionStorage.getItem('rules_prefill')) {
-              target = '/chat/?autoAsk=1';
-          }
-          window.location.href = target;
-      }
-  }
+    if (currentShortcut) {
+        if (currentShortcut.action === "redirect") {
+            if (currentShortcut.popupToOpen) {
+                sessionStorage.setItem('openPopup', currentShortcut.popupToOpen);
+            }
+            let target = currentShortcut.target;
+            if (target === '/chat/' && sessionStorage.getItem('rules_prefill')) {
+                target = '/chat/?autoAsk=1';
+            }
+            window.location.href = target;
+
+        } else if (currentShortcut.action === "external") {
+            window.open(currentShortcut.target, "_blank"); // 在新分頁開啟
+        }
+    }
 }
+
 
 // 例：你原本拿到使用者輸入的地方
 function onAskSubmit() {
