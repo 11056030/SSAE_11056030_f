@@ -20,20 +20,20 @@ from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from web_app import views
 from web_app import views_todo  # Todo API
 from web_app import profile_api  # Profile API
+from web_app import views  # 主要views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('base/' , views.base),
+    path('', include('web_app.urls')),
+    path('', include('web_app.urls_ntub')),
     path('ttt/' , views.ttt),
     path('login/' , views.login, name='login'),
     path('welcome/' , views.welcome),
     path('welcome_mo/' , views.welcome_mo, name='wel_mo'),
     path('' , views.welcome),
     path('index/' , views.index),
-
     # path('mobile/' , views.mobile, name='mobile'),
     path('personal/' , views.personal),
     path('chat/' , views.chat),
