@@ -1183,84 +1183,45 @@ h1, h2, h3 {
     font-weight: 400;
 }
 
+/* 讓這層成為 tooltip 的定位父層 */
+.value-with-progress { position: relative; }
 
-
-
-.progress-segment {
-    height: 100%;
-    float: left;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-@keyframes slideIn {
-    0% {
-        width: 0;
-    }
-    100% {
-        width: var(--target-width);
-    }
-}
-
-.progress-segment.animate {
-    width: 0;
-    animation: slideIn 1.5s ease-out forwards;
-}
-
-.progress-segment:hover {
-    filter: brightness(1.1);
-    z-index: 2;
-}
-
-.progress-segment.required {
-    background: #219ebc;
-}
-
-.progress-segment.elective {
-    background: #023047;
-}
-
-.progress-segment.major {
-    background: #ffb703;
-}
-
-.progress-segment.general {
-    background: #fb8500;
-}
-
+/* 改為絕對定位；預設以 left 為中心，向下 8px */
 .tooltip {
-    position: relative;
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 8px 4px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    text-align: center;
-    white-space: nowrap;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    max-width: 130px;
+  position: absolute;
+  left: 0; top: 0;
+  transform: translateX(-90%) translateY(6px);
+  background: rgba(0,0,0,0.9);
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, visibility .18s ease;
+  pointer-events: none;
+  max-width: 220px;
 }
 
+/* 只控制可見性，不再改 transform（避免被推走） */
 .tooltip.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-90%) translateY(20px);
+  opacity: 1;
+  visibility: visible;
 }
 
+/* 小箭頭：在上緣、朝上（因為 tooltip 在進度條下方） */
 .tooltip::after {
-    content: '';
-    position: absolute;
-    bottom: 100%; /* 放在 tooltip 上方 */
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: transparent transparent rgba(0, 0, 0, 0.9) transparent;
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent rgba(0,0,0,0.9) transparent;
 }
 
 

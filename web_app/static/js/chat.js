@@ -575,90 +575,184 @@ newChatBtn.addEventListener('click', async () => {
 });
 
 
-// 發送訊息
-async function sendQuestion() {
-    const questionEl = document.getElementById('messageInput');
-    const question = questionEl.value.trim();
-    
-    if (!question || !currentId) return;
-    
-    // 清空輸入框並調整高度
-    questionEl.value = '';
-    adjustTextareaHeight();
-    
-    try {
-        // 在聊天區域加入用戶訊息
-        const userMsg = document.createElement('div');
-        userMsg.className = 'message-container user-container';
-        userMsg.innerHTML = `
-            <div class="message-content user-content">${question}</div>
-            <div class="avatar user-avatar">你</div>
-        `;
-        chatContainer.appendChild(userMsg);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        
-        // 在聊天區域加入機器人正在輸入的指示
-        const loadingMsg = document.createElement('div');
-        loadingMsg.className = 'message-container bot-container';
-        loadingMsg.innerHTML = `
-            <div class="avatar bot-avatar">AI</div>
-            <div class="message-content bot-content loading-dots">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
-        `;
-        chatContainer.appendChild(loadingMsg);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        
-        // 發送到後端
-        const res = await fetch("/api/ask/", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({conversation_id: currentId, question: question})
-        });
-        
-        const data = await res.json();
-        
-        // 移除載入指示器
-        chatContainer.removeChild(loadingMsg);
-        
-        // 建立機器人回覆內容
-        let botContent = `<div class="message-content bot-content">${data.answer || data.error}`;
-        
-        // 如果有來源文檔，添加查看按鈕
-        if (data.has_sources && data.sources && data.sources.length > 0) {
-            botContent += `<div class="source-indicator"><button class="source-btn" onclick="showSources(${JSON.stringify(data.sources).replace(/"/g, '&quot;')})">📑</button></div>`;
-        }
-
-        botContent += `</div>`;
-
-        // 在聊天區域加入機器人回覆
-        const botMsg = document.createElement('div');
-        botMsg.className = 'message-container bot-container';
-        botMsg.innerHTML = `
-            <div class="avatar bot-avatar">AI</div>
-            ${botContent}
-        `;
-        chatContainer.appendChild(botMsg);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        
-        // 更新對話標題（如果是第一條訊息）
-        const convo = conversations.find(c => c.id === currentId);
-        if (convo && (!convo.title || convo.title.startsWith('新對話'))) {
-            const title = question.length > 25 ? question.substring(0, 25) + '...' : question;
-            await fetch(`/api/conversations/${currentId}/`, {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({title: title})
-            });
-            currentChatTitle.innerText = title;
-            await loadConvos();
-        }
-    } catch (error) {
-        console.error('發送問題失敗:', error);
-    }
+/* =========================
+   ✅ 安全提示工具（不依賴現有 showMessage）
+   ========================= */
+function _safeShowMessage(text, type = 'error') {
+  try {
+    if (typeof showMessage === 'function') return showMessage(text, type);
+  } catch (_) {}
+  // 後備：至少給個可見的提示，不會讓程式壞掉
+  if (type === 'error') console.error(text);
+  else console.log(text);
+  try { alert(text); } catch (_) {}
 }
+
+/* =========================
+   ✅ 確保 currentId 再送出
+   （不改動你其它流程）
+   ========================= */
+async function ensureConversationReady() {
+  // 已經有 currentId
+  if (window.currentId) return true;
+
+  // 有既有對話 → 選第一個
+  if (Array.isArray(window.conversations) && window.conversations.length) {
+    if (typeof selectConvo === 'function') {
+      await selectConvo(window.conversations[0].id);
+      return true;
+    }
+  }
+
+  // 已登入 → 建立一個新對話（沿用你的 API）
+  if (window.IS_AUTH && typeof fetch === 'function') {
+    try {
+      const title = `新對話${(window.conversations?.length || 0) + 1}`;
+      const res = await fetch("/api/conversations/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ title })
+      });
+      const newConvo = await res.json();
+      if (!newConvo?.id) throw new Error('no id in create conversation response');
+
+      window.currentId = newConvo.id;
+      if (typeof loadConvos === 'function') await loadConvos();
+      if (typeof selectConvo === 'function') await selectConvo(newConvo.id);
+      return true;
+    } catch (e) {
+      console.error('[chat] 建立對話失敗：', e);
+      _safeShowMessage('建立對話失敗，請稍後再試', 'error');
+      return false;
+    }
+  }
+
+  // 訪客且沒有 currentId：明確提示
+  _safeShowMessage('請先建立一個對話再發送訊息', 'error');
+  return false;
+}
+
+/* =========================
+   ✅ 修正版送出：先確保對話 → 再清空 → 先畫使用者訊息 → 打 API
+   並加上「送出中鎖定」避免重複點擊
+   ========================= */
+let _sendingLock = false;
+
+async function sendQuestion() {
+  const field = window.messageInput || document.getElementById('messageInput');
+  const sendBtn = window.sendBtn || document.getElementById('sendBtn');
+  const text = (field?.value || '').trim();
+
+  if (!field) {
+    _safeShowMessage('找不到訊息輸入框', 'error');
+    return;
+  }
+  if (!text) {
+    _safeShowMessage('請先輸入問題', 'error');
+    return;
+  }
+  if (_sendingLock) return; // 防重複送
+
+  // 先確保 currentId（必要時自動選或建立）
+  const ok = await ensureConversationReady();
+  if (!ok) return;
+
+  try {
+    _sendingLock = true;
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.classList.add('is-sending');
+    }
+
+    // ★ 這時一定有 currentId，才清空輸入框
+    field.value = '';
+    try {
+      if (typeof adjustTextareaHeight === 'function') adjustTextareaHeight(field);
+    } catch {}
+
+    // 立刻把使用者訊息畫到畫面（避免「像沒反應」）
+    const userMsg = document.createElement('div');
+    userMsg.className = 'message-container user-container';
+    userMsg.innerHTML = `
+      <div class="message-content user-content">${text}</div>
+      <div class="avatar user-avatar">你</div>
+    `;
+    chatContainer.appendChild(userMsg);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // loading dots
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'message-container bot-container';
+    loadingMsg.innerHTML = `
+      <div class="avatar bot-avatar">AI</div>
+      <div class="message-content bot-content loading-dots">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>`;
+    chatContainer.appendChild(loadingMsg);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // 送到後端（沿用你的 API）
+    let data = {};
+    try {
+      const res = await fetch("/api/ask/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversation_id: window.currentId, question: text })
+      });
+      // 兼容非 2xx 的情況
+      let raw = null;
+      try { raw = await res.text(); } catch {}
+      try { data = raw ? JSON.parse(raw) : {}; } catch { data = { error: raw || '回應解析失敗' }; }
+      if (!res.ok && !data.error) data.error = `HTTP ${res.status}`;
+    } catch (e) {
+      console.error('呼叫 /api/ask/ 失敗：', e);
+      data = { error: '網路或伺服器錯誤' };
+    }
+
+    // 移除載入中
+    if (loadingMsg.parentNode) chatContainer.removeChild(loadingMsg);
+
+    // 顯示 AI 回覆（保留你的來源按鈕邏輯）
+    let botContent = `<div class="message-content bot-content">${data.answer || data.error || '（未收到回應）'}`;
+    if (data.has_sources && Array.isArray(data.sources) && data.sources.length) {
+      botContent += `<div class="source-indicator"><button class="source-btn" onclick="showSources(${JSON.stringify(data.sources).replace(/"/g, '&quot;')})">📑</button></div>`;
+    }
+    botContent += `</div>`;
+
+    const botMsg = document.createElement('div');
+    botMsg.className = 'message-container bot-container';
+    botMsg.innerHTML = `<div class="avatar bot-avatar">AI</div>${botContent}`;
+    chatContainer.appendChild(botMsg);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // 首則訊息 → 更新對話標題（延續你的規則）
+    try {
+      const convo = Array.isArray(window.conversations)
+        ? window.conversations.find(c => c.id === window.currentId)
+        : null;
+      if (convo && (!convo.title || convo.title.startsWith('新對話'))) {
+        const title = text.length > 25 ? text.substring(0, 25) + '...' : text;
+        await fetch(`/api/conversations/${window.currentId}/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
+        });
+        if (window.currentChatTitle) window.currentChatTitle.innerText = title;
+        if (typeof loadConvos === 'function') await loadConvos();
+      }
+    } catch (e) {
+      console.warn('更新對話標題失敗（略過）：', e);
+    }
+  } finally {
+    _sendingLock = false;
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.classList.remove('is-sending');
+    }
+  }
+}
+
+
 
 // 修正後的 showSources 函數
 function showSources(sources) {
