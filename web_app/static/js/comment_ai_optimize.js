@@ -159,7 +159,7 @@
       // 1) 尚未轉換（或空白）
       if (!preview){
         e.preventDefault(); e.stopPropagation();
-        alert("請先按「轉換」,產生可提交的評論內容,再送出。");
+        alert("偵測到可能不當的言論，建議您先按「轉換」，以產生符合規範的評論內容，然後再送出。");
         return;
       }
 
