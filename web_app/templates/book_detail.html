@@ -26,7 +26,7 @@
         <!-- 書籍基本資訊 -->
         <div class="book-info">
             <div class="book-content-layout">
-                <div class="book-image-container" style="height:350px;display:flex;align-items:center;justify-content:center;position:relative;">
+                <div class="book-image-container">
                     {% if book.cover_image %}
                         <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="book-image">
                     {% else %}
