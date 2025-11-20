@@ -4,6 +4,7 @@ import re
 import requests
 import logging
 import threading
+import concurrent.futures
 from typing import Dict, List, Optional
 from difflib import SequenceMatcher
 
@@ -11,48 +12,30 @@ try:
     from googleapiclient.discovery import build
     from bs4 import BeautifulSoup
 except ImportError:
-    print("錯誤：缺少必要的函式庫。")
-    exit()
+    pass
 
 from .google_vision_service import google_vision_service
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# 將 Log 層級調高，隱藏 INFO，只顯示 ERROR
+logging.basicConfig(level=logging.ERROR, format='%(message)s')
 logger = logging.getLogger(__name__)
 
-_API_LOCK = threading.Lock()
-_LAST_REQUEST_TIME = 0
-
-class TerminalColors:
-    HEADER = '\033[95m'; OKGREEN = '\033[92m'; WARNING = '\033[93m'; FAIL = '\033[91m'; ENDC = '\033[0m'; BOLD = '\033[1m'
-
 class TerminalUI:
-    ENABLE_VISUAL = True
+    # 只保留最終結果的輸出功能
     @staticmethod
-    def print_header(text): print(f"\n{TerminalColors.HEADER}{'='*60}\n{text:^60}\n{'='*60}{TerminalColors.ENDC}")
-    @staticmethod
-    def print_step(num, text): print(f"\n{TerminalColors.BOLD}[步驟 {num}]{TerminalColors.ENDC} {text}")
-    @staticmethod
-    def print_success(text): print(f"  {TerminalColors.OKGREEN}✓ {text}{TerminalColors.ENDC}")
-    @staticmethod
-    def print_warning(text): print(f"  {TerminalColors.WARNING}⚠ {text}{TerminalColors.ENDC}")
-    @staticmethod
-    def print_error(text): print(f"  {TerminalColors.FAIL}✗ {text}{TerminalColors.ENDC}")
-    @staticmethod
-    def print_info(text): print(f"  → {text}")
-    @staticmethod
-    def print_book_info(info):
-        TerminalUI.print_header("📖 最終判定結果")
-        for k, l in [('title','書名'),('authors','作者'),('publisher','出版社'),('isbn','ISBN'),('source','來源')]:
+    def print_result(info):
+        print(f"\n{'-'*50}")
+        print(f"✅ 辨識成功")
+        print(f"{'-'*50}")
+        for k, l in [('title','書名'), ('authors','作者'), ('publisher','出版社'), ('isbn','ISBN')]:
             val = info.get(k,'')
             if isinstance(val, list): val = ', '.join(val)
-            print(f"{l}：{val}")
+            if val: print(f"{l}：{val}")
+        print(f"{'-'*50}\n")
 
 class FinalBookRecognizer:
     def __init__(self):
-        TerminalUI.print_header("📚 書籍識別服務 (Final v14.0 - 爬蟲修正版)")
         self.google_books_api = {'base_url': 'https://www.googleapis.com/books/v1/volumes'}
-        self.request_interval = 0.3
-        
         self.google_api_key = "AIzaSyARwMYmmWQbUeNNxXKP0WAOg0Tlp9xwVXY"
         self.google_search_cx_id = "e250702ba333848ea"
         
@@ -122,30 +105,32 @@ class FinalBookRecognizer:
 
     def process_book_image(self, image_data: bytes) -> Dict:
         result_template = {"title": "未知", "authors": [], "isbn": "", "source": "無"}
-        best_result_so_far = None
-        highest_score = 0.0
         
         try:
-            TerminalUI.print_step(1, f"影像分析中 (圖片: {len(image_data)/1024:.1f} KB)")
-
-            web_res = google_vision_service.detect_web_entities(image_data)
-            ocr_res = google_vision_service.detect_text_with_preprocessing(image_data)
+            # 1. 平行執行 Vision API
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                future_web = executor.submit(google_vision_service.detect_web_entities, image_data)
+                future_ocr = executor.submit(google_vision_service.detect_text_with_preprocessing, image_data)
+                web_res = future_web.result()
+                ocr_res = future_ocr.result()
             
             full_text = ocr_res.get('text', '')
             best_guess = web_res.get('best_guess', '').lower()
             
-            if best_guess: TerminalUI.print_info(f"Google 猜測: {best_guess}")
-
+            # 2. ISBN 秒殺
             isbn = self._extract_isbn_from_text(full_text)
             if isbn:
-                TerminalUI.print_success(f"發現 ISBN: {isbn}")
-                res = self._search_books_com_tw(isbn) or self._search_google_books(f"isbn:{isbn}")
-                if res: return self._success_return(res, "ISBN 精準搜尋", full_text)
+                # 優先用 Google Books 查 ISBN (最快)
+                res = self._search_google_books(f"isbn:{isbn}")
+                if not res: 
+                    # 沒找到再用爬蟲 (較慢)
+                    res = self._search_books_com_tw(isbn)
+                if res: return self._success_return(res, full_text)
 
-            search_candidates = []
-
+            # 3. 建立搜尋任務
+            tasks = []
             if best_guess and not any(g in best_guess for g in self.generic_labels):
-                 search_candidates.append({"q": best_guess, "src": f"以圖搜圖 ({best_guess})", "weight": 0.6})
+                 tasks.append({"q": best_guess, "type": "google", "weight": 0.6})
 
             raw_lines = [l.strip() for l in full_text.split('\n') if len(l.strip()) > 1]
             valid_lines = []
@@ -155,99 +140,116 @@ class FinalBookRecognizer:
             
             if valid_lines:
                 line1 = valid_lines[0]
-                search_candidates.append({"q": line1, "src": f"OCR 第一行", "weight": 1.0})
-                
+                # 標題搜尋
+                tasks.append({"q": line1, "type": "google", "weight": 0.9})
+                tasks.append({"q": line1, "type": "books_tw", "weight": 1.0}) # 博客來權重高
+
+                # 滑動視窗 (長標題)
                 if len(line1) > 8:
                     mid = len(line1) // 2
-                    search_candidates.append({"q": line1[:mid+2], "src": "OCR 切割(前)", "weight": 0.9})
-                    search_candidates.append({"q": line1[mid-2:], "src": "OCR 切割(後)", "weight": 0.9})
+                    tasks.append({"q": line1[:mid+2], "type": "google", "weight": 0.8})
+                    tasks.append({"q": line1[mid-2:], "type": "google", "weight": 0.8})
 
+                # 組合技
                 if len(valid_lines) > 1:
                     author_part = self._clean_text(valid_lines[1])
                     if len(author_part) < 20:
                         query = f"{line1} {author_part}"
-                        search_candidates.append({"q": query, "src": "標題+作者", "weight": 1.2})
+                        tasks.append({"q": query, "type": "google", "weight": 1.2})
 
             text_blocks = ocr_res.get('text_blocks', [])
             if text_blocks:
                 max_block = max(text_blocks, key=lambda b: abs(b['boundingBox']['vertices'][2]['y'] - b['boundingBox']['vertices'][0]['y']))
-                search_candidates.append({"q": max_block['text'], "src": f"OCR 最大區塊", "weight": 0.95})
+                tasks.append({"q": max_block['text'], "type": "google", "weight": 0.9})
 
-            if not search_candidates:
-                return {"success": False, "book_info": result_template, "ocr_text": full_text, "error": "無法提取搜尋關鍵字"}
+            if not tasks:
+                return {"success": False, "book_info": result_template, "ocr_text": full_text, "error": "無法提取關鍵字"}
 
-            TerminalUI.print_step(2, f"執行容錯搜尋 (共 {len(search_candidates)} 個候選)")
-            
-            unique_queries = []
+            unique_tasks = []
             seen = set()
-            for c in search_candidates:
-                cleaned_q = c['q'].replace('\n', ' ').strip()
-                if cleaned_q not in seen and len(cleaned_q) > 1 and not cleaned_q.isdigit():
-                    unique_queries.append(c)
-                    seen.add(cleaned_q)
+            for t in tasks:
+                k = f"{t['q']}_{t['type']}"
+                if k not in seen:
+                    unique_tasks.append(t)
+                    seen.add(k)
 
-            for cand in unique_queries:
-                query = cand['q']
-                TerminalUI.print_info(f"嘗試搜尋: [{query}]")
+            # 4. 競速搜尋
+            best_result_so_far = None
+            highest_score = 0.0
+            
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                future_to_task = {executor.submit(self._execute_search_task, t, full_text): t for t in unique_tasks}
                 
-                res = self._search_books_com_tw(query)
-                if not res: res = self._search_google_books(query)
-                
-                if res:
-                    res_title = res.get('title', '')
-                    
-                    if not self._check_keyword_containment(query, res_title):
-                        TerminalUI.print_warning(f"  -> 找到 '{res_title}' 但關鍵字不匹配 (剔除)")
-                        continue
-
-                    score = 0
-                    if res.get('isbn'): score += 30
-                    if res.get('authors'): score += 10
-                    if res.get('title'): score += 10
-                    if re.search(r'[\u4e00-\u9fa5]', res_title): score += 30
-                    
-                    similarity = SequenceMatcher(None, query, res_title).ratio()
-                    if similarity > 0.5: score += 20
-                    if 'books.com.tw' in res.get('source', ''): score += 15
-                    
-                    score *= cand['weight']
-                    TerminalUI.print_success(f"  -> 找到: {res_title} (分數: {score:.1f})")
-
-                    if score > highest_score:
-                        highest_score = score
-                        best_result_so_far = res
-                        best_result_so_far['source'] = f"{cand['src']} -> {res['source']}"
-                else:
-                    TerminalUI.print_warning("  -> 無結果")
+                for future in concurrent.futures.as_completed(future_to_task):
+                    try:
+                        result = future.result()
+                        if result:
+                            score, data = result
+                            if score > highest_score:
+                                highest_score = score
+                                best_result_so_far = data
+                            
+                            # ★ 極速回傳：分數 > 65 就走人 (降低門檻以求速度)
+                            if score >= 65:
+                                return self._success_return(best_result_so_far, full_text)
+                                
+                    except Exception: pass
 
             if best_result_so_far and highest_score > 25:
-                return self._success_return(best_result_so_far, best_result_so_far['source'], full_text)
+                return self._success_return(best_result_so_far, full_text)
             
             if full_text:
                 fallback = valid_lines[0] if valid_lines else "未知"
                 ocr_info = {"title": fallback, "source": "OCR 原始文字"}
-                return self._success_return(ocr_info, "OCR 原始資料", full_text)
+                return self._success_return(ocr_info, full_text)
 
             return {"success": False, "book_info": result_template, "error": "查無資料"}
 
         except Exception as e:
-            TerminalUI.print_error(f"系統錯誤: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "book_info": result_template, "error": str(e)}
 
-    def _search_books_com_tw(self, query):
+    def _execute_search_task(self, task, full_text):
+        query = task['q']
+        search_type = task['type']
+        
+        res = None
+        if search_type == 'books_tw':
+            res = self._search_books_com_tw(query, timeout=3.5) # 縮短 Timeout
+        else:
+            res = self._search_google_books(query)
+            
+        if not res: return None
+        res_title = res.get('title', '')
+        if not self._check_keyword_containment(query, res_title): return None
+
+        score = 0
+        if res.get('isbn'): score += 30
+        if res.get('authors'): score += 10
+        if res.get('title'): score += 10
+        if re.search(r'[\u4e00-\u9fa5]', res_title): score += 30
+        
+        similarity = SequenceMatcher(None, query, res_title).ratio()
+        if similarity > 0.5: score += 20
+        if search_type == 'books_tw': score += 15 
+        
+        score *= task['weight']
+        res['source'] = 'Books.tw' if search_type=='books_tw' else 'Google'
+        return (score, res)
+
+    def _search_books_com_tw(self, query, timeout=5):
         try:
             service = build("customsearch", "v1", developerKey=self.google_api_key)
             full_query = f'site:books.com.tw {query}' 
             res = service.cse().list(q=full_query, cx=self.google_search_cx_id, num=1).execute()
             if 'items' in res and len(res['items']) > 0:
-                return self._scrape_books_page(res['items'][0]['link'])
+                return self._scrape_books_page(res['items'][0]['link'], timeout)
         except Exception: pass
         return None
 
-    def _scrape_books_page(self, url):
+    def _scrape_books_page(self, url, timeout):
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-            resp = requests.get(url, headers=headers, timeout=5)
+            resp = requests.get(url, headers=headers, timeout=timeout)
             if resp.status_code != 200: return None
             
             soup = BeautifulSoup(resp.text, 'html.parser')
@@ -255,24 +257,11 @@ class FinalBookRecognizer:
             title = title.split('：')[0] if '：' in title else title
             title = re.sub(r' - 博客來.*', '', title)
 
-            # ★ 修正：精準抓取作者與出版社
             authors = []
-            # 博客來作者連結通常包含 adv_author 參數
-            for a in soup.select('a[href*="adv_author"]'):
-                authors.append(a.text.strip())
+            for a in soup.select('a[href*="adv_author"]'): authors.append(a.text.strip())
             
-            # 如果沒有 adv_author，嘗試抓 meta description 裡的
-            if not authors:
-                desc = soup.find('meta', property='og:description')['content']
-                if desc:
-                    # 簡單嘗試從描述中提取，但這比較不可靠，不如留空
-                    pass
-
-            # 博客來出版社連結通常包含 adv_pub
             pub_tag = soup.select_one('a[href*="adv_pub"]')
-            # 或是 pub
             if not pub_tag: pub_tag = soup.select_one('a[href*="pub"]')
-            
             publisher = pub_tag.text.strip() if pub_tag else ''
             
             isbn = ''
@@ -284,9 +273,7 @@ class FinalBookRecognizer:
             if date_tag: date = date_tag.replace('出版日期：', '').strip()
 
             if title:
-                # 去重作者
-                authors = list(set(authors))
-                return {"title": title, "authors": authors, "publisher": publisher, "publishedDate": date, "isbn": isbn, "source": "博客來爬蟲"}
+                return {"title": title, "authors": list(set(authors)), "publisher": publisher, "publishedDate": date, "isbn": isbn}
         except Exception: pass
         return None
 
@@ -294,7 +281,7 @@ class FinalBookRecognizer:
         try:
             safe_query = query[:100]
             url = f"{self.google_books_api['base_url']}?q={safe_query}&maxResults=1&langRestrict=zh&key={self.google_api_key}"
-            r = requests.get(url, timeout=5)
+            r = requests.get(url, timeout=2) # Google Books 極速 timeout
             if r.status_code == 200 and r.json().get('totalItems', 0) > 0:
                 vol = r.json()['items'][0]['volumeInfo']
                 return {
@@ -303,14 +290,12 @@ class FinalBookRecognizer:
                     "publisher": vol.get('publisher'),
                     "publishedDate": vol.get('publishedDate'),
                     "isbn": next((i['identifier'] for i in vol.get('industryIdentifiers', []) if i['type']=='ISBN_13'), ""),
-                    "source": "Google Books"
                 }
         except: pass
         return None
 
-    def _success_return(self, info, source, text):
-        info['source'] = source
-        TerminalUI.print_book_info(info)
-        return {"success": True, "book_info": info, "ocr_text": text}
+    def _success_return(self, info, ocr_text):
+        TerminalUI.print_result(info)
+        return {"success": True, "book_info": info, "ocr_text": ocr_text}
 
 book_recognition_service = FinalBookRecognizer()
