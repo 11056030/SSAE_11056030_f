@@ -12,7 +12,7 @@ load_dotenv()
 # 🔑 基本設定
 # ========================
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-$fdia7icb&ji2k_6aof1b)s#ozo^kvo9%9@#o@23z+x(ki+r)j')
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*']
 
 # ========================
