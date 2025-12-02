@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}我的課表{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/personal.css' %}">
+<style>
+  .schedule-page-container { max-width: 1200px; margin: 40px auto; padding: 20px; }
+  .schedule-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(15,23,42,.12); }
+  .schedule-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .schedule-header h1 { font-size:24px; font-weight:700; }
+  .schedule-form-row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; margin-bottom:16px; }
+  .schedule-form-group { display:flex; flex-direction:column; min-width:200px; }
+  .schedule-form-group label { font-size:14px; margin-bottom:4px; color:#4b5563; }
+  .schedule-form-group input { border-radius:8px; border:1px solid #d1d5db; padding:8px 10px; font-size:14px; }
+  .btn-primary { border:none; border-radius:999px; padding:8px 18px; background:#2563eb; color:#fff; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .btn-primary:disabled { opacity:.6; cursor:not-allowed; }
+  .status-text { font-size:13px; color:#4b5563; min-height:18px; margin-top:4px; }
+  .schedule-table-wrapper { margin-top:24px; overflow-x:auto; }
+  table.schedule-table { border-collapse:collapse; width:100%; min-width:720px; font-size:13px; }
+  table.schedule-table th, table.schedule-table td { border:1px solid #e5e7eb; padding:6px 8px; text-align:center; vertical-align:top; }
+  table.schedule-table th { background:#f3f4f6; font-weight:600; }
+  table.schedule-table td.period-cell { background:#f9fafb; font-weight:600; width:80px; }
+  .course-cell { font-size:12px; line-height:1.4; }
+  .course-name { font-weight:600; margin-bottom:2px; }
+  .course-meta { color:#4b5563; }
+  .badge-semester { font-size:12px; padding:2px 8px; border-radius:999px; background:#eff6ff; color:#1d4ed8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="schedule-page-container">
+  <div class="schedule-card">
+    <div class="schedule-header">
+      <h1>我的課表</h1>
+      <button type="button" class="btn-primary" style="text-decoration:none;" onclick="history.back();">
+        ← 回個人中心
+      </button>
+    </div>
+
+    <form id="scheduleSyncForm">
+      {% csrf_token %}
+      <div class="schedule-form-row">
+        <div class="schedule-form-group">
+          <label>學號</label>
+          <input type="text" value="{{ student_id|default:'(尚未設定)' }}" readonly>
+        </div>
+        <div class="schedule-form-group">
+          <label for="ntubPassword">校務系統密碼</label>
+          <input id="ntubPassword" name="password" type="password" required placeholder="請輸入資訊系統密碼">
+        </div>
+        <div class="schedule-form-group">
+          <button type="submit" class="btn-primary" id="syncBtn">
+            <span id="syncBtnText">同步課表</span>
+          </button>
+          <div class="status-text" id="syncStatus"></div>
+        </div>
+      </div>
+    </form>
+
+    <div class="schedule-table-wrapper">
+      <div class="status-text" id="scheduleHint">請先同步課表，或如果已同步可以直接載入現有課表。</div>
+      <table class="schedule-table" id="scheduleTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>節次 / 時間</th>
+            <th>一</th>
+            <th>二</th>
+            <th>三</th>
+            <th>四</th>
+            <th>五</th>
+            <th>六</th>
+            <th>日</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_js %}
+<script>
+(function() {
+  const form = document.getElementById('scheduleSyncForm');
+  const syncBtn = document.getElementById('syncBtn');
+  const syncBtnText = document.getElementById('syncBtnText');
+  const syncStatus = document.getElementById('syncStatus');
+  const scheduleTable = document.getElementById('scheduleTable');
+  const scheduleTableBody = document.getElementById('scheduleTableBody');
+  const scheduleHint = document.getElementById('scheduleHint');
+
+  function getCSRFToken() {
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : '';
+  }
+
+  const PERIOD_ORDER = [
+    '08:10-09:00',
+    '09:10-10:00',
+    '10:10-11:00',
+    '11:10-12:00',
+    '13:10-14:00',
+    '14:10-15:00',
+    '15:10-16:00',
+    '16:10-17:00',
+    '17:10-18:00',
+    '18:10-19:00',
+    '19:10-20:00',
+    '20:10-21:00'
+  ];
+
+  function buildScheduleGrid(courses) {
+    const grid = {};
+    const periodSet = new Set();
+
+    courses.forEach(c => {
+      const st = c.start_time;
+      const et = c.end_time;
+      if (!st || !et || !c.day_of_week) return;
+      const key = st + '-' + et;
+      periodSet.add(key);
+      const day = c.day_of_week;
+      if (!grid[key]) grid[key] = {};
+      if (!grid[key][day]) grid[key][day] = [];
+      grid[key][day].push(c);
+    });
+
+    const periods = Array.from(periodSet).sort((a,b) => {
+      const ai = PERIOD_ORDER.indexOf(a);
+      const bi = PERIOD_ORDER.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+
+    scheduleTableBody.innerHTML = '';
+
+    periods.forEach(pkey => {
+      const tr = document.createElement('tr');
+      const tdPeriod = document.createElement('td');
+      tdPeriod.className = 'period-cell';
+      const parts = pkey.split('-');
+      tdPeriod.textContent = (parts[0] || '') + '\n' + (parts[1] || '');
+      tr.appendChild(tdPeriod);
+
+      for (let day = 1; day <= 7; day++) {
+        const td = document.createElement('td');
+        const list = (grid[pkey] && grid[pkey][day]) || [];
+        if (list.length) {
+          list.forEach(c => {
+            const wrap = document.createElement('div');
+            wrap.className = 'course-cell';
+            const nameEl = document.createElement('div');
+            nameEl.className = 'course-name';
+            nameEl.textContent = c.course_name || '';
+            const metaEl = document.createElement('div');
+            metaEl.className = 'course-meta';
+            metaEl.textContent = [c.teacher || '', c.classroom || ''].filter(Boolean).join(' / ');
+            wrap.appendChild(nameEl);
+            wrap.appendChild(metaEl);
+            td.appendChild(wrap);
+          });
+        }
+        tr.appendChild(td);
+      }
+      scheduleTableBody.appendChild(tr);
+    });
+
+    if (periods.length === 0) {
+      scheduleHint.textContent = '目前沒有找到課表資料，請先同步或稍後再試。';
+      scheduleTable.style.display = 'none';
+    } else {
+      scheduleHint.textContent = '';
+      scheduleTable.style.display = '';
+    }
+  }
+
+  async function fetchCurrentSchedule() {
+    try {
+      const resp = await fetch('/api/class-schedule/', { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('載入課表失敗');
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.message || '載入課表失敗');
+
+      const payload = data.data || {};
+      const list = Array.isArray(payload.schedules) ? payload.schedules : [];
+      if (list.length === 0) return;  // 沒有歷史課表就不顯示
+
+      buildScheduleGrid(list);
+
+      if (payload.semester) {
+        const sem = payload.semester;
+        const semText = typeof sem === 'string' ? sem : (sem.fullText || '');
+        if (semText) {
+          syncStatus.textContent = '已載入上次同步的課表（' + semText + '）';
+        } else {
+          syncStatus.textContent = '已載入上次同步的課表。';
+        }
+      } else {
+        syncStatus.textContent = '已載入上次同步的課表。';
+      }
+    } catch (e) {
+      // 沒有歷史課表或載入失敗時可以靜默忽略
+    }
+  }
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const password = document.getElementById('ntubPassword').value.trim();
+    if (!password) {
+      syncStatus.textContent = '請輸入校務系統密碼';
+      return;
+    }
+
+    syncBtn.disabled = true;
+    syncBtnText.textContent = '同步中...';
+    syncStatus.textContent = '正在同步課表，可能需要數十秒，請稍候...';
+
+    try {
+      const formData = new FormData();
+      formData.append('password', password);
+
+      const resp = await fetch('/api/sync-schedule/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRFToken() },
+        body: formData,
+        credentials: 'same-origin'
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.message || '同步失敗');
+      }
+
+      // 直接使用同步 API 回傳的課表資料在前端顯示
+      const payload = data.data || {};
+      const courses = payload.courses || [];
+      buildScheduleGrid(Array.isArray(courses) ? courses : []);
+
+      if (payload.semester) {
+        const s = payload.semester;
+        const semText = s.fullText || `${s.year || ''}學年度第${s.term || ''}學期`;
+        syncStatus.textContent = '課表已更新（' + semText + '）';
+      } else {
+        syncStatus.textContent = '課表已更新。';
+      }
+    } catch (err) {
+      console.error(err);
+      syncStatus.textContent = '錯誤：' + (err.message || '同步失敗');
+    } finally {
+      syncBtn.disabled = false;
+      syncBtnText.textContent = '同步課表';
+    }
+  });
+
+  // 頁面載入時，嘗試載入上次同步的課表
+  fetchCurrentSchedule();
+
+})();
+</script>
+{% endblock %}

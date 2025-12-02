@@ -8,20 +8,21 @@ import logging
 import base64
 import mimetypes
 import openpyxl
+import subprocess
 from datetime import date, timedelta
 from io import BytesIO
 from urllib.parse import unquote
 from .system import ask_question
 # Django imports
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponse, FileResponse
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotAllowed, HttpResponse, FileResponse, HttpResponseServerError
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
-from django.db import models, connection, transaction, IntegrityError
+from django.db import models, connection, transaction, IntegrityError, DatabaseError
 from django.db.models import Avg, Count, Max, Q, Subquery, OuterRef, F, Value, BooleanField, Case, When, Prefetch, IntegerField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -58,7 +59,7 @@ from .models import (
     GroupActivity, ActivityParticipant, ActivityComment, Book2, Department, 
     AcademicGrade, Category, Status, Academic, User, Academica, Departmentd, 
     AcadeGrade, AcadeDepart, CourseReview, Course, Departmentd, Academica, CourseReview, 
-    ReviewLike, User as LegacyUser
+    ReviewLike, User as LegacyUser, CourseSchedule, CreditSummary
 )
 from .forms import Book2Form, ActivityForm
 from .utils.content_filter import contains_banned_content, BANNED_WORDS, debug_banned_content
@@ -404,6 +405,31 @@ def personal(request):
         'tickets': tickets,
         'books': books,
         'created_flags': created_flags,
+    })
+
+
+@login_required
+def class_schedule_page(request):
+    """顯示課表查詢與視覺化頁面"""
+    student_id = None
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT student_id
+                FROM `User`
+                WHERE mail = %s
+                """,
+                [request.user.email],
+            )
+            row = cursor.fetchone()
+            if row:
+                student_id = row[0]
+    except Exception as e:
+        logger.warning(f"無法從自定義 User 表獲取學號: {e}")
+
+    return render(request, 'class_schedule.html', {
+        'student_id': student_id,
     })
 
 
@@ -2887,6 +2913,260 @@ def view_pdf_streaming(request, filename):
     except Exception as e:
         logger.error(f"❌ streaming PDF 錯誤: {e}")
         return JsonResponse({"error": f"伺服器錯誤: {str(e)}"}, status=500)
+
+# ============================================================
+# 課表同步 API
+# ============================================================
+@login_required
+@require_http_methods(['POST'])
+def sync_class_schedule(request):
+    """
+    同步學生的課表資料
+    """
+    try:
+        user = request.user
+        
+        # 獲取學號和密碼
+        student_id = None
+        try:
+            # 優先從自定義 User 資料表(以 email 對應)取得學號
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT student_id
+                    FROM `User`
+                    WHERE mail = %s
+                    """,
+                    [user.email],
+                )
+                row = cursor.fetchone()
+                if row:
+                    student_id = row[0]
+        except Exception as e:
+            logger.warning(f"同步課表時無法從自定義 User 表取得學號: {e}")
+
+        # 若自定義表沒有對應紀錄，退回使用 Django 使用者帳號作為學號
+        if not student_id:
+            student_id = getattr(user, 'username', None)
+
+        password = request.POST.get('password')  # 需要前端傳入密碼
+        
+        if not student_id or not password:
+            return JsonResponse({
+                'success': False,
+                'message': '請提供學號和密碼'
+            }, status=400)
+        
+        # 構建 Node.js 腳本路徑
+        script_path = os.path.join(settings.BASE_DIR, 'ntub_scraper', 'sync_schedule.js')
+        
+        # 構建命令
+        cmd = [
+            'node',
+            script_path,
+            '--studentId', student_id,
+            '--password', password,
+            '--userId', str(user.id)
+        ]
+        
+        # 執行命令（強制使用 UTF-8 讀取輸出，避免 Windows cp950 解碼錯誤）
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            cwd=os.path.dirname(script_path)
+        )
+        
+        # 檢查執行結果
+        if result.returncode != 0:
+            return JsonResponse({
+                'success': False,
+                'message': f'同步失敗: {result.stderr}'
+            }, status=500)
+        
+        try:
+            # 解析 JSON 輸出：從整個 stdout 中擷取第一個 '{' 到最後一個 '}' 之間的內容
+            raw_output = result.stdout
+            if not raw_output:
+                raise ValueError("同步腳本沒有輸出任何資料")
+
+            start_idx = raw_output.find('{')
+            end_idx = raw_output.rfind('}')
+
+            if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
+                raise ValueError("找不到 JSON 格式的輸出。原始輸出: " + raw_output.strip().splitlines()[-1])
+
+            json_block = raw_output[start_idx:end_idx + 1]
+            output = json.loads(json_block)
+
+            if not output.get('success', False):
+                return JsonResponse({
+                    'success': False,
+                    'message': f'同步失敗: {output.get("message", "未知錯誤")}'
+                }, status=500)
+
+            # === 將課表與學分資料寫入資料庫 ===
+            data = output.get('data', {}) or {}
+            courses = data.get('courses', []) or []
+            semester_info = data.get('semester')
+
+            # semester 可能是字串（例如 '1122'）或物件（包含 year/term）
+            if isinstance(semester_info, dict):
+                semester_str = semester_info.get('semester') or (
+                    (semester_info.get('year') or '') + (semester_info.get('term') or '')
+                )
+            else:
+                semester_str = semester_info
+
+            if not semester_str:
+                semester_str = ''
+
+            try:
+                # 先刪除該使用者該學期舊的課表資料
+                CourseSchedule.objects.filter(user=user, semester=semester_str).delete()
+
+                # 批次建立新的課表資料
+                schedule_objs = []
+                for c in courses:
+                    # Node 端鍵名為 course_name / teacher / classroom / day_of_week / start_time / end_time / credit / course_code
+                    course_code = c.get('course_code') or c.get('courseCode') or ''
+                    day_of_week = c.get('day_of_week') or c.get('dayOfWeek')
+                    if day_of_week is None:
+                        continue
+
+                    schedule_objs.append(CourseSchedule(
+                        user=user,
+                        course_code=course_code or '',
+                        course_name=c.get('course_name') or c.get('courseName') or '',
+                        teacher=c.get('teacher') or '',
+                        classroom=c.get('classroom') or '',
+                        day_of_week=str(day_of_week),
+                        start_time=c.get('start_time') or c.get('startTime') or '00:00',
+                        end_time=c.get('end_time') or c.get('endTime') or '00:00',
+                        credit=c.get('credit') or 0,
+                        semester=semester_str,
+                    ))
+
+                if schedule_objs:
+                    CourseSchedule.objects.bulk_create(schedule_objs)
+
+                # 寫入 / 更新學分統計
+                summary = data.get('creditSummary') or {}
+                CreditSummary.objects.update_or_create(
+                    user=user,
+                    semester=semester_str,
+                    defaults={
+                        'required_credits': summary.get('required_credits', 0) or 0,
+                        'elective_credits': summary.get('elective_credits', 0) or 0,
+                        'total_credits': summary.get('total_credits', 0) or 0,
+                        'gpa': summary.get('gpa', None),
+                    }
+                )
+            except Exception as db_err:
+                logger.warning(f"同步課表時寫入資料庫失敗: {db_err}")
+
+            return JsonResponse({
+                'success': True,
+                'message': '課表同步成功',
+                'data': data
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': '解析同步結果失敗',
+                'error': result.stderr or result.stdout
+            }, status=500)
+            
+    except Exception as e:
+        logger.exception('同步課表時發生錯誤')
+        return JsonResponse({
+            'success': False,
+            'message': f'伺服器錯誤: {str(e)}'
+        }, status=500)
+
+# ============================================================
+# 獲取課表 API
+# ============================================================
+@login_required
+@require_http_methods(['GET'])
+def get_class_schedule(request):
+    """
+    獲取當前用戶的課表
+    """
+    try:
+        # 獲取查詢參數
+        semester = request.GET.get('semester')  # 可選，如果沒有則自動使用最新學期
+
+        # 如果沒有指定學期，先找出該用戶最新一筆課表所屬學期
+        if not semester:
+            latest = CourseSchedule.objects.filter(user=request.user).order_by('-created_at').first()
+            if latest:
+                semester = latest.semester
+
+        # 構建查詢條件
+        query = CourseSchedule.objects.filter(user=request.user)
+        if semester:
+            query = query.filter(semester=semester)
+
+        # 獲取課表數據
+        schedules = list(query.values(
+            'course_code', 'course_name', 'teacher', 'classroom',
+            'day_of_week', 'start_time', 'end_time', 'credit', 'semester'
+        ))
+        
+        # 格式化時間
+        for schedule in schedules:
+            if isinstance(schedule['start_time'], str):
+                schedule['start_time'] = schedule['start_time']
+            else:
+                schedule['start_time'] = schedule['start_time'].strftime('%H:%M') if schedule['start_time'] else None
+                
+            if isinstance(schedule['end_time'], str):
+                schedule['end_time'] = schedule['end_time']
+            else:
+                schedule['end_time'] = schedule['end_time'].strftime('%H:%M') if schedule['end_time'] else None
+        
+        # 獲取學分統計
+        credit_summary = None
+        if semester:
+            credit_summary = CreditSummary.objects.filter(
+                user=request.user,
+                semester=semester
+            ).first()
+        
+        summary_data = {
+            'required_credits': 0,
+            'elective_credits': 0,
+            'total_credits': 0,
+            'gpa': None
+        }
+        
+        if credit_summary:
+            summary_data = {
+                'required_credits': credit_summary.required_credits,
+                'elective_credits': credit_summary.elective_credits,
+                'total_credits': credit_summary.total_credits,
+                'gpa': float(credit_summary.gpa) if credit_summary.gpa else None
+            }
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'schedules': schedules,
+                'summary': summary_data,
+                'semester': semester
+            }
+        })
+        
+    except Exception as e:
+        logger.exception('獲取課表時發生錯誤')
+        return JsonResponse({
+            'success': False,
+            'message': f'獲取課表失敗: {str(e)}'
+        }, status=500)
 
 # 如果需要處理 OPTIONS 請求（CORS 預檢）
 @csrf_exempt

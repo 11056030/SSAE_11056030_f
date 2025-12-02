@@ -8,19 +8,25 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "puppeteer": "^21.0.0",
+    "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "helmet": "^7.0.0",
+    "express": "^4.18.2",
     "express-rate-limit": "^6.8.1",
-    "tesseract.js": "^4.1.1",
-    "jimp": "^0.22.10"
+    "helmet": "^7.0.0",
+    "jimp": "^0.22.10",
+    "puppeteer": "^21.11.0",
+    "tesseract.js": "^4.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["scraper", "ntub", "student", "api"],
+  "keywords": [
+    "scraper",
+    "ntub",
+    "student",
+    "api"
+  ],
   "author": "Your Name",
   "license": "MIT"
 }

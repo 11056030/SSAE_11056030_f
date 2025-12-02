@@ -536,6 +536,71 @@ class ActivityComment(models.Model):
         return f'{uname or "user"}: {snippet}'
 
 
+# ====== 課表與學分資訊 =====
+class CourseSchedule(models.Model):
+    """
+    學生課表資料
+    """
+    DAYS_OF_WEEK = [
+        ('1', '星期一'),
+        ('2', '星期二'),
+        ('3', '星期三'),
+        ('4', '星期四'),
+        ('5', '星期五'),
+        ('6', '星期六'),
+        ('7', '星期日'),
+    ]
+    
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='course_schedules'
+    )
+    course_code = models.CharField('課程代碼', max_length=20)
+    course_name = models.CharField('課程名稱', max_length=100)
+    teacher = models.CharField('授課教師', max_length=50, blank=True, null=True)
+    classroom = models.CharField('教室', max_length=50, blank=True, null=True)
+    day_of_week = models.CharField('星期', max_length=1, choices=DAYS_OF_WEEK)
+    start_time = models.TimeField('開始時間')
+    end_time = models.TimeField('結束時間')
+    credit = models.PositiveSmallIntegerField('學分數', default=0)
+    semester = models.CharField('學期', max_length=20)  # 例如: 112-2
+    created_at = models.DateTimeField('建立時間', auto_now_add=True)
+    updated_at = models.DateTimeField('更新時間', auto_now=True)
+    
+    class Meta:
+        verbose_name = '課程表'
+        verbose_name_plural = '課程表'
+        ordering = ['day_of_week', 'start_time']
+    
+    def __str__(self):
+        return f"{self.course_name} - {self.get_day_of_week_display()} {self.start_time.strftime('%H:%M')}-{self.end_time.strftime('%H:%M')}"
+
+
+class CreditSummary(models.Model):
+    """
+    學生學分統計
+    """
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='credit_summary'
+    )
+    semester = models.CharField('學期', max_length=20)  # 例如: 112-2
+    required_credits = models.PositiveSmallIntegerField('必修學分', default=0)
+    elective_credits = models.PositiveSmallIntegerField('選修學分', default=0)
+    total_credits = models.PositiveSmallIntegerField('總學分', default=0)
+    gpa = models.DecimalField('GPA', max_digits=3, decimal_places=2, null=True, blank=True)
+    last_updated = models.DateTimeField('最後更新時間', auto_now=True)
+    
+    class Meta:
+        verbose_name = '學分統計'
+        verbose_name_plural = '學分統計'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.semester} 學分統計"
+
+
 # ====== 個人中心 Todo（持久化）=====
 class Todo(models.Model):
     user = models.ForeignKey(

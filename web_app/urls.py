@@ -1,7 +1,12 @@
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
 from . import views
 
-# 這是一個基本的urls.py文件，你可以根據需要添加更多路由
 urlpatterns = [
-    # 基本路由可以在這裡添加
+    # 課表相關 API
+    path('api/sync-schedule/', csrf_exempt(views.sync_class_schedule), name='sync_class_schedule'),
+    path('api/class-schedule/', views.get_class_schedule, name='get_class_schedule'),
+    path('schedule/', views.class_schedule_page, name='class_schedule_page'),
+    
+    # 其他路由...
 ]

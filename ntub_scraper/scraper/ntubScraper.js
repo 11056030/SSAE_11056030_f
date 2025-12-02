@@ -1070,12 +1070,19 @@ class NTUBScraper {
     }
 }
 
-// 創建單例實例
-const scraper = new NTUBScraper();
+// 導出 NTUBScraper 類
+module.exports = NTUBScraper;
 
-// 定期清理過期session
-setInterval(() => {
-    scraper.cleanupExpiredSessions();
-}, 10 * 60 * 1000); // 每10分鐘清理一次
-
-module.exports = scraper;
+// 以下代碼僅在直接運行此文件時執行
+if (require.main === module) {
+    // 創建單例實例
+    const scraper = new NTUBScraper();
+    
+    // 定期清理過期session
+    setInterval(() => {
+        scraper.cleanupExpiredSessions();
+    }, 10 * 60 * 1000); // 每10分鐘清理一次
+    
+    // 導出實例（僅用於直接運行）
+    module.exports.instance = scraper;
+}
