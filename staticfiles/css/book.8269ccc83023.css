@@ -1,0 +1,1661 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;500;700;900&display=swap');
+
+:root {
+  --primary-color: #9e8c9d;
+  --primary-light: #bfaebe;
+  --primary-dark: #7d6c7c;
+  --accent-color: #aa9da9;
+  --success-color: #7d6c7c;
+  --text-color: #333;
+  --bg-color: #F8F6F4;
+  --light-gray: #f8f6f4;
+  --medium-gray: #e5e2df;
+  --dark-gray: #888;
+  --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.07);
+  --radius-sm: 5px;
+  --radius-md: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+
+body {
+  font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+  background-color: #f8f6f4;
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+  margin-top: 80px;
+  position: relative;
+}
+
+.page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px 0;
+  position: relative;
+  z-index: 1;
+}
+
+
+/* 上傳表單彈窗樣式 */
+.upload-form {
+  display: none;
+  position: fixed;
+  left: 0; top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(111,85,125,0.09);
+  z-index: 3500;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+.upload-form.show {
+  display: flex;
+}
+.upload-container {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(111,85,125,0.13);
+  padding: 32px 28px 20px 28px;
+  min-width: 340px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* 浮動上傳按鈕與圓形logo */
+.floating-action-button {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  z-index: 3300;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.circular-logo {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  z-index: 3350;
+}
+.circular-logo:hover {
+  box-shadow: 0 4px 16px rgba(111,85,125,0.18);
+  transform: translateY(-2px) scale(1.04);
+}
+.circular-text {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.upload-btn-center {
+  width: 44px;
+  height: 44px;
+  background: #6F557D;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%,-50%);
+  box-shadow: 0 2px 8px rgba(111,85,125,0.14);
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.upload-btn-center:hover {
+  background: #9e8c9d;
+  color: #e7c21b;
+  transform: translate(-50%,-54%) scale(1.08);
+}
+/* Background elements */
+.bg-text {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  font-size: 18vw;
+  font-weight: 900;
+  line-height: 0.8;
+  color: #f0f0f0;
+  white-space: nowrap;
+  letter-spacing: -0.05em;
+  user-select: none;
+  z-index: -1;
+  transition: transform 0.1s ease-out;
+}
+
+/* Header and Title Section */
+.page-header {
+  text-align: center;
+  position: relative;
+  margin-top: 20px;
+}
+
+.page-title {
+  font-size: 50px;
+  font-weight: 700;
+  color: #635c63;
+  text-align: center;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+}
+
+.page-subtitle {
+  font-size: 18px;
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+/* Filter Section */
+.filter-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; 
+  gap: 15px;
+  margin: 20px 0px 40px 0px;
+}
+
+.search-container {
+  display: flex;
+  position: relative;
+}
+
+.search-input {
+  padding: 12px 25px;
+  border-radius: 50px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  width: 250px;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.search-input:focus {
+  border-color: #e0d3e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.search-btn {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.search-btn:hover {
+  color: var(--primary-color);
+}
+
+.filter-item {
+  padding: 12px 25px;
+  border-radius: 50px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 1em;
+  padding-right: 30px;
+}
+
+.filter-item:hover {
+  border-color: #e0d3e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.search-box {
+  padding: 12px 25px;
+  border-radius: 50px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  width: 250px;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.search-box:focus {
+  border-color: #e0d3e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+
+.upload-book-btn {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 50px;
+  border: none;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(68, 55, 48, 0.2);
+  justify-content: center;
+}
+
+.upload-book-btn:hover {
+  background-color: #554539;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(68, 55, 48, 0.3);
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  left: 20px;
+  top: 20px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  transform: translateX(-3px);
+  opacity: 0.8;
+}
+
+.circular-logo {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.circular-text {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  animation: rotate 20s linear infinite;
+  transform-origin: center center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.circular-text svg text {
+  fill: #6F557D;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* 右下角浮動按鈕樣式 */
+.floating-action-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 100;
+}
+
+/* 上傳按鈕 */
+.upload-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.upload-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+  background-color: #2a5c64;
+}
+
+/* 書籍上傳表單圖片上傳區塊 */
+.image-upload-rectangle {
+  width: 100%;
+  max-width: 400px;
+  height: 320px;
+  border: 2px dashed #ddd;
+  border-radius: 18px;
+  background: #faf7fb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0 auto 10px auto;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  position: relative;
+}
+.image-upload-rectangle:hover, .image-upload-rectangle.dragover {
+.image-upload-rectangle .image-upload-icon {
+  font-size: 2.8rem;
+  color: #bbb;
+  margin-bottom: 10px;
+  transition: color 0.2s;
+}
+.image-upload-rectangle:hover .image-upload-icon {
+  color: #6F557D;
+}
+.image-upload-rectangle .image-upload-text {
+  font-size: 14px;
+  color: #666;
+  margin-top: 8px;
+}
+.image-upload-rectangle img {
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  margin-top: 10px;
+  pointer-events: auto;
+  display: block;
+  background: #fff;
+  border: 2px solid #6F557D;
+  padding: 6px;
+}
+
+
+
+  color: #777;
+  font-size: 1rem;
+}
+
+.image-upload-container {
+  border: 2px dashed #ddd;
+  border-radius: 18px;
+  background: #faf7fb;
+  padding: 32px 0 20px 0;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  position: relative;
+}
+.image-upload-container:hover {
+  border-color: #6F557D;
+  background: #f2e9fa;
+  box-shadow: 0 4px 12px rgba(111,85,125,0.08);
+}
+.image-upload-icon {
+  font-size: 2.8rem;
+  color: #bbb;
+  margin-bottom: 10px;
+  transition: color 0.2s;
+}
+.image-upload-container:hover .image-upload-icon {
+  color: #6F557D;
+}
+.image-upload-text {
+  color: #777;
+  font-size: 1rem;
+  margin-bottom: 0.5em;
+}
+.help-text {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 5px;
+}
+
+/* 中心上傳按鈕樣式 */
+.upload-btn-center {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background-color: #6F557D;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(111, 85, 125, 0.25);
+  transition: all 0.3s ease;
+  z-index: 100;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.upload-btn-center:hover {
+  background-color: #9e8c9d;
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 6px 15px rgba(111, 85, 125, 0.35);
+}
+
+.upload-form {
+  display: none;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 2rem 0 1.5rem 0;
+}
+.page-link {
+  display: inline-block;
+  min-width: 36px;
+  padding: 0.5em 1.1em;
+  margin: 0 0.18em;
+  border-radius: 2em;
+  background: #ede6f3;
+  color: #6F557D;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(111,85,125,0.10);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(.4,1.2,.4,1.0), box-shadow 0.2s;
+  position: relative;
+  z-index: 1;
+  text-decoration: none !important;
+}
+.page-link:visited,
+.page-link:active,
+.page-link:focus,
+.page-link:hover,
+.page-link.disabled,
+.page-link.active {
+  text-decoration: none !important;
+}
+
+.page-link:hover:not(.active):not(.disabled) {
+  background: #9f99a2;
+  color: #fff;
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 4px 16px rgba(111,85,125,0.18);
+}
+.page-link.active {
+  background: linear-gradient(90deg, #9e8c9d 0%, #6F557D 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(111,85,125,0.20), 0 2px 8px rgba(111,85,125,0.11);
+  font-weight: 800;
+  border: 2px solid #6F557D;
+  pointer-events: none;
+}
+.page-link.disabled {
+  background: #f4f1f7;
+  color: #b7aabb;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+
+/* 裝飾線 */
+.deco-line {
+  width: 100%;
+  height: 3px;
+  background-color: #9e8c9d;
+  margin: 40px 0;
+  opacity: 0.2;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.logo-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+}
+
+.title-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.site-title {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 50px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 auto;
+    color: var(--text-color);
+    letter-spacing: 2px;
+}
+
+/* 篩選區域 */
+.filter-card {
+  margin: 30px 0;
+  border-radius: 15px;
+  padding: 25px;
+}
+
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.filter-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+.filter-select, .filter-input {
+  padding: 12px 25px;
+  border-radius: 50px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 150px;
+  outline: none;
+}
+
+.filter-select:hover, .filter-input:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.filter-input {
+  width: 250px;
+}
+
+/* 書籍容器 */
+.books-container {
+  margin-top: 30px;
+  position: relative;
+  z-index: 2;
+}
+
+/* .books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
+} */
+
+
+.book-tag, .book-academic, .book-department, .book-grade {
+    display: inline-block;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 12px;
+    margin-right: 8px;
+    margin-bottom: 3px;
+    vertical-align: middle;
+    box-shadow: 0 1px 4px rgba(111,85,125,0.07);
+    transition: background 0.2s, color 0.2s;
+}
+
+.book-tag {
+    background: #6F557D;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+.book-academic {
+    background: #f3eef7;
+    color: #6F557D;
+}
+
+.book-department {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+
+.book-tag:last-child {
+    margin-right: 0;
+}
+
+.book-info {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 15px;
+}
+
+.book-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 56px;
+  min-height: 56px;
+  max-height: 56px;
+  overflow: hidden;
+}
+
+.book-meta {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  font-size: 0.9rem;
+  color: #666;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 180px;
+  align-items: center;
+  position: relative;
+}
+
+/* 跑馬燈容器 */
+.book-meta-marquee {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: bookMarquee 15s linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
+}
+
+/* 滑鼠懸停卡片時啟動跑馬燈 */
+.book-card:hover .book-meta-marquee {
+  animation-play-state: running;
+}
+.book-card.filtered-hidden {
+  display: none !important;
+}
+/* 保留原本的懸停效果作為備用 */
+.book-meta:hover .book-meta-marquee {
+  animation-play-state: running;
+}
+
+/* 跑馬燈動畫 - 單向滾動 */
+@keyframes bookMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* 游標效果 - 只在有跑馬燈時使用 */
+.book-meta.has-marquee {
+  mask: linear-gradient(90deg, transparent 0%, white 8%, white 92%, transparent 100%);
+  -webkit-mask: linear-gradient(90deg, transparent 0%, white 8%, white 92%, transparent 100%);
+}
+
+/* 卡片懸停效果 - 移除背景提示 */
+
+/* 滑鼠懸停效果 */
+.book-meta:hover {
+  cursor: pointer;
+}
+/* 移除舊的滾動條樣式，因為現在使用跑馬燈 */
+.book-meta::-webkit-scrollbar {
+  display: none;
+}
+
+.book-meta {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+.book-meta-tag {
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 2000px;
+  padding: 2px 14px;
+  font-size: 0.85em;
+  font-weight: 500;
+  margin-right: 6px;
+  margin-bottom: 0;
+  box-shadow: 0 1px 4px rgba(111,85,125,0.07);
+  transition: background 0.2s, color 0.2s;
+}
+
+.book-meta-tag.book-academic,
+.book-meta-tag.book-department,
+.book-meta-tag.book-grade {
+  background: #ede6f3;
+  color: #6F557D;
+}
+
+/* 書籍狀態標籤顏色 */
+.book-meta-tag.book-condition {
+  font-weight: 600;
+}
+
+/* 全新 - 綠色 */
+.book-meta-tag.condition-new {
+  background: #e8f5e8 !important;
+  color: #2e7d32 !important;
+  border: 1px solid #4caf50 !important;
+}
+
+/* 良好 - 黃色 */
+.book-meta-tag.condition-good {
+  background: #fff8e1 !important;
+  color: #f57f17 !important;
+  border: 1px solid #ffeb3b !important;
+}
+
+/* 尚可 - 紅色 */
+.book-meta-tag.condition-fair {
+  background: #ffebee !important;
+  color: #d32f2f !important;
+  border: 1px solid #f44336 !important;
+}
+
+.book-tag {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  z-index: 20;
+}
+
+.book-tag.textbook {
+  background-color: #2f0855; 
+  font-size: 16px; 
+  padding: 6px 12px; 
+}
+
+.book-tag.reference, .book-tag.literature {
+  background-color: #2f0855; 
+  font-size: 16px;
+  padding: 6px 12px;
+}
+
+.book-info {
+  padding: 15px;
+}
+
+@media (max-width: 600px) {
+  .book-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+.book-meta span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  line-height: 32px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-meta-tag {
+  position: relative; 
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  min-width: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  background: #ede6f3;
+  color: #6F557D;
+  border-radius: 2000px;
+  padding: 0 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  font-size: clamp(9px, 1vw, 12px);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+
+.book-meta-tag span, .book-meta-tag {
+  min-width: 0;
+}
+
+
+
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 20px 20px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: var(--accent-color);
+  border-radius: 50px;
+  font-size: 12px;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+
+/* 上傳按鈕和功能  */
+
+.upload-form.show-popup {
+  display: flex;
+}
+
+
+#imageUpload {
+  display: none;
+}
+
+.upload-form {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.upload-container {
+  background-color: white;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  z-index: 9999;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.upload-header, .form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 1px solid #eee;
+  background-color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.upload-title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s;
+}
+
+.close-btn:hover {
+  color: var(--primary-color);
+}
+
+.image-upload-section {
+  margin-top: 25px;
+  margin-bottom: 25px;
+}
+
+.image-upload-area {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto 20px;
+}
+
+.image-upload-area input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.preview-container {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed var(--primary-color);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f9f7f5;
+  transition: all 0.3s ease;
+}
+
+.preview-container:hover {
+  border-color: #554539;
+  background-color: #f5f2f0;
+}
+
+.preview-container.highlight {
+  border-color: var(--primary-color);
+  background-color: #f0ebe8;
+  border-style: solid;
+  box-shadow: 0 0 10px rgba(68, 55, 48, 0.2);
+}
+
+.preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #999;
+  padding: 20px;
+  text-align: center;
+}
+
+.preview-placeholder i {
+  font-size: 40px;
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.scrollable-content {
+  overflow-y: auto;
+  max-height: calc(90vh - 70px);
+  padding: 0 30px 30px;
+}
+
+.upload-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+}
+
+.form-group-half {
+  flex: 1;
+  min-width: 0; 
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 10px;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s;
+  margin-bottom: 1rem;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #510f8e;
+  box-shadow: 0 0 0 2px rgba(158, 70, 206, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Checkbox styles */
+.checkbox-group {
+  display: flex;
+  gap: 20px;
+  margin-top: 5px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+}
+
+.checkbox-item label {
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding: 0 10px;
+  width: 100%;
+  gap: 10px;
+}
+
+/* Submit Button */
+.submit-btn {
+  padding: 12px 30px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 120px;
+}
+
+.submit-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Cancel Button */
+.cancel-btn {
+  padding: 12px 30px;
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 120px;
+}
+
+.cancel-btn:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 裝飾元素 */
+.deco-line {
+  width: 100%;
+  height: 3px;
+  background-color: #9e8c9d;
+  margin: 40px 0;
+  opacity: 0.2;
+}
+
+
+
+/* 浮動動畫 */
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* 響應式設計 */
+@media (max-width: 900px) {
+  /* .books-grid {
+    grid-template-columns: repeat(2, 1fr);
+  } */
+  
+  .site-title {
+    font-size: 42px;
+  }
+  
+  .filter-options {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .filter-group {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .filter-select, .filter-input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  /* .books-grid {
+    grid-template-columns: 1fr;
+  } */
+  
+  .circular-logo {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .site-title {
+    font-size: 32px;
+  }
+  
+  .header-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .upload-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    bottom: 20px;
+    right: 20px;
+  }
+}
+
+.book-header,
+.book-tag,
+.book-meta-tag,
+.book-price {
+    text-decoration: none;
+}
+
+/* 移除書卡連結底線 */
+.book-card {
+    text-decoration: none; /* 移除文字底線 */
+    color: inherit;         /* 讓文字顏色不被 a 影響 */
+}
+
+/* 如果內部的 meta 標籤也是 a，可以加上 */
+.book-card .book-meta-tag,
+.book-card .book-price,
+.book-card .book-header,
+.book-card .book-tag {
+    text-decoration: none;
+}
+
+/* 顯示控制器樣式 */
+.display-controls {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 20px 25px !important;
+  margin: 30px 0 !important;
+  border-radius: 15px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.control-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.control-group label {
+  font-weight: 500 !important;
+  color: #333 !important;
+  font-size: 14px !important;
+}
+
+.items-selector {
+  padding: 8px 12px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  background: white !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+}
+
+/* 手機版按鈕預設隱藏 */
+.mobile-book-buttons {
+  display: none;
+}
+
+/* 書籍網格樣式 - 跟活動頁面一樣 */
+.books-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  gap: 25px !important;
+  margin-bottom: 80px !important;
+  transition: all 0.3s ease !important;
+}
+
+/* 每行顯示數量的網格樣式 - 1到5個 */
+.books-grid.items-per-row-1 {
+  gap: 30px !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.books-grid.items-per-row-2 {
+  gap: 40px !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+}
+
+.books-grid.items-per-row-3 {
+  gap: 30px !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+}
+
+.books-grid.items-per-row-4 {
+  gap: 20px !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+}
+
+.books-grid.items-per-row-5 {
+  gap: 15px !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+}
+
+/* 書籍卡片寬度控制 */
+.books-grid.items-per-row-1 .book-card {
+  width: 360px !important;
+  max-width: 360px !important;
+}
+
+.books-grid.items-per-row-2 .book-card {
+  width: calc(50% - 20px) !important;
+  max-width: 400px !important;
+}
+
+.books-grid.items-per-row-3 .book-card {
+  width: calc(33.333% - 20px) !important;
+  max-width: 350px !important;
+}
+
+.books-grid.items-per-row-4 .book-card {
+  width: calc(25% - 15px) !important;
+  max-width: 300px !important;
+}
+
+.books-grid.items-per-row-5 .book-card {
+  width: calc(20% - 12px) !important;
+  max-width: 250px !important;
+}
+
+
+/* ===== 基本書卡動畫 ===== */
+.book-card { opacity: 0; transform: translateY(20px); transition: all 0.5s ease; }
+.book-card.visible { opacity: 1; transform: translateY(0); }
+.book-header,.book-tag,.book-meta-tag,.book-price { text-decoration: none; }
+/* ===== Filter Box ===== */
+.filter-box { padding: 80px; margin-bottom: 20px; }
+.filter-grid {
+  display: flex;           /* 改成水平排列 */
+  flex-wrap: wrap;         /* 超過寬度換行 */
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.filter-grid-2 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 150px; /* 每個篩選條件最小寬度150px，會自動撐開 */
+}
+.filter-label { color: #6F557D; font-weight: 500; margin-bottom: 5px; font-size: 14px; }
+
+.filter-select, .search-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 50px;  /* 圓角50 */
+  font-size: 14px;
+}
+.filter-select:focus, .search-input:focus { border-color: #9e8c9d; box-shadow: 0 0 0 2px rgba(111,85,125,0.1); }
+.search-container {
+  flex: 1 1 200px; /* 搜尋欄比其他略寬 */
+  position: relative;
+  height: 44px;
+}
+.search-input { padding-left: 40px; }
+.search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #6F557D; }
+.clear-filters-btn {
+    padding: 12px 25px;
+    border-radius: 50px;
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #666;
+}
+
+.clear-filters-btn:hover {
+    background-color: #ebebeb;
+    border-color: #d0d0d0;
+    transform: translateY(-2px);
+}
+
+/* 禁用狀態樣式 */
+.filter-select:disabled {
+    background-color: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ===== 書卡樣式 ===== */
+.book-card {
+  background-color: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  overflow: hidden; transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column; height: 100%; width: 100%;
+}
+.book-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04); }
+.book-image-container { width: 100%; aspect-ratio: 3/4; overflow: hidden; background-color: #f3f4f6; }
+.book-image { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform 0.3s ease; }
+.book-card:hover .book-image { transform: scale(1.05); }
+.book-info { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
+.book-header { font-size: 1.25rem; font-weight: bold; color: #1a202c; margin-bottom: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.book-footer { display: flex; justify-content: flex-start; align-items: center; margin-top: auto; padding: 0; gap: 0.5rem; }
+.book-price { font-weight: bold; color: #6F557D; font-size: 1.1rem; margin-left: auto; }
+
+
+
+
+/* ===== 480px以下手機版設定 ===== */
+@media (max-width: 480px) {
+  .filter-box {
+    padding: 0px !important;
+  }
+  
+  /* 隱藏桌面版選擇器 */
+  .items-selector {
+    display: none !important;
+  }
+  
+  /* 顯示手機版按鈕 */
+  .mobile-book-buttons {
+    display: flex !important;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .book-grid-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 60px;
+    font-size: 11px;
+    color: #666;
+  }
+  
+  .book-grid-btn i {
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #9e8c9d;
+  }
+  
+  .book-grid-btn.active {
+    border-color: #9e8c9d;
+    background: #f8f6f4;
+    color: #9e8c9d;
+  }
+  
+  .book-grid-btn.active i {
+    color: #9e8c9d;
+  }
+  
+  .book-grid-btn:hover {
+    border-color: #9e8c9d;
+    transform: translateY(-1px);
+  }
+  
+  /* 顯示控制器手機版調整 */
+  .display-controls {
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 15px !important;
+    margin: 15px 0 !important;
+    text-align: center;
+  }
+  
+  .control-group {
+    justify-content: center !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .control-group label {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #9e8c9d !important;
+  }
+  
+  /* 書卡footer跑馬燈效果 */
+  .book-footer {
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  .book-meta {
+    display: flex !important;
+    animation: marquee 15s linear infinite !important;
+    white-space: nowrap !important;
+    gap: 8px !important;
+  }
+  
+  /* 跑馬燈動畫 */
+  @keyframes marquee {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+  
+  /* 暫停動畫當懸停時 */
+  .book-card:hover .book-meta {
+    animation-play-state: paused !important;
+  }
+  
+  /* 書卡整體調整 */
+  .book-card {
+    border-radius: 12px !important;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1) !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .book-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
+  }
+  
+
+  
+  /* 書籍信息區域 */
+  .book-info {
+    padding: 0.5rem !important;
+
+  }
+  
+  .page-subtitle {
+    margin-bottom: 40px !important;
+  }
+  /* 書籍標題 */
+  .book-header {
+    font-size: 1rem !important;
+}
+
+  .book-image-container {
+    height: 240px !important;
+  }
+  
+  /* 每行顯示1個時圖片更高 */
+  .books-grid.items-per-row-1 .book-image-container {
+    height: 400px !important;
+  }
+  
+  .books-grid.items-per-row-1 .book-image {
+    height: 400px !important;
+    object-fit: cover !important;
+    width: 100% !important;
+  }
+  
+  /* 標籤樣式調整 */
+  .book-meta-tag {
+    flex-shrink: 0 !important;
+    font-size: 10px !important;
+    padding: 3px 8px !important;
+    margin: 0 4px 0 0 !important;
+    border-radius: 12px !important;
+    white-space: nowrap !important;
+    font-weight: 500 !important;
+  }
+  
+
+  /* 價格固定在右側 */
+  .book-price {
+    position: absolute !important;
+    right: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: linear-gradient(135deg, #9e8c9d, #7d6c7c) !important;
+    color: white !important;
+    padding: 4px 10px !important;
+    border-radius: 15px !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    z-index: 2 !important;
+    box-shadow: 0 2px 6px rgba(158, 140, 157, 0.3) !important;
+    min-width: 50px !important;
+    text-align: center !important;
+  }
+}
+
+.pagination {
+  flex-direction: row !important;
+  gap: 12px !important;
+}

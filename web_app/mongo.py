@@ -1,11 +1,12 @@
-# web_app/mongo.py
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from bson.errors import InvalidId  # 新增
 from datetime import datetime
 import os
 
 MONGO_URI = os.getenv("MONGO_URI")
-client = MongoClient(MONGO_URI)
+# 建議加上 connect=False 避免多執行緒問題
+client = MongoClient(MONGO_URI, connect=False)
 db = client["chatbot_db"]
 col = db["conversations"]
 
@@ -28,37 +29,50 @@ def add_message(conversation_id, question, answer, sources=None):
     if sources:
         message_data["sources"] = sources
 
-    col.update_one(
-        {"_id": ObjectId(conversation_id)},
-        {"$push": {"messages": message_data}}
-    )
+    try:
+        col.update_one(
+            {"_id": ObjectId(conversation_id)},
+            {"$push": {"messages": message_data}}
+        )
+    except InvalidId:
+        pass
 
 def get_messages(conversation_id):
-    doc = col.find_one({"_id": ObjectId(conversation_id)})
-    if not doc: return []
-    # sort by timestamp in ascending
-    return sorted(doc["messages"], key=lambda m: m["timestamp"])
+    try:
+        doc = col.find_one({"_id": ObjectId(conversation_id)})
+        if not doc: return []
+        return sorted(doc.get("messages", []), key=lambda m: m["timestamp"])
+    except InvalidId:
+        return []
 
 def update_conversation_title(conversation_id, new_title):
-    col.update_one(
-        {"_id": ObjectId(conversation_id)},
-        {"$set": {"title": new_title}}
-    )
+    try:
+        col.update_one(
+            {"_id": ObjectId(conversation_id)},
+            {"$set": {"title": new_title}}
+        )
+    except InvalidId:
+        pass
 
 def delete_conversation(conversation_id):
-    col.delete_one({"_id": ObjectId(conversation_id)})
+    try:
+        col.delete_one({"_id": ObjectId(conversation_id)})
+    except InvalidId:
+        pass
 
 def get_conversation_by_id(conversation_id):
     """取得單一對話（用於權限檢查）"""
-    return col.find_one({"_id": ObjectId(conversation_id)})
+    try:
+        return col.find_one({"_id": ObjectId(conversation_id)})
+    except InvalidId:
+        return None
 
 def get_conversations(user_id):
-    # 如果是訪客，不顯示歷史對話
     if user_id == "guest":
         return []
     
     docs = col.find({"user_id": user_id}).sort("created_at", -1)
     return [
-        {"id": str(d["_id"]), "title": d["title"]}
+        {"id": str(d["_id"]), "title": d.get("title", "新對話")}
         for d in docs
     ]

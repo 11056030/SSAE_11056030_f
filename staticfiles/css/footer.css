@@ -1,0 +1,275 @@
+/* Footer */
+footer {
+  position: relative;
+  width: 100%;
+  display: flex;
+  background: #9E8C9D;
+  min-height: 200px;
+  display: flex;
+  margin: 100px 0 0;
+  flex-wrap: wrap;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  z-index: 999;
+}
+
+.fowl {
+  width: 150px;
+  height: 150px;
+  background-image: url('../image/lay.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: absolute;
+  left: 80px;
+  top: -130px;
+  transform: translateX(-50%);
+  animation: float 3s ease-in-out infinite;
+  z-index: 1200; /* 確保在 wave 上層 */
+}
+
+@keyframes float {
+  0%   { transform: translateX(-50%) translateY(0); }
+  50%  { transform: translateX(-50%) translateY(-10px); }
+  100% { transform: translateX(-50%) translateY(0); }
+}
+
+
+footer .wave {
+  position: absolute;
+  top: -70px;
+  left: 0;
+  width: 100%;
+  height: 105px;
+  background: url(../image/footerwave.png);
+  background-size: 1000px 100px;
+
+}
+
+footer .wave#wave1{
+  z-index: 1000;
+  opacity: 1;
+  bottom: 0;
+  animation: animateWave 8s linear infinite;
+}
+
+footer .wave#wave2{
+  z-index: 999;
+  opacity: 0.5;
+  bottom: 10px;
+  animation: animateWave_02 8s linear infinite;
+} 
+
+footer .wave#wave3{
+  z-index: 1000;
+  opacity: 0.2;
+  bottom: 15px;
+  animation: animateWave 6s linear infinite;
+}
+footer .wave#wave4{
+  z-index: 1000;
+  opacity: 0.7;
+  bottom: 20px;
+  animation: animateWave_02 6s linear infinite;
+}
+
+@keyframes animateWave {
+  0% {
+    background-position-x: 1000px;
+  }
+  100% {
+    background-position-x: 0px;
+  }
+}
+
+@keyframes animateWave_02 {
+  0% {
+    background-position-x: 0px;
+  }
+  100% {
+    background-position-x: 1000px;
+  }
+}
+
+
+.footer-info {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 80px 30px;
+}
+.footer-info div {
+  flex: 1;
+  padding: 0 20px;
+  align-content: center;
+}
+
+.footer-logo {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.footer-links {
+  border-left: 5px solid #877a87;
+  border-right: 3px solid #877a87;
+  display: flex;
+  width: 50%; /* 控制這一列的總寬度 */
+}
+
+.footer-links .name {
+  flex: 1; /* 讓name占用較小的空間 */
+  font-weight: bold;
+}
+
+.footer-links .aaa {
+  flex: 3; /* 讓aaa占用更多空間 */
+}
+
+.footer-contact {
+  display: flex;
+  width: 25%; /* 控制footer-contact寬度 */
+}
+
+.footer-contact .name {
+  flex: 1;
+  white-space: nowrap; /* 確保「聯絡資訊」不會換行 */
+  font-weight: bold;
+}
+
+.footer-contact .details {
+  flex: 3; /* 讓details區域占更多空間 */
+}
+
+.footer-info p, 
+.footer-info a {
+  margin-bottom: 6px;
+}
+
+.footer-info a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.social-icons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.social-icon {
+  background-color: #ccc;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.footer-backup {
+  position: absolute;
+  right: 20px;
+  bottom: 60px;
+}
+
+.backupowl {
+  width: 150px;
+  height: 150px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.backupowl:hover {
+  transform: scale(1.1);
+}
+
+.phone-footer-copyright {
+  display: none;
+}
+
+@media (max-width: 1280px) {
+  .footer-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px;
+    padding: 60px 20px;
+    align-items: flex-start;
+  }
+
+  .footer-title {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+  }
+
+  .footer-links {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    width: 100%;
+    border-left: none;
+    border-right: 3px solid #877a87;
+    flex-direction: column;
+    /* border-bottom: 2px solid #877a87; */
+    padding-bottom: 15px;
+    padding-right: 15px;
+  }
+
+  .footer-links .name {
+    margin-bottom: 8px;
+  }
+
+  .footer-contact {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    width: 100%;
+    flex-direction: column;
+    padding-left: 15px;
+  }
+
+  .footer-contact .name {
+    margin-bottom: 8px;
+  }
+
+  .footer-contact .details {
+    margin-top: 5px;
+  }
+
+  .footer-backup {
+    display: none;
+  }
+
+  .social-icons {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  footer{
+    min-height: 150px;
+  }
+
+  .footer-info {
+    display: none;
+  }
+
+  .footer-backup {
+    display: none;
+  }
+
+  .phone-footer-copyright {
+    display: block;
+    height: 50px;
+    padding: 20px 0;
+    text-align: center;
+    width: 100%;
+  }
+
+  .phone-footer-copyright p {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+    padding: 40px 0 0;
+  }
+
+  .fowl {
+    width: 120px;
+    height: 120px;
+}
+}

@@ -1,23 +1,35 @@
 # django_system/settings.py
+
 import os
+
 from pathlib import Path
+
 from dotenv import load_dotenv
+
+# ========================
+# 🔑 環境變數載入 (修正 `invalid_client` 錯誤)
+# 確保在任何 os.getenv 呼叫之前執行
+# ========================
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 載入 .env 環境變數 (這行很重要)
-load_dotenv()
 
 # ========================
 # 🔑 基本設定
 # ========================
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-$fdia7icb&ji2k_6aof1b)s#ozo^kvo9%9@#o@23z+x(ki+r)j')
-DEBUG = False
+
+SECRET_KEY = 'django-insecure-$fdia7icb&ji2k_6aof1b)s#ozo^kvo9%9@#o@23z+x(ki+r)j'
+
+DEBUG = True
+
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*']
+
 
 # ========================
 # 📦 Installed Apps
 # ========================
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -30,25 +42,34 @@ INSTALLED_APPS = [
     "reminders",
 ]
 
+
 # ========================
 # ⚙️ Middleware
 # ========================
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # "whitenoise.middleware.WhiteNoiseMiddleware",  # 靜態檔壓縮 - 暫時停用
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "social_django.middleware.SocialAuthExceptionMiddleware",
+    "social_django.middleware.SocialAuthExceptionMiddleware",  # Google 登入錯誤處理
 ]
 
+
+# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"  # 暫時停用
+
+
 ROOT_URLCONF = 'django_system.urls'
+
 
 # ========================
 # 🎨 Templates
 # ========================
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -67,11 +88,14 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'django_system.wsgi.application'
+
 
 # ========================
 # 🗄️ Database (MySQL)
 # ========================
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -87,9 +111,11 @@ DATABASES = {
     }
 }
 
+
 # ========================
 # 🔐 Password Validators
 # ========================
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
@@ -97,27 +123,41 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
+
 # ========================
 # 👤 Authentication
 # ========================
+
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.google.GoogleOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
+
 LOGIN_URL = '/auth/login/google-oauth2/'
+
 LOGIN_REDIRECT_URL = '/index'
+
 LOGOUT_REDIRECT_URL = '/welcome'
+
 SOCIAL_AUTH_LOGIN_ERROR_URL = '/index/'
+
 SOCIAL_AUTH_RAISE_EXCEPTIONS = False
 
-# ✅ [修改重點] 改成從環境變數讀取，不要直接寫在這裡！
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('GOOGLE_CLIENT_ID')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
-SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'http://127.0.0.1:8000/auth/complete/google-oauth2/'
 
-CSRF_COOKIE_SECURE = False
-SESSION_COOKIE_SECURE = False
+# **🔽 Google OAuth2 憑證 (從 .env 讀取) 🔽**
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('GOOGLE_CLIENT_ID', 'fallback-key')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', 'fallback-secret')
+
+# 部署環境的重新導向 URI (應與 Google Cloud Console 一致)
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = 'http://ntubssae.dpdns.org/auth/complete/google-oauth2/' 
+
+
+# 啟用 Cookie 安全性 (假設您使用 HTTPS)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_COOKIE_SECURE = True   
+SESSION_COOKIE_SECURE = True
+
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
@@ -125,11 +165,13 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'openid'
 ]
 
+
 SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = [
     ('picture', 'picture'),
     ('email', 'email'),
     ('name', 'name')
 ]
+
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
@@ -144,63 +186,103 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.user.user_details',
 )
 
+
 # ========================
 # 🌍 CSRF / Locale
 # ========================
+# 確保包含所有協議和網域，特別是部署環境的 HTTPS
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://localhost:8000',
+    'http://ntubssae.dpdns.org',
+    'https://ntubssae.dpdns.org',
 ]
 
+
 LANGUAGE_CODE = 'zh-hant'
+
 TIME_ZONE = 'Asia/Taipei'
+
 USE_I18N = True
+
 USE_TZ = True
+
 
 # ========================
 # 📂 Static & Media
 # ========================
+
 STATIC_URL = '/static/'
+
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "web_app", "static")]
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+
 MEDIA_URL = '/media/'
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
 # ========================
-# 🔑 環境變數 (其他)
+# 🔑 環境變數 (僅保留讀取，載入已移至頂部)
 # ========================
+
 MONGO_URI = os.getenv("MONGO_URI")
+
+
+# ========================
+# 🤖 Azure OpenAI
+# ========================
+
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+
 AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-06-01")
+
 AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
 AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME")
 
+
+# ========================
+# 👁️ Google Vision API
+# ========================
+
 GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR, "vision_api_key.json")
+
 
 # ========================
 # ⚡ Redis Cache
 # ========================
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': 'redis://127.0.0.1:6379/1',
     }
 }
-OCR_CACHE_TIMEOUT = 3600
+
+OCR_CACHE_TIMEOUT = 3600  # 1 小時
+
 
 # ========================
 # 🖼️ Image Upload
 # ========================
-MAX_IMAGE_SIZE = 10 * 1024 * 1024
+
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+
 ALLOWED_IMAGE_FORMATS = ['JPEG', 'PNG', 'WebP']
+
 
 # ========================
 # 📝 Logging
 # ========================
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -225,47 +307,64 @@ LOGGING = {
     },
 }
 
-# ========================
-# 📧 Email Settings
-# ========================
+
+# 時區建議台北
+
+TIME_ZONE = "Asia/Taipei"
+
+USE_TZ = True
+
+
+# Email：改成你們 SMTP
+
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
 EMAIL_HOST = "smtp.gmail.com"
+
 EMAIL_PORT = 587
+
 EMAIL_USE_TLS = True
+
 EMAIL_HOST_USER = "ntubimd114510@gmail.com"
-# ✅ [修改重點] Email 密碼也建議從 .env 讀取
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
+EMAIL_HOST_PASSWORD = "lodw hjdb tjmm qmdv"
+
 DEFAULT_FROM_EMAIL = "智能校事專家 <ntubimd114510@gmail.com>"
 
-# ========================
-# ⏰ Reminder Settings
-# ========================
+
+# settings.py
+
 REMINDER_SOURCES = [
+    # A) 參與者來源（有參與者時寄給參與者）
     {
         "label": "活動",
         "model": "web_app.ActivityParticipant",
-        "filters": {"status": "joined"},
+        "filters": {"status": "joined"},  # 先留空，等你確認資料後再加狀態過濾
         "date_field": {"date": "activity__date", "time": "activity__time"},
         "title_field": "activity__title",
-        "user_field": ["user", "owner", "created_by"],
+        "user_field": ["user", "owner", "created_by"],  # ← 支援多候選
         "object_field_for_log": "activity",
+        # "detail_url_attr": "get_absolute_url",
     },
+    # B) 活動本體來源（沒有參與者時，寄給建立者/擁有者）
     {
         "label": "活動（建立者）",
         "model": "web_app.GroupActivity",
         "filters": {},
         "date_field": {"date": "date", "time": "time"},
         "title_field": "title",
-        "user_field": ["user", "owner", "created_by"],
+        "user_field": ["user", "owner", "created_by"],  # ← 支援多候選
         "object_field_for_log": None,
+        # "detail_url_attr": "get_absolute_url",
     },
+    # C) 行事曆（Todo）
     {
         "label": "行事曆",
         "model": "web_app.Todo",
         "filters": {},
-        "date_field": "date",
+        "date_field": "date",  # 只有日期
         "title_field": "title",
-        "user_field": ["user", "owner", "created_by"],
+        "user_field": ["user", "owner", "created_by"],  # 一併用候選
         "object_field_for_log": None,
     },
 ]

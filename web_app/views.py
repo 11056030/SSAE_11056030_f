@@ -2535,6 +2535,7 @@ def api_messages(request, convo_id):
         return JsonResponse({"messages": out})
     return HttpResponseNotAllowed(["GET"])
 
+
 @csrf_exempt
 def api_ask(request):
     if request.method != "POST":
@@ -2543,26 +2544,91 @@ def api_ask(request):
     user_id = get_user_id(request)
     data = json.loads(request.body)
     question = data.get("question", "").strip()
+    
+    # 接收前端傳來的 ID (可能是空的，也可能是既有的)
     convo_id = data.get("conversation_id")
     
-    if not question or not convo_id:
-        return JsonResponse({"error": "缺少 question 或 conversation_id"}, status=400)
+    if not question:
+        return JsonResponse({"error": "問題不能為空"}, status=400)
 
-    # 驗證對話是否屬於當前用戶（安全性檢查）
-    from .mongo import get_conversation_by_id
-    conversation = get_conversation_by_id(convo_id)
-    if not conversation or conversation.get("user_id") != user_id:
-        return JsonResponse({"error": "無權限存取此對話"}, status=403)
+    # 引入 mongo 函式
+    from .mongo import create_conversation, get_conversation_by_id, update_conversation_title, add_message, get_messages
+    
+    # ==========================================
+    # 1. 處理對話 ID 邏輯 (解決跳對話問題)
+    # ==========================================
+    conversation = None
+    is_new_chat = False
 
-    conversation_history = get_messages(convo_id)
+    if convo_id:
+        # 如果前端有傳 ID，我們就去查這個 ID
+        conversation = get_conversation_by_id(convo_id)
+        
+        # 安全檢查：確認這個 ID 真的存在，而且屬於這個用戶
+        if not conversation or conversation.get("user_id") != user_id:
+            # 如果 ID 無效，或是別人的，強制建立新的
+            convo_id = create_conversation(user_id, title="新對話")
+            is_new_chat = True
+    else:
+        # 前端沒傳 ID (代表使用者按了「新對話」按鈕)，建立新的
+        convo_id = create_conversation(user_id, title="新對話")
+        is_new_chat = True
+
+    # ==========================================
+    # 2. 執行 RAG 問答
+    # ==========================================
+    # 取得歷史紀錄 (如果是新的就是空的)
+    conversation_history = get_messages(convo_id) if not is_new_chat else []
+    
+    # 呼叫 system.py 進行回答
+    # 注意：這裡使用的是檔案開頭引入的 ask_question (from .system import ask_question)
     result = ask_question(question, conversation_history)
     answer = result["answer"]
+    
+    # 3. 儲存訊息到資料庫 (存回同一個 ID)
     add_message(convo_id, question, answer, result.get("sources", []))
 
+    # ==========================================
+    # 3. [自動改標題功能]
+    # ==========================================
+    # 觸發條件：這是該對話的第一條訊息，或者是剛建立的對話
+    new_title = None
+    if len(conversation_history) == 0:
+        try:
+            # 使用 AI 生成簡短標題
+            from langchain_openai import AzureChatOpenAI
+            from langchain_core.messages import HumanMessage
+            
+            llm_title = AzureChatOpenAI(
+                api_key=settings.AZURE_OPENAI_API_KEY,
+                api_version=settings.AZURE_OPENAI_API_VERSION,
+                azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+                azure_deployment=settings.AZURE_OPENAI_DEPLOYMENT_NAME
+            )
+            
+            # 提示詞：根據問題產生 6 個字以內的標題
+            prompt_content = f"請根據這個使用者的問題：「{question}」，產生一個非常簡短的標題（繁體中文，6個字以內，不要標點符號）。直接輸出標題即可。"
+            
+            response = llm_title.invoke([HumanMessage(content=prompt_content)])
+            # 清理標題文字
+            new_title = response.content.strip().replace('"', '').replace('「', '').replace('」', '').replace('標題：', '')
+            
+            # 更新資料庫
+            update_conversation_title(convo_id, new_title)
+            
+        except Exception as e:
+            print(f"自動命名失敗: {e}")
+            # 失敗不影響回答，保持原樣即可
+
+    # ==========================================
+    # 4. 回傳結果 (回傳 ID 與 Title 給前端更新)
+    # ==========================================
     return JsonResponse({
         "answer": answer,
+        "conversation_id": convo_id, # 這裡把 ID 回傳給前端，前端必須更新！
         "has_sources": result["has_sources"],
-        "sources": result["sources"]
+        "sources": result["sources"],
+        "new_title": new_title # 如果有改名，前端要更新側邊欄
     })
 
 @csrf_exempt
