@@ -1951,7 +1951,7 @@ function showCustomAlert(title, message, type = 'success') {
     
     const icon = type === 'success' 
       ? '<svg style="color:#10b981; margin-bottom:12px;" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
-      : '<svg style="color:#ef4444; margin-bottom:12px;" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+      : '<svg style="color:#f59e0b; margin-bottom:12px;" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
     
     modal.innerHTML = `
       <div style="text-align:center;">
@@ -2032,13 +2032,19 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       
       if (!creditsResponse.ok) {
-        const errorText = await creditsResponse.text();
-        throw new Error(`學分同步失敗 (${creditsResponse.status}): ${errorText.substring(0, 100)}`);
+        let errorMessage = '同步失敗，請稍後再試';
+        try {
+          const errorData = await creditsResponse.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // 如果無法解析 JSON，使用預設訊息
+        }
+        throw new Error(errorMessage);
       }
       
       const creditsData = await creditsResponse.json();
       if (!creditsData.success) {
-        throw new Error('學分同步失敗：' + (creditsData.message || '未知錯誤'));
+        throw new Error(creditsData.message || '同步失敗');
       }
       
       await showCustomAlert('同步成功', '學分同步成功！頁面即將重新整理。', 'success');

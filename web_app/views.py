@@ -2947,40 +2947,59 @@ def sync_class_schedule(request):
     """
     try:
         import json
+        from django.core.cache import cache
+        
         user = request.user
+        
+        # 檢查是否已有同步任務在進行（防止重複請求）
+        cache_key = f'sync_schedule_{user.id}'
+        if cache.get(cache_key):
+            return JsonResponse({
+                'success': False,
+                'message': '課表資料已是最新，無需重複同步'
+            }, status=429)
+        
+        # 設置鎖，有效期 3 分鐘
+        cache.set(cache_key, True, timeout=180)
         
         # 從 JSON body 獲取密碼
         data = json.loads(request.body)
         password = data.get('password')
         
-        # 獲取學號
+        # 獲取學號（多種方式嘗試）
         student_id = None
         try:
-            # 優先從自定義 User 資料表(以 email 對應)取得學號
+            # 方法1: 從自定義 User 資料表用 email 查詢
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
                     SELECT student_id
                     FROM `User`
-                    WHERE mail = %s
+                    WHERE mail = %s AND student_id IS NOT NULL AND student_id != ''
                     """,
                     [user.email],
                 )
                 row = cursor.fetchone()
                 if row:
                     student_id = row[0]
+                    logger.info(f"[課表同步] 從 User 表用 email 找到學號: {student_id}")
         except Exception as e:
-            logger.warning(f"同步課表時無法從自定義 User 表取得學號: {e}")
+            logger.warning(f"[課表同步] 從 User 表用 email 查詢學號失敗: {e}")
 
-        # 若自定義表沒有對應紀錄，退回使用 Django 使用者帳號作為學號
+        # 方法2: 如果 email 查不到，直接使用 Django username 作為學號
         if not student_id:
             student_id = getattr(user, 'username', None)
+            if student_id:
+                logger.info(f"[課表同步] 使用 Django username 作為學號: {student_id}")
         
         if not student_id or not password:
+            logger.error(f"[課表同步] 學號或密碼為空 - student_id: {student_id}, password: {'有' if password else '無'}")
             return JsonResponse({
                 'success': False,
-                'message': '請提供學號和密碼'
+                'message': '無法取得學號，請確認資料庫中有您的學號資訊'
             }, status=400)
+        
+        logger.info(f"[課表同步] 準備同步 - 用戶: {user.email}, 學號: {student_id}, Django user.id: {user.id}")
         
         # 構建 Node.js 腳本路徑
         script_path = os.path.join(settings.BASE_DIR, 'ntub_scraper', 'sync_schedule.js')
@@ -2994,21 +3013,50 @@ def sync_class_schedule(request):
             '--userId', str(user.id)
         ]
         
+        logger.info(f"[課表同步] 執行命令: node sync_schedule.js --studentId {student_id} --password *** --userId {user.id}")
+        
         # 執行命令（強制使用 UTF-8 讀取輸出，避免 Windows cp950 解碼錯誤）
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            errors='replace',
-            cwd=os.path.dirname(script_path)
-        )
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='replace',
+                cwd=os.path.dirname(script_path),
+                timeout=180  # 3分鐘超時
+            )
+        except subprocess.TimeoutExpired as e:
+            logger.error(f"[課表同步] 執行超時 (180秒)")
+            cache.delete(cache_key)  # 釋放鎖
+            return JsonResponse({
+                'success': False,
+                'message': '同步超時，請稍後再試。可能是網路問題或驗證碼識別失敗。'
+            }, status=500)
         
         # 檢查執行結果
         if result.returncode != 0:
+            logger.error(f"[課表同步] Node.js 腳本執行失敗 (returncode={result.returncode})")
+            logger.error(f"[課表同步] stdout: {result.stdout[:500]}")
+            logger.error(f"[課表同步] stderr: {result.stderr[:500]}")
+            
+            # 嘗試從 stderr 中找到最後的錯誤訊息（通常是 ❌ 開頭的）
+            error_msg = '同步失敗，請稍後再試'
+            if result.stderr:
+                # 找出所有以 ❌ 開頭的行
+                error_lines = [line for line in result.stderr.split('\n') if '❌' in line]
+                if error_lines:
+                    # 取最後一行錯誤訊息，移除 emoji 和多餘空白
+                    last_error = error_lines[-1].replace('❌', '').strip()
+                    if '學號或密碼錯誤' in last_error or '登入失敗' in last_error or '密碼' in last_error:
+                        error_msg = '密碼錯誤，請檢查後重試'
+                    elif last_error:
+                        error_msg = last_error
+            
+            cache.delete(cache_key)  # 釋放鎖
             return JsonResponse({
                 'success': False,
-                'message': f'同步失敗: {result.stderr}'
+                'message': error_msg
             }, status=500)
         
         try:
@@ -3096,6 +3144,9 @@ def sync_class_schedule(request):
             except Exception as db_err:
                 logger.warning(f"同步課表時寫入資料庫失敗: {db_err}")
 
+            # 釋放鎖
+            cache.delete(cache_key)
+            
             return JsonResponse({
                 'success': True,
                 'message': '課表同步成功',
@@ -3103,6 +3154,8 @@ def sync_class_schedule(request):
             })
             
         except json.JSONDecodeError:
+            # 釋放鎖
+            cache.delete(cache_key)
             return JsonResponse({
                 'success': False,
                 'message': '解析同步結果失敗',
@@ -3110,6 +3163,11 @@ def sync_class_schedule(request):
             }, status=500)
             
     except Exception as e:
+        # 釋放鎖
+        from django.core.cache import cache
+        cache_key = f'sync_schedule_{request.user.id}'
+        cache.delete(cache_key)
+        
         logger.exception('同步課表時發生錯誤')
         return JsonResponse({
             'success': False,
@@ -3211,32 +3269,60 @@ def sync_credits(request):
         import subprocess
         import os
         from .models import UserCreditProgress
+        from django.core.cache import cache
+        
+        # 檢查是否已有同步任務在進行（防止重複請求）
+        cache_key = f'sync_credits_{request.user.id}'
+        if cache.get(cache_key):
+            return JsonResponse({
+                'success': False,
+                'message': '學分資料已是最新，無需重複同步'
+            }, status=429)
+        
+        # 設置鎖，有效期 3 分鐘
+        cache.set(cache_key, True, timeout=180)
         
         data = json.loads(request.body)
         password = data.get('password')
         
         if not password:
+            cache.delete(cache_key)  # 釋放鎖
             return JsonResponse({
                 'success': False,
                 'message': '請提供校務系統密碼'
             }, status=400)
         
-        # 從自定義 User 表獲取學號
+        # 獲取學號（多種方式嘗試）
         student_id = None
         try:
+            # 方法1: 從自定義 User 資料表用 email 查詢
             with connection.cursor() as cursor:
-                cursor.execute("SELECT student_id FROM `User` WHERE mail = %s", [request.user.email])
+                cursor.execute(
+                    "SELECT student_id FROM `User` WHERE mail = %s AND student_id IS NOT NULL AND student_id != ''",
+                    [request.user.email]
+                )
                 row = cursor.fetchone()
                 if row:
                     student_id = row[0]
+                    logger.info(f'[學分同步] 從 User 表用 email 找到學號: {student_id}')
         except Exception as e:
-            logger.error(f'查詢學號失敗: {e}')
+            logger.warning(f'[學分同步] 從 User 表用 email 查詢學號失敗: {e}')
+        
+        # 方法2: 如果 email 查不到，直接使用 Django username 作為學號
+        if not student_id:
+            student_id = getattr(request.user, 'username', None)
+            if student_id:
+                logger.info(f'[學分同步] 使用 Django username 作為學號: {student_id}')
         
         if not student_id:
+            logger.error(f'[學分同步] 無法取得學號 - 用戶: {request.user.email}')
+            cache.delete(cache_key)  # 釋放鎖
             return JsonResponse({
                 'success': False,
-                'message': '無法獲取學號，請確認個人資料是否完整'
+                'message': '無法獲取學號，請確認資料庫中有您的學號資訊'
             }, status=400)
+        
+        logger.info(f'[學分同步] 準備同步 - 用戶: {request.user.email}, 學號: {student_id}')
         
         # 執行 Node.js 同步腳本
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -3249,16 +3335,25 @@ def sync_credits(request):
             '--password', password
         ]
         
-        logger.info(f'執行學分同步指令: node sync_credits.js --studentId {student_id}')
+        logger.info(f'[學分同步] 執行命令: node sync_credits.js --studentId {student_id} --password ***')
         
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            errors='replace',
-            timeout=120
-        )
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='replace',
+                cwd=os.path.dirname(script_path),  # 設定工作目錄
+                timeout=180  # 3分鐘超時
+            )
+        except subprocess.TimeoutExpired as e:
+            logger.error(f'[學分同步] 執行超時 (180秒)')
+            cache.delete(cache_key)  # 釋放鎖
+            return JsonResponse({
+                'success': False,
+                'message': '同步超時，請稍後再試。可能是網路問題或驗證碼識別失敗。'
+            }, status=500)
         
         if result.returncode == 0:
             try:
@@ -3295,6 +3390,7 @@ def sync_credits(request):
                     }
                 )
                 
+                cache.delete(cache_key)  # 釋放鎖
                 return JsonResponse({
                     'success': True,
                     'message': '學分同步成功',
@@ -3303,20 +3399,40 @@ def sync_credits(request):
                 
             except (json.JSONDecodeError, ValueError) as e:
                 logger.error(f'解析同步結果失敗: {e}')
+                cache.delete(cache_key)  # 釋放鎖
                 return JsonResponse({
                     'success': False,
                     'message': f'解析同步結果失敗',
                     'error': str(e)
                 }, status=500)
         else:
-            logger.error(f'同步學分失敗: {result.stderr}')
+            logger.error(f'[學分同步] Node.js 腳本執行失敗 (returncode={result.returncode})')
+            logger.error(f'[學分同步] stdout: {result.stdout[:500]}')
+            logger.error(f'[學分同步] stderr: {result.stderr[:500]}')
+            
+            # 嘗試從 stderr 中找到最後的錯誤訊息
+            error_msg = '同步失敗，請稍後再試'
+            if result.stderr:
+                error_lines = [line for line in result.stderr.split('\n') if '❌' in line]
+                if error_lines:
+                    last_error = error_lines[-1].replace('❌', '').strip()
+                    if '學號或密碼錯誤' in last_error or '登入失敗' in last_error or '密碼' in last_error:
+                        error_msg = '密碼錯誤，請檢查後重試'
+                    elif last_error:
+                        error_msg = last_error
+            
+            cache.delete(cache_key)  # 釋放鎖
             return JsonResponse({
                 'success': False,
-                'message': '同步學分失敗',
-                'error': result.stderr or result.stdout
+                'message': error_msg
             }, status=500)
             
     except Exception as e:
+        # 釋放鎖
+        from django.core.cache import cache
+        cache_key = f'sync_credits_{request.user.id}'
+        cache.delete(cache_key)
+        
         logger.exception('同步學分時發生錯誤')
         error_msg = str(e)
         # 如果是 FileNotFoundError，給出更明確的提示

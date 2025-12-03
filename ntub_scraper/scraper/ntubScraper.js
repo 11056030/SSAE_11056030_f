@@ -138,6 +138,14 @@ class NTUBScraper {
             // 點擊登入按鈕
             console.log('🖱️ 準備點擊登入按鈕...');
             
+            // 設置 dialog 監聽器來捕獲 alert 彈窗
+            let alertMessage = null;
+            page.on('dialog', async dialog => {
+                alertMessage = dialog.message();
+                console.log(`🚨 捕獲到 alert 彈窗: ${alertMessage}`);
+                await dialog.accept(); // 自動點擊確定
+            });
+            
             // 確保登入按鈕可見和可點擊
             await page.waitForSelector('#Client_Login', { visible: true, timeout: 10000 });
             
@@ -150,31 +158,51 @@ class NTUBScraper {
             });
             
             // 等待一下讓頁面穩定
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
             
-            // 嘗試點擊登入按鈕
-            try {
-                await Promise.all([
-                    page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
-                    page.click('#Client_Login')
-                ]);
-            } catch (clickError) {
-                console.log('⚠️ 直接點擊失敗，嘗試JavaScript點擊');
-                // 如果直接點擊失敗，使用JavaScript點擊
-                await page.evaluate(() => {
-                    const loginBtn = document.querySelector('#Client_Login');
-                    if (loginBtn) {
-                        loginBtn.click();
-                    }
-                });
-                
-                // 等待頁面導航，但設置較短的超時時間
-                try {
-                    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
-                } catch (navError) {
-                    console.log('⚠️ 頁面導航超時，繼續檢查登入狀態');
-                    // 即使導航超時，也繼續檢查登入狀態
+            // 點擊登入按鈕
+            await page.click('#Client_Login');
+            
+            // 等待 3 秒，讓 alert 有時間彈出
+            await page.waitForTimeout(3000);
+            
+            // 如果捕獲到 alert 訊息，表示登入失敗
+            if (alertMessage) {
+                console.log(`❌ 登入失敗，錯誤訊息: ${alertMessage}`);
+                await browser.close();
+                return {
+                    success: false,
+                    message: alertMessage.includes('密碼') || alertMessage.includes('帳號') || alertMessage.includes('錯誤')
+                        ? '學號或密碼錯誤，請檢查後重試' 
+                        : alertMessage
+                };
+            }
+            
+            // 檢查頁面上是否有錯誤訊息（作為備用檢查）
+            const errorMessage = await page.evaluate(() => {
+                const errorSpan = document.querySelector('#lblMsg, .error-message, [id*="error"], [class*="error"]');
+                if (errorSpan && errorSpan.textContent.trim()) {
+                    return errorSpan.textContent.trim();
                 }
+                return null;
+            });
+            
+            if (errorMessage) {
+                console.log(`❌ 檢測到頁面錯誤訊息: ${errorMessage}`);
+                await browser.close();
+                return {
+                    success: false,
+                    message: errorMessage.includes('密碼') || errorMessage.includes('帳號') 
+                        ? '學號或密碼錯誤，請檢查後重試' 
+                        : errorMessage
+                };
+            }
+            
+            // 等待頁面導航（如果沒有錯誤訊息）
+            try {
+                await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 });
+            } catch (navError) {
+                console.log('⚠️ 頁面導航超時，檢查當前狀態');
             }
 
             // 檢查是否登入成功

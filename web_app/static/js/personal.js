@@ -276,10 +276,11 @@ window.addEventListener('load', function() {
     });
 });
 document.addEventListener('DOMContentLoaded', function() {
+    const segments = document.querySelectorAll('.progress-segment');
     segments.forEach(segment => {
         const w = parseFloat(getComputedStyle(segment).width);
-            if (w <= 1) segment.style.pointerEvents = 'none';
-        });
+        if (w <= 1) segment.style.pointerEvents = 'none';
+    });
 });
 
 
