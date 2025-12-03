@@ -624,4 +624,31 @@ class Todo(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.date})"
+
+
+class UserCreditProgress(models.Model):
+    """
+    學生學分進度統計（從成績系統抓取的真實學分）
+    """
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='credit_progress',
+        primary_key=True
+    )
+    professional_required = models.DecimalField('專業必修', max_digits=5, decimal_places=1, default=0)
+    professional_elective = models.DecimalField('專業選修', max_digits=5, decimal_places=1, default=0)
+    general_required = models.DecimalField('通識必修', max_digits=5, decimal_places=1, default=0)
+    general = models.DecimalField('通識', max_digits=5, decimal_places=1, default=0)
+    common = models.DecimalField('一般科目', max_digits=5, decimal_places=1, default=0)
+    total_credits = models.DecimalField('總學分', max_digits=5, decimal_places=1, default=0)
+    updated_at = models.DateTimeField('最後更新時間', auto_now=True)
     
+    class Meta:
+        db_table = 'web_app_usercreditprogress'
+        verbose_name = '學分進度'
+        verbose_name_plural = '學分進度'
+    
+    def __str__(self):
+        username = getattr(self.user, 'username', 'Unknown')
+        return f"{username} - 已修 {self.total_credits} 學分"

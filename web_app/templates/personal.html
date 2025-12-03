@@ -532,7 +532,7 @@
                 <h1>個人中心</h1>
             </div>
             <div>
-                <a href="{% url 'class_schedule_page' %}" class="btn-primary" style="text-decoration:none; padding:6px 14px; border-radius:999px; background:#2563eb; color:#fff; font-size:14px;">
+                <a href="{% url 'class_schedule_page' %}" class="btn-primary" style="text-decoration:none; padding:6px 14px; border-radius:999px; background:#7e6a8a; color:#fff; font-size:14px;">
                     我的課表
                 </a>
             </div>
@@ -701,7 +701,15 @@
 
             <!-- 個人資料卡 -->
             <div class="card profile-card">
-              <h2>我的資料</h2>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                <h2 style="margin:0;">我的資料</h2>
+                <button id="syncAllBtn" style="padding:6px 16px; border:none; border-radius:999px; background:#7e6a8a; color:#fff; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  </svg>
+                  同步學分
+                </button>
+              </div>
               <div class="profile-content">
                 <div class="profile-image">
                   {% if google_picture %}
@@ -743,21 +751,28 @@
                     <div class="label">學分</div>
                     
                     <div class="value-with-progress">
+                        {% if credit_progress and credit_progress_percentages %}
                         <div class="progress-bar" id="progressBar">
                             <div class="progress-segment required animate" 
-                                style="--target-width: 37.73%;" 
-                                data-tooltip="必修：83學分"></div>
-                            <div class="progress-segment elective animate" 
-                                style="--target-width: 0%;" 
-                                data-tooltip="選修：2學分"></div>
+                                style="--target-width: {{ credit_progress_percentages.professional_required }}%;" 
+                                data-tooltip="專業必修：{{ credit_progress.professional_required }}學分"></div>
                             <div class="progress-segment major animate" 
-                                style="--target-width: 12.27%;" 
-                                data-tooltip="專選：27學分"></div>
+                                style="--target-width: {{ credit_progress_percentages.professional_elective }}%;" 
+                                data-tooltip="專業選修：{{ credit_progress.professional_elective }}學分"></div>
                             <div class="progress-segment general animate" 
-                                style="--target-width: 30%;" 
-                                data-tooltip="通識：66學分"></div>
+                                style="--target-width: {{ credit_progress_percentages.general_required }}%;" 
+                                data-tooltip="通識必修：{{ credit_progress.general_required }}學分"></div>
+                            <div class="progress-segment elective animate" 
+                                style="--target-width: {{ credit_progress_percentages.general }}%;" 
+                                data-tooltip="通識：{{ credit_progress.general }}學分"></div>
+                            <div class="progress-segment common animate" 
+                                style="--target-width: {{ credit_progress_percentages.common }}%;" 
+                                data-tooltip="一般科目：{{ credit_progress.common }}學分"></div>
                         </div>
-                        <div class="value">已修196</div>
+                        <div class="value">已修{{ credit_progress.total_credits }}</div>
+                        {% else %}
+                        <div class="value" style="color:#999;">尚未同步</div>
+                        {% endif %}
                         <div class="tooltip" id="tooltip"></div>
                     </div>
                   </div>
@@ -1781,6 +1796,265 @@ function getCookie(name) {
   // 初始化
   initializeActivities();
 })();
+
+// ===== 自訂彈窗 =====
+function showCustomPrompt(title, message, inputType = 'password') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:10000; animation:fadeIn 0.2s ease;';
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background:#fff; border-radius:16px; padding:28px 32px; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:slideUp 0.3s ease;';
+    
+    modal.innerHTML = `
+      <h3 style="margin:0 0 8px 0; font-size:20px; font-weight:600; color:#1f2937;">${title}</h3>
+      <p style="margin:0 0 16px 0; font-size:14px; color:#6b7280; line-height:1.5;">${message}</p>
+      
+      <div style="background:#f9fafb; border-radius:8px; padding:14px 16px; margin-bottom:16px; border-left:3px solid #7e6a8a;">
+        <div style="display:flex; align-items:start; gap:10px; margin-bottom:10px;">
+          <input type="checkbox" id="agreeTerms" style="margin-top:3px; cursor:pointer; width:16px; height:16px;">
+          <label for="agreeTerms" style="font-size:13px; color:#374151; line-height:1.6; cursor:pointer; user-select:none;">
+            我已閱讀並同意以下事項：
+          </label>
+        </div>
+        <ul style="margin:8px 0 0 26px; padding:0; font-size:12px; color:#6b7280; line-height:1.7;">
+          <li style="margin-bottom:6px;">
+            <strong style="color:#374151;">隱私保護：</strong>我們不會儲存您的校務系統密碼，此密碼僅用於即時爬取資料。
+          </li>
+          <li>
+            <strong style="color:#374151;">資料使用：</strong>您的學分與課表資料將被儲存於本系統資料庫，用於個人化功能展示。
+          </li>
+        </ul>
+      </div>
+      
+      <div style="position:relative;">
+        <input type="${inputType}" id="customPromptInput" disabled style="width:100%; padding:10px 40px 10px 14px; border:2px solid #e5e7eb; border-radius:8px; font-size:14px; transition:border-color 0.2s; box-sizing:border-box; background:#f3f4f6;" placeholder="請先勾選同意條款">
+        <button type="button" id="togglePassword" disabled style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:4px; display:flex; align-items:center; opacity:0.4;">
+          <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+      <div style="display:flex; gap:12px; margin-top:20px; justify-content:flex-end;">
+        <button id="customPromptCancel" style="padding:8px 20px; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:#374151; font-size:14px; cursor:pointer; transition:all 0.2s;">取消</button>
+        <button id="customPromptConfirm" disabled style="padding:8px 20px; border:none; border-radius:8px; background:#d1d5db; color:#9ca3af; font-size:14px; cursor:not-allowed; transition:all 0.2s;">確定</button>
+      </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const input = modal.querySelector('#customPromptInput');
+    const cancelBtn = modal.querySelector('#customPromptCancel');
+    const confirmBtn = modal.querySelector('#customPromptConfirm');
+    const agreeCheckbox = modal.querySelector('#agreeTerms');
+    const togglePasswordBtn = modal.querySelector('#togglePassword');
+    const eyeIcon = modal.querySelector('#eyeIcon');
+    
+    // 切換密碼顯示/隱藏
+    let isPasswordVisible = false;
+    togglePasswordBtn.onclick = () => {
+      isPasswordVisible = !isPasswordVisible;
+      input.type = isPasswordVisible ? 'text' : 'password';
+      
+      if (isPasswordVisible) {
+        // 顯示密碼：眼睛加斜線
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        `;
+      } else {
+        // 隱藏密碼：正常眼睛
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        `;
+      }
+    };
+    
+    // 勾選條款後才能輸入密碼
+    agreeCheckbox.onchange = () => {
+      if (agreeCheckbox.checked) {
+        input.disabled = false;
+        input.style.background = '#fff';
+        input.placeholder = '請輸入密碼';
+        input.focus();
+        confirmBtn.disabled = false;
+        confirmBtn.style.background = '#7e6a8a';
+        confirmBtn.style.color = '#fff';
+        confirmBtn.style.cursor = 'pointer';
+        togglePasswordBtn.disabled = false;
+        togglePasswordBtn.style.opacity = '1';
+        togglePasswordBtn.style.cursor = 'pointer';
+      } else {
+        input.disabled = true;
+        input.style.background = '#f3f4f6';
+        input.placeholder = '請先勾選同意條款';
+        input.value = '';
+        confirmBtn.disabled = true;
+        confirmBtn.style.background = '#d1d5db';
+        confirmBtn.style.color = '#9ca3af';
+        confirmBtn.style.cursor = 'not-allowed';
+        togglePasswordBtn.disabled = true;
+        togglePasswordBtn.style.opacity = '0.4';
+        togglePasswordBtn.style.cursor = 'not-allowed';
+        // 重置為隱藏狀態
+        isPasswordVisible = false;
+        input.type = 'password';
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        `;
+      }
+    };
+    
+    // Hover effects
+    confirmBtn.onmouseenter = () => {
+      if (!confirmBtn.disabled) confirmBtn.style.background = '#6d5a7b';
+    };
+    confirmBtn.onmouseleave = () => {
+      if (!confirmBtn.disabled) confirmBtn.style.background = '#7e6a8a';
+    };
+    cancelBtn.onmouseenter = () => cancelBtn.style.background = '#f3f4f6';
+    cancelBtn.onmouseleave = () => cancelBtn.style.background = '#fff';
+    input.onfocus = () => {
+      if (!input.disabled) input.style.borderColor = '#7e6a8a';
+    };
+    input.onblur = () => input.style.borderColor = '#e5e7eb';
+    
+    const close = (value) => {
+      overlay.style.animation = 'fadeOut 0.2s ease';
+      setTimeout(() => overlay.remove(), 200);
+      resolve(value);
+    };
+    
+    confirmBtn.onclick = () => {
+      if (!confirmBtn.disabled) close(input.value);
+    };
+    cancelBtn.onclick = () => close(null);
+    input.onkeypress = (e) => { 
+      if (e.key === 'Enter' && !confirmBtn.disabled) close(input.value); 
+    };
+    overlay.onclick = (e) => { if (e.target === overlay) close(null); };
+  });
+}
+
+function showCustomAlert(title, message, type = 'success') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:10000; animation:fadeIn 0.2s ease;';
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background:#fff; border-radius:16px; padding:28px 32px; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:slideUp 0.3s ease;';
+    
+    const icon = type === 'success' 
+      ? '<svg style="color:#10b981; margin-bottom:12px;" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+      : '<svg style="color:#ef4444; margin-bottom:12px;" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    
+    modal.innerHTML = `
+      <div style="text-align:center;">
+        ${icon}
+        <h3 style="margin:0 0 8px 0; font-size:20px; font-weight:600; color:#1f2937;">${title}</h3>
+        <p style="margin:0 0 24px 0; font-size:14px; color:#6b7280; line-height:1.5;">${message}</p>
+        <button id="customAlertOk" style="padding:10px 32px; border:none; border-radius:8px; background:#7e6a8a; color:#fff; font-size:14px; cursor:pointer; transition:all 0.2s;">確定</button>
+      </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const okBtn = modal.querySelector('#customAlertOk');
+    okBtn.onmouseenter = () => okBtn.style.background = '#6d5a7b';
+    okBtn.onmouseleave = () => okBtn.style.background = '#7e6a8a';
+    
+    const close = () => {
+      overlay.style.animation = 'fadeOut 0.2s ease';
+      setTimeout(() => overlay.remove(), 200);
+      resolve();
+    };
+    
+    okBtn.onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+  });
+}
+
+// 加上動畫
+const modalStyle = document.createElement('style');
+modalStyle.textContent = `
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+`;
+document.head.appendChild(modalStyle);
+
+// ===== 同步學分按鈕 =====
+document.addEventListener('DOMContentLoaded', function() {
+  const syncBtn = document.getElementById('syncAllBtn');
+  if (!syncBtn) return;
+  
+  syncBtn.addEventListener('click', async function() {
+    const password = await showCustomPrompt('同步學分', '請輸入校務系統密碼以同步學分資料：');
+    if (!password) return;
+    
+    syncBtn.disabled = true;
+    const originalHTML = syncBtn.innerHTML;
+    syncBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>同步中...';
+    
+    try {
+      // 從 cookie 取得 CSRF token
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+      const csrfToken = getCookie('csrftoken');
+      
+      // 同步學分
+      const creditsResponse = await fetch('/api/sync-credits/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ password })
+      });
+      
+      if (!creditsResponse.ok) {
+        const errorText = await creditsResponse.text();
+        throw new Error(`學分同步失敗 (${creditsResponse.status}): ${errorText.substring(0, 100)}`);
+      }
+      
+      const creditsData = await creditsResponse.json();
+      if (!creditsData.success) {
+        throw new Error('學分同步失敗：' + (creditsData.message || '未知錯誤'));
+      }
+      
+      await showCustomAlert('同步成功', '學分同步成功！頁面即將重新整理。', 'success');
+      location.reload();
+      
+    } catch (err) {
+      let errorMessage = err.message;
+      if (err.message === 'Failed to fetch') {
+        errorMessage = '無法連接到伺服器，請確認 Django 伺服器是否正在運行';
+      }
+      await showCustomAlert('同步失敗', errorMessage, 'error');
+      syncBtn.disabled = false;
+      syncBtn.innerHTML = originalHTML;
+    }
+  });
+});
 </script>
 <script src="{% static 'js/personal.js' %}?v=2"></script>
 {% endblock %}

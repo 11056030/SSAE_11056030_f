@@ -384,6 +384,26 @@ def personal(request):
     except Exception as e:
         print(f"Error fetching books: {e}")
     
+    # 獲取學分進度統計
+    credit_progress = None
+    credit_progress_percentages = None
+    try:
+        from .models import UserCreditProgress
+        progress = UserCreditProgress.objects.filter(user=request.user).first()
+        if progress:
+            credit_progress = progress
+            total = progress.total_credits
+            if total > 0:
+                credit_progress_percentages = {
+                    'professional_required': round(progress.professional_required * 100 / total, 2),
+                    'professional_elective': round(progress.professional_elective * 100 / total, 2),
+                    'general_required': round(progress.general_required * 100 / total, 2),
+                    'general': round(progress.general * 100 / total, 2),
+                    'common': round(progress.common * 100 / total, 2),
+                }
+    except Exception as e:
+        print(f"Error fetching credit progress: {e}")
+    
     return render(request, "personal.html", {
         'user_data': user_data,
         'user': request.user,  # 保留原始的 user 對象以確保向後兼容
@@ -405,6 +425,8 @@ def personal(request):
         'tickets': tickets,
         'books': books,
         'created_flags': created_flags,
+        'credit_progress': credit_progress,
+        'credit_progress_percentages': credit_progress_percentages,
     })
 
 
@@ -2924,9 +2946,14 @@ def sync_class_schedule(request):
     同步學生的課表資料
     """
     try:
+        import json
         user = request.user
         
-        # 獲取學號和密碼
+        # 從 JSON body 獲取密碼
+        data = json.loads(request.body)
+        password = data.get('password')
+        
+        # 獲取學號
         student_id = None
         try:
             # 優先從自定義 User 資料表(以 email 對應)取得學號
@@ -2948,8 +2975,6 @@ def sync_class_schedule(request):
         # 若自定義表沒有對應紀錄，退回使用 Django 使用者帳號作為學號
         if not student_id:
             student_id = getattr(user, 'username', None)
-
-        password = request.POST.get('password')  # 需要前端傳入密碼
         
         if not student_id or not password:
             return JsonResponse({
@@ -3002,9 +3027,13 @@ def sync_class_schedule(request):
             output = json.loads(json_block)
 
             if not output.get('success', False):
+                error_msg = output.get("message", "未知錯誤")
+                # 如果錯誤訊息包含登入相關字眼，給出更明確的提示
+                if '登入' in error_msg or 'login' in error_msg.lower():
+                    error_msg = '登入失敗，請確認密碼是否正確'
                 return JsonResponse({
                     'success': False,
-                    'message': f'同步失敗: {output.get("message", "未知錯誤")}'
+                    'message': error_msg
                 }, status=500)
 
             # === 將課表與學分資料寫入資料庫 ===
@@ -3166,6 +3195,136 @@ def get_class_schedule(request):
         return JsonResponse({
             'success': False,
             'message': f'獲取課表失敗: {str(e)}'
+        }, status=500)
+
+# ============================================================
+# 同步學分 API
+# ============================================================
+@login_required
+@require_http_methods(['POST'])
+def sync_credits(request):
+    """
+    同步學生的學分統計資料
+    """
+    try:
+        import json
+        import subprocess
+        import os
+        from .models import UserCreditProgress
+        
+        data = json.loads(request.body)
+        password = data.get('password')
+        
+        if not password:
+            return JsonResponse({
+                'success': False,
+                'message': '請提供校務系統密碼'
+            }, status=400)
+        
+        # 從自定義 User 表獲取學號
+        student_id = None
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT student_id FROM `User` WHERE mail = %s", [request.user.email])
+                row = cursor.fetchone()
+                if row:
+                    student_id = row[0]
+        except Exception as e:
+            logger.error(f'查詢學號失敗: {e}')
+        
+        if not student_id:
+            return JsonResponse({
+                'success': False,
+                'message': '無法獲取學號，請確認個人資料是否完整'
+            }, status=400)
+        
+        # 執行 Node.js 同步腳本
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        script_path = os.path.join(BASE_DIR, 'ntub_scraper', 'sync_credits.js')
+        
+        cmd = [
+            'node',
+            script_path,
+            '--studentId', student_id,
+            '--password', password
+        ]
+        
+        logger.info(f'執行學分同步指令: node sync_credits.js --studentId {student_id}')
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
+            timeout=120
+        )
+        
+        if result.returncode == 0:
+            try:
+                raw_output = result.stdout
+                if not raw_output:
+                    raise ValueError("同步腳本沒有輸出任何資料")
+                
+                start_idx = raw_output.find('{')
+                end_idx = raw_output.rfind('}')
+                
+                if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
+                    raise ValueError("找不到 JSON 格式的輸出")
+                
+                json_block = raw_output[start_idx:end_idx + 1]
+                output = json.loads(json_block)
+                
+                if not output.get('success'):
+                    return JsonResponse({
+                        'success': False,
+                        'message': output.get('message', '同步失敗')
+                    }, status=500)
+                
+                # 寫入資料庫
+                stats = output.get('data', {})
+                UserCreditProgress.objects.update_or_create(
+                    user=request.user,
+                    defaults={
+                        'professional_required': stats.get('professional_required', 0),
+                        'professional_elective': stats.get('professional_elective', 0),
+                        'general_required': stats.get('general_required', 0),
+                        'general': stats.get('general', 0),
+                        'common': stats.get('common', 0),
+                        'total_credits': stats.get('total', 0)
+                    }
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': '學分同步成功',
+                    'data': stats
+                })
+                
+            except (json.JSONDecodeError, ValueError) as e:
+                logger.error(f'解析同步結果失敗: {e}')
+                return JsonResponse({
+                    'success': False,
+                    'message': f'解析同步結果失敗',
+                    'error': str(e)
+                }, status=500)
+        else:
+            logger.error(f'同步學分失敗: {result.stderr}')
+            return JsonResponse({
+                'success': False,
+                'message': '同步學分失敗',
+                'error': result.stderr or result.stdout
+            }, status=500)
+            
+    except Exception as e:
+        logger.exception('同步學分時發生錯誤')
+        error_msg = str(e)
+        # 如果是 FileNotFoundError，給出更明確的提示
+        if 'node' in error_msg.lower() or isinstance(e, FileNotFoundError):
+            error_msg = 'Node.js 未安裝或不在系統 PATH 中，請確認 Node.js 已正確安裝'
+        return JsonResponse({
+            'success': False,
+            'message': f'伺服器錯誤: {error_msg}'
         }, status=500)
 
 # 如果需要處理 OPTIONS 請求（CORS 預檢）
