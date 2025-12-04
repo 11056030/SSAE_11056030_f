@@ -138,6 +138,14 @@ class NTUBScraper {
             // 點擊登入按鈕
             console.log('🖱️ 準備點擊登入按鈕...');
             
+            // 設置 dialog 監聽器來捕獲 alert 彈窗
+            let alertMessage = null;
+            page.on('dialog', async dialog => {
+                alertMessage = dialog.message();
+                console.log(`🚨 捕獲到 alert 彈窗: ${alertMessage}`);
+                await dialog.accept(); // 自動點擊確定
+            });
+            
             // 確保登入按鈕可見和可點擊
             await page.waitForSelector('#Client_Login', { visible: true, timeout: 10000 });
             
@@ -150,31 +158,51 @@ class NTUBScraper {
             });
             
             // 等待一下讓頁面穩定
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
             
-            // 嘗試點擊登入按鈕
-            try {
-                await Promise.all([
-                    page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
-                    page.click('#Client_Login')
-                ]);
-            } catch (clickError) {
-                console.log('⚠️ 直接點擊失敗，嘗試JavaScript點擊');
-                // 如果直接點擊失敗，使用JavaScript點擊
-                await page.evaluate(() => {
-                    const loginBtn = document.querySelector('#Client_Login');
-                    if (loginBtn) {
-                        loginBtn.click();
-                    }
-                });
-                
-                // 等待頁面導航，但設置較短的超時時間
-                try {
-                    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
-                } catch (navError) {
-                    console.log('⚠️ 頁面導航超時，繼續檢查登入狀態');
-                    // 即使導航超時，也繼續檢查登入狀態
+            // 點擊登入按鈕
+            await page.click('#Client_Login');
+            
+            // 等待 3 秒，讓 alert 有時間彈出
+            await page.waitForTimeout(3000);
+            
+            // 如果捕獲到 alert 訊息，表示登入失敗
+            if (alertMessage) {
+                console.log(`❌ 登入失敗，錯誤訊息: ${alertMessage}`);
+                await browser.close();
+                return {
+                    success: false,
+                    message: alertMessage.includes('密碼') || alertMessage.includes('帳號') || alertMessage.includes('錯誤')
+                        ? '學號或密碼錯誤，請檢查後重試' 
+                        : alertMessage
+                };
+            }
+            
+            // 檢查頁面上是否有錯誤訊息（作為備用檢查）
+            const errorMessage = await page.evaluate(() => {
+                const errorSpan = document.querySelector('#lblMsg, .error-message, [id*="error"], [class*="error"]');
+                if (errorSpan && errorSpan.textContent.trim()) {
+                    return errorSpan.textContent.trim();
                 }
+                return null;
+            });
+            
+            if (errorMessage) {
+                console.log(`❌ 檢測到頁面錯誤訊息: ${errorMessage}`);
+                await browser.close();
+                return {
+                    success: false,
+                    message: errorMessage.includes('密碼') || errorMessage.includes('帳號') 
+                        ? '學號或密碼錯誤，請檢查後重試' 
+                        : errorMessage
+                };
+            }
+            
+            // 等待頁面導航（如果沒有錯誤訊息）
+            try {
+                await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 });
+            } catch (navError) {
+                console.log('⚠️ 頁面導航超時，檢查當前狀態');
             }
 
             // 檢查是否登入成功
@@ -522,7 +550,7 @@ class NTUBScraper {
 
                 if (systemLinkClicked) {
                     console.log('✅ 成功點擊學生資訊系統連結');
-                    await page.waitForTimeout(3000);
+                    await page.waitForTimeout(1500);
                 } else {
                     console.log('⚠️ 未找到學生資訊系統連結，嘗試直接導航');
                     await page.goto(`${this.baseUrl}/Portal/Main_total.aspx?SysID=STDWEB`, { 
@@ -539,7 +567,7 @@ class NTUBScraper {
             // 步驟2: 尋找成績查詢連結
             console.log('🖱️ 尋找成績查詢連結...');
             
-            await page.waitForTimeout(2000);
+            await page.waitForTimeout(1000);
             
             const gradePageUrl = await page.evaluate(() => {
                 // 尋找成績相關連結
@@ -585,7 +613,7 @@ class NTUBScraper {
 
             // 步驟3: 等待成績頁面載入並提取資料
             console.log('📋 等待成績頁面載入...');
-            await page.waitForTimeout(3000);
+            await page.waitForTimeout(1500);
 
             // 如果指定學期，嘗試選擇學期
             if (semester) {
@@ -697,6 +725,170 @@ class NTUBScraper {
         }
     }
 
+    // 根據成績查詢頁面統計學分（必修 / 專選 / 通識 / 選修 / 總學分）
+    async getCreditStats(sessionToken) {
+        const session = this.sessions.get(sessionToken);
+
+        if (!session) {
+            throw new Error('Session已過期，請重新登入');
+        }
+
+        try {
+            const { page } = session;
+            session.lastActivity = new Date();
+
+            console.log('📊 開始統計學分資料...');
+
+            // 直接導向學期成績總覽頁
+            const targetUrl = `${this.baseUrl}/ACAD/STDWEB/GRD_GRDQry_All.aspx`;
+            console.log('🔗 導航到學分統計頁面:', targetUrl);
+            await page.goto(targetUrl, {
+                waitUntil: 'networkidle2',
+                timeout: 20000
+            });
+
+            await page.waitForTimeout(1500);
+
+            const stats = await page.evaluate(() => {
+                const result = {
+                    professional_required: 0,
+                    professional_elective: 0,
+                    general_required: 0,
+                    general: 0,
+                    common: 0,
+                    total: 0
+                };
+
+                const toNumber = (text) => {
+                    if (!text) return 0;
+                    const cleaned = text.replace(/[^0-9.]/g, '');
+                    const n = parseFloat(cleaned);
+                    return isNaN(n) ? 0 : n;
+                };
+
+                // 直接用 ID 找表格
+                const detailTable = document.getElementById('ctl00_ContentPlaceHolder1_GRD');
+
+                if (!detailTable) {
+                    console.log('⚠️ 未找到修課明細表格 (ID: ctl00_ContentPlaceHolder1_GRD)');
+                    return result;
+                }
+                
+                console.log('✅ 找到修課明細表格');
+
+                const rows = Array.from(detailTable.querySelectorAll('tr'));
+                console.log(`📋 表格共有 ${rows.length} 行`);
+                if (rows.length <= 1) {
+                    console.log('⚠️ 表格行數不足');
+                    return result;
+                }
+
+                // 先分析表頭找出「選修別」、「學分」、「分數」欄位索引
+                const headerCells = Array.from(rows[0].querySelectorAll('th,td'));
+                let typeIdx = -1;
+                let creditIdx = -1;
+                let scoreIdx = -1;
+
+                headerCells.forEach((cell, idx) => {
+                    const t = (cell.textContent || '').trim();
+                    if (t.includes('選修別')) typeIdx = idx;
+                    if (t.includes('學分')) {
+                        // 通常第一個含「學分」的是科目學分
+                        if (creditIdx === -1) creditIdx = idx;
+                    }
+                    if (t.includes('分數')) scoreIdx = idx;
+                });
+                
+                console.log(`📍 選修別欄位索引: ${typeIdx}, 學分欄位索引: ${creditIdx}, 分數欄位索引: ${scoreIdx}`);
+
+                // 如果無法從表頭判斷，就假設：課程類別在倒數第2或第3欄，學分在靠近成績前的欄位
+                if (typeIdx === -1 || creditIdx === -1) {
+                    const sampleRow = rows[1];
+                    const cells = Array.from(sampleRow.querySelectorAll('td,th'));
+                    const len = cells.length;
+                    if (typeIdx === -1) {
+                        for (let i = 0; i < len; i++) {
+                            const txt = (cells[i].textContent || '').trim();
+                            if (
+                                REQUIRED_KEYWORDS.concat(MAJOR_KEYWORDS, GENERAL_KEYWORDS)
+                                    .some(k => txt.includes(k))
+                            ) {
+                                typeIdx = i;
+                                break;
+                            }
+                        }
+                    }
+                    if (creditIdx === -1 && len >= 4) {
+                        // 粗略假設學分在第 4~7 欄之間
+                        for (let i = 2; i < Math.min(len, 8); i++) {
+                            const n = toNumber(cells[i].textContent || '');
+                            if (n > 0 && n <= 10) {
+                                creditIdx = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (typeIdx === -1 || creditIdx === -1) {
+                    console.log('⚠️ 無法判斷課程類別或學分欄位索引');
+                    return result;
+                }
+
+                let processedCount = 0;
+                let passedCount = 0;
+                for (let r = 1; r < rows.length; r++) {
+                    const cells = Array.from(rows[r].querySelectorAll('td,th'));
+                    if (!cells.length) continue;
+
+                    const typeText = (cells[typeIdx] && cells[typeIdx].textContent || '').trim();
+                    const credit = toNumber(cells[creditIdx] && cells[creditIdx].textContent || '');
+                    if (!credit) continue;
+
+                    // 檢查分數是否及格（>= 60）
+                    let isPassed = true;
+                    if (scoreIdx !== -1 && cells[scoreIdx]) {
+                        const scoreText = cells[scoreIdx].textContent || '';
+                        const score = toNumber(scoreText);
+                        isPassed = score >= 60;
+                    }
+
+                    processedCount++;
+                    
+                    // 只統計及格的課程
+                    if (!isPassed) continue;
+                    
+                    passedCount++;
+
+                    // 精確匹配 5 種課程類別
+                    if (typeText.includes('專業必修') || typeText.includes('專業核心必修')) {
+                        result.professional_required += credit;
+                    } else if (typeText.includes('專業選修')) {
+                        result.professional_elective += credit;
+                    } else if (typeText.includes('通識必修')) {
+                        result.general_required += credit;
+                    } else if (typeText === '通識') {
+                        result.general += credit;
+                    } else if (typeText.includes('一般科目') || typeText.includes('共同必修')) {
+                        result.common += credit;
+                    }
+
+                    result.total += credit;
+                }
+                
+                console.log(`✅ 處理了 ${processedCount} 筆課程資料，其中 ${passedCount} 筆及格`);
+
+                return result;
+            });
+
+            console.log('📊 學分統計結果:', stats);
+            return stats;
+        } catch (error) {
+            console.error('統計學分資料失敗:', error);
+            throw new Error('統計學分資料失敗');
+        }
+    }
+
     // 獲取課表
     async getSchedule(sessionToken, semester = null) {
         const session = this.sessions.get(sessionToken);
@@ -749,7 +941,7 @@ class NTUBScraper {
 
                 if (systemLinkClicked) {
                     console.log('✅ 成功點擊學生資訊系統連結');
-                    await page.waitForTimeout(3000); // 等待頁面載入
+                    await page.waitForTimeout(1500); // 等待頁面載入
                 } else {
                     console.log('⚠️ 未找到學生資訊系統連結，嘗試直接導航');
                     await page.goto(`${this.baseUrl}/Portal/Main_total.aspx?SysID=STDWEB`, { 
@@ -766,7 +958,7 @@ class NTUBScraper {
             // 步驟2: 點擊 "我的課表"
             console.log('🖱️ 尋找並點擊 "我的課表"...');
             
-            await page.waitForTimeout(2000);
+            await page.waitForTimeout(1000);
             
             const schedulePageUrl = await page.evaluate(() => {
                 // 尋找 "我的課表" 連結
@@ -800,7 +992,7 @@ class NTUBScraper {
 
             // 步驟3: 等待課表頁面載入並提取資料
             console.log('📋 等待課表頁面載入...');
-            await page.waitForTimeout(3000);
+            await page.waitForTimeout(1500);
 
             // 如果指定學期，嘗試選擇學期
             if (semester) {
@@ -1070,12 +1262,19 @@ class NTUBScraper {
     }
 }
 
-// 創建單例實例
-const scraper = new NTUBScraper();
+// 導出 NTUBScraper 類
+module.exports = NTUBScraper;
 
-// 定期清理過期session
-setInterval(() => {
-    scraper.cleanupExpiredSessions();
-}, 10 * 60 * 1000); // 每10分鐘清理一次
-
-module.exports = scraper;
+// 以下代碼僅在直接運行此文件時執行
+if (require.main === module) {
+    // 創建單例實例
+    const scraper = new NTUBScraper();
+    
+    // 定期清理過期session
+    setInterval(() => {
+        scraper.cleanupExpiredSessions();
+    }, 10 * 60 * 1000); // 每10分鐘清理一次
+    
+    // 導出實例（僅用於直接運行）
+    module.exports.instance = scraper;
+}

@@ -257,21 +257,31 @@ GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR, "vision_api_key.json")
 
 
 # ========================
-# ⚡ Redis Cache
+# Cache Configuration
 # ========================
+# 使用記憶體快取（開發環境）
+# 生產環境建議使用 Redis
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
     }
 }
+
+# 如果要使用 Redis（需要先安裝: pip install redis）
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/1',
+#     }
+# }
 
 OCR_CACHE_TIMEOUT = 3600  # 1 小時
 
 
 # ========================
-# 🖼️ Image Upload
+# Image Upload
 # ========================
 
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
