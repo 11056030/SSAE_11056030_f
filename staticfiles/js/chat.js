@@ -358,96 +358,71 @@ async function loadConvos() {
     }
 }
 
-// 渲染對話列表（含 historyTitle、訪客/已登入差異與 CTA）
+// 渲染對話列表（修正版：讓訪客也能看到建立按鈕）
 function renderConvos() {
     const historyTitle = document.getElementById('historyTitle');
     chatHistoryEl.innerHTML = '';
 
-    const isAuth = !!window.IS_AUTH; // 確保為布林
+    const isAuth = !!window.IS_AUTH;
 
     // 沒有對話的狀況
     if (!conversations || conversations.length === 0) {
-        // 設定標題（存在就改）
         if (historyTitle) {
-            historyTitle.textContent = isAuth
-                ? '對話歷史'
-                : '訪客模式';
+            historyTitle.textContent = isAuth ? '對話歷史' : '訪客模式';
         }
+
+        // 建立一個容器來放提示訊息
+        const noticeContainer = document.createElement('div');
+        noticeContainer.style.cssText = `
+            padding: 15px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            margin: 10px;
+            border: 1px dashed #e0e0e0;
+        `;
 
         if (!isAuth) {
             // 訪客提示
-            const guestNotice = document.createElement('div');
-            guestNotice.className = 'guest-notice';
-            guestNotice.style.cssText = `
-                padding: 15px;
-                text-align: center;
-                color: #666;
-                font-size: 14px;
-                border-radius: 8px;
-                background: #f8f9fa;
-                margin: 10px;
+            noticeContainer.innerHTML = `
+                <div style="margin-bottom:10px;">👤 訪客模式<br/>對話記錄不會被保存</div>
+                <div><button id="createFirstChatBtn" style="
+                    background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer;
+                ">開始對話</button></div>
             `;
-            guestNotice.innerHTML = '👤 訪客模式<br/>對話記錄不會被保存';
-            chatHistoryEl.appendChild(guestNotice);
         } else {
-            // 已登入但尚無對話：顯示 CTA（使用 newChatBtn 重用既有邏輯）
-            const emptyNotice = document.createElement('div');
-            emptyNotice.className = 'empty-notice';
-            emptyNotice.style.cssText = `
-                padding: 18px;
-                text-align: center;
-                color: #444;
-                font-size: 14px;
-                border-radius: 8px;
-                background: #ffffff;
-                margin: 10px;
-                border: 1px dashed #e0e0e0;
-            `;
-            emptyNotice.innerHTML = `
+            // 已登入提示
+            noticeContainer.innerHTML = `
                 <div style="margin-bottom:10px;">尚無對話 — 您可以建立第一個對話來開始使用。</div>
                 <div><button id="createFirstChatBtn" style="
                     background:#007bff;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer;
                 ">建立第一個對話</button></div>
             `;
-            chatHistoryEl.appendChild(emptyNotice);
-
-            // 綁定按鈕
-            const createBtn = document.getElementById('createFirstChatBtn');
-            if (createBtn) {
-                createBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    // 如果你已經有 newChatBtn 的處理流程，直接呼叫它最方便
-                    if (typeof newChatBtn !== 'undefined' && newChatBtn) {
-                        newChatBtn.click();
-                    } else {
-                        // fallback：呼叫 API 建立並載入
-                        (async () => {
-                            try {
-                                const title = `新對話${nextSeq++}`;
-                                const res = await fetch("/api/conversations/", {
-                                    method: "POST",
-                                    headers: {"Content-Type": "application/json"},
-                                    body: JSON.stringify({title})
-                                });
-                                const newConvo = await res.json();
-                                await loadConvos();
-                                selectConvo(newConvo.id);
-                            } catch (err) {
-                                console.error('建立對話失敗：', err);
-                            }
-                        })();
-                    }
-                });
-            }
         }
 
+        chatHistoryEl.appendChild(noticeContainer);
+
+        // 綁定按鈕 (共用邏輯)
+        const createBtn = document.getElementById('createFirstChatBtn');
+        if (createBtn) {
+            createBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (typeof newChatBtn !== 'undefined' && newChatBtn) {
+                    newChatBtn.click();
+                } else {
+                    createNewChat(); // 直接呼叫建立函數
+                }
+            });
+        }
         return; // 無對話就結束
     }
 
     // 有對話：設定標題
     if (historyTitle) historyTitle.textContent = '對話歷史';
 
-    // 原本的對話列表渲染邏輯（保持你既有內容）
+    // ... (以下保持原本的 conversations.forEach 迴圈邏輯) ...
     conversations.forEach(c => {
         const chatItem = document.createElement('div');
         chatItem.className = 'chat-item';
@@ -476,7 +451,7 @@ function renderConvos() {
         chatHistoryEl.appendChild(chatItem);
     });
 
-    // 綁定匯出按鈕事件
+    // 綁定按鈕事件 (匯出與刪除) - 保持原樣
     document.querySelectorAll('.download-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -485,13 +460,11 @@ function renderConvos() {
         });
     });
 
-    // 綁定刪除按鈕事件
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const id = btn.getAttribute('data-id');
             if (!confirm('確定刪除此對話？')) return;
-            
             try {
                 await fetch(`/api/conversations/${id}/`, { method: 'DELETE' });
                 conversations = conversations.filter(x => x.id !== id);
@@ -582,22 +555,35 @@ function renderMessages(messages) {
 }
 
 
-// 建立新對話函數
+// 建立新對話函數（修正版：區分訪客與登入者）
 async function createNewChat() {
-    try {
-        const title = `新對話${nextSeq++}`;
-        const res = await fetch("/api/conversations/", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({title})
-        });
+    // [已登入者]：呼叫 API 建立
+    if (window.IS_AUTH) {
+        try {
+            const title = `新對話${nextSeq++}`;
+            const res = await fetch("/api/conversations/", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({title})
+            });
+            
+            const newConvo = await res.json();
+            currentId = newConvo.id;
+            await loadConvos();
+            selectConvo(newConvo.id);
+        } catch (error) {
+            console.error('建立新對話失敗:', error);
+        }
+    } 
+    // [訪客]：僅重置前端畫面，不存資料庫
+    else {
+        currentId = null; // 重置 ID
+        chatContainer.innerHTML = ''; // 清空聊天室
+        noMessagesEl.style.display = 'block'; // 顯示無訊息提示
+        if (currentChatTitle) currentChatTitle.innerText = '新對話';
         
-        const newConvo = await res.json();
-        currentId = newConvo.id;
-        await loadConvos();
-        selectConvo(newConvo.id);
-    } catch (error) {
-        console.error('建立新對話失敗:', error);
+        // 移除左側列表的 active 狀態
+        document.querySelectorAll(".chat-item").forEach(item => item.classList.remove("active"));
     }
 }
 
@@ -616,47 +602,57 @@ function _safeShowMessage(text, type = 'error') {
 }
 
 /* =========================
-   ✅ 確保 currentId 再送出
-   （不改動你其它流程）
+   ✅ 確保 currentId 再送出 (修正版：允許訪客自動建立或使用臨時 ID)
    ========================= */
 async function ensureConversationReady() {
-  // 已經有 currentId
-  if (window.currentId) return true;
+    // 1. 已經有 currentId，直接通過
+    if (window.currentId) return true;
 
-  // 有既有對話 → 選第一個
-  if (Array.isArray(window.conversations) && window.conversations.length) {
-    if (typeof selectConvo === 'function') {
-      await selectConvo(window.conversations[0].id);
-      return true;
+    // 2. 有既有對話 → 自動選第一個
+    if (Array.isArray(window.conversations) && window.conversations.length) {
+        if (typeof selectConvo === 'function') {
+            await selectConvo(window.conversations[0].id);
+            return true;
+        }
     }
-  }
 
-  // 已登入 → 建立一個新對話（沿用你的 API）
-  if (window.IS_AUTH && typeof fetch === 'function') {
-    try {
-      const title = `新對話${(window.conversations?.length || 0) + 1}`;
-      const res = await fetch("/api/conversations/", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ title })
-      });
-      const newConvo = await res.json();
-      if (!newConvo?.id) throw new Error('no id in create conversation response');
+    // 3. 嘗試建立新對話 (移除 IS_AUTH 檢查，讓訪客也能嘗試)
+    if (typeof fetch === 'function') {
+        try {
+            const title = `新對話${(window.conversations?.length || 0) + 1}`;
+            const res = await fetch("/api/conversations/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title })
+            });
 
-      window.currentId = newConvo.id;
-      if (typeof loadConvos === 'function') await loadConvos();
-      if (typeof selectConvo === 'function') await selectConvo(newConvo.id);
-      return true;
-    } catch (e) {
-      console.error('[chat] 建立對話失敗：', e);
-      _safeShowMessage('建立對話失敗，請稍後再試', 'error');
-      return false;
+            if (res.ok) {
+                const newConvo = await res.json();
+                if (newConvo?.id) {
+                    window.currentId = newConvo.id;
+                    // 重新載入列表 (如果有的話)
+                    if (typeof loadConvos === 'function') await loadConvos();
+                    if (typeof selectConvo === 'function') await selectConvo(newConvo.id);
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.warn('[chat] 自動建立對話失敗 (可能需登入或網絡錯誤):', e);
+        }
     }
-  }
 
-  // 訪客且沒有 currentId：明確提示
-  _safeShowMessage('請先建立一個對話再發送訊息', 'error');
-  return false;
+    // 4. 訪客 Fallback：
+    // 如果上面建立失敗 (例如後端禁止訪客建對話)，但我們是訪客，
+    // 強制設定一個臨時 ID，讓前端允許發送 (後端需支援 conversation_id 為 null 或臨時字串)
+    if (!window.IS_AUTH) {
+        console.log('訪客模式：使用臨時會話 ID 繼續');
+        window.currentId = 'guest_temp_' + Date.now(); 
+        return true;
+    }
+
+    // 5. 若是已登入使用者但建立失敗，才報錯
+    _safeShowMessage('建立對話失敗，請重新整理頁面再試', 'error');
+    return false;
 }
 
 /* =========================

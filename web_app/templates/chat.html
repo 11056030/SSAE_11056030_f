@@ -80,6 +80,6 @@
 <script>
     window.IS_AUTH = "{{ request.user.is_authenticated|yesno:'true,false' }}" === "true";
 </script>
-<script src="{% static 'js/chat.js' %}"></script>
+<script src="{% static 'js/chat.js' %}?=100"></script>
 <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
 {% endblock %}

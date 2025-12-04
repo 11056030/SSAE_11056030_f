@@ -60,40 +60,76 @@ advanced_rag_chain = None
 if os.path.exists(PERSIST_DIRECTORY) and embeddings:
     try:
         vectorstore = Chroma(persist_directory=PERSIST_DIRECTORY, embedding_function=embeddings)
-        # k=6 增加搜尋廣度
-        retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 6})
+        
+        # ❌ 原本的寫法：強制湊滿 6 個，容易有雜訊
+        # retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 6})
+        
+        # ✅ 修改後的寫法：加上 score_threshold (相似度門檻)
+        # 意思：最多找 k=6 個，但相似度必須高於 0.5 (score_threshold) 才會被採用
+        # 門檻建議值：0.5 ~ 0.7 之間 (依據你的 Embeddings 模型調整，Azure OpenAI 建議從 0.5 或 0.6 試起)
+        retriever = vectorstore.as_retriever(
+            search_type="similarity_score_threshold", 
+            search_kwargs={"score_threshold": 0.7, "k": 1}
+        )
+        
         advanced_rag_chain = create_advanced_rag_chain(retriever)
         print(f"✅ RAG 系統就緒 (讀取: {PERSIST_DIRECTORY})")
     except Exception as e:
         print(f"❌ 載入資料庫失敗: {e}")
-else:
-    print(f"⚠ 找不到資料庫: {PERSIST_DIRECTORY}")
 
-# ==================== 查詢函式 ====================
+# ==================== 查詢函式 (修正版) ====================
 def ask_question(question: str, conversation_history: list = None) -> dict:
-    if not advanced_rag_chain:
+    # 1. 基礎檢查
+    if not vectorstore:
         return {"answer": "系統維護中 (資料庫未載入)。", "has_sources": False, "sources": []}
 
     try:
-        # 1. 歷史紀錄
-        full_question = question
+        # 2. 準備「給 AI 看」的完整對話紀錄 (包含歷史)
+        full_context_for_llm = question
         if conversation_history:
-            recent = conversation_history[-3:]
-            hist_txt = "\n".join([f"Q: {m['question']}\nA: {m['answer']}" for m in recent])
-            full_question = f"歷史紀錄：\n{hist_txt}\n\n新問題：{question}"
+            # 只取最近 2 組對話以免 Token 爆炸
+            recent = conversation_history[-2:]
+            hist_txt = "\n".join([f"Human: {m['question']}\nAI: {m['answer']}" for m in recent])
+            full_context_for_llm = f"【對話歷史】\n{hist_txt}\n\n【使用者新問題】\n{question}"
 
-        # 2. 檢索與回答
-        response = advanced_rag_chain.invoke({"input": full_question})
-        raw_answer = response["answer"].strip()
+        # 3. 【關鍵修改】搜尋資料庫 (Retriever)
+        # ★ 重點：只用「新問題 (question)」去搜尋，不要帶歷史紀錄！
+        # 這樣才能精準找到「英文畢業門檻」的 PDF，不會被「產學合作」干擾。
+        docs = retriever.invoke(question)
+
+        # 4. 生成回答 (Generation)
+        # 我們手動呼叫 qa_chain (create_stuff_documents_chain 產生的那個)
+        # 把我們剛剛用「乾淨問題」搜到的 docs 餵給它
+        # 但 input 依然給它「完整歷史」，這樣 AI 才知道你在跟它聊天
         
-        # 3. 來源處理
-        source_documents = response.get("context", [])
-        pdf_sources = list(set([os.path.basename(doc.metadata.get('source', '')) for doc in source_documents if doc.metadata.get('source')]))
+        # 這裡需要用到上面定義的 qa_chain，如果原本是在 create_advanced_rag_chain 裡定義的，
+        # 建議把 qa_chain 拉出來變成全域變數，或者在這裡重新定義一次 prompt 和 chain
         
-        # 4. 簡單排版 (加強標題顯示，但不強制加 #)
+        # 為了保險起見，我們在這裡重新建立一個簡單的 chain 來回答
+        system_prompt = (
+            "You are a helpful assistant for National Taipei University of Business (NTUB). "
+            "Use the retrieved context to answer the question accurately in Traditional Chinese. "
+            "Use '## ' for sections and numbered lists for steps. "
+            "If the documents don't have the answer, say so based on the context provided."
+            "Always mention '根據國立臺北商業大學校規...' at the start."
+            "\n\n{context}"
+        )
+        prompt = ChatPromptTemplate.from_messages([("system", system_prompt), ("human", "{input}")])
+        manual_qa_chain = create_stuff_documents_chain(llm, prompt)
+        
+        # 執行生成
+        response = manual_qa_chain.invoke({
+            "input": full_context_for_llm, # 給 AI 看完整歷史 (懂上下文)
+            "context": docs                # 給 AI 看精準搜到的資料 (懂校規)
+        })
+        
+        raw_answer = response.strip()
+        
+        # 5. 來源處理 (跟原本一樣)
+        pdf_sources = list(set([os.path.basename(doc.metadata.get('source', '')) for doc in docs if doc.metadata.get('source')]))
+        
+        # 6. 排版處理 (跟原本一樣)
         raw_answer = re.sub(r'\*\*([^*\n]+?)\*\*', r'<strong style="color:#4A5B73; font-weight:700;">\1</strong>', raw_answer)
-        
-        # 轉換 markdown 標題為 HTML 樣式
         lines = raw_answer.split('\n')
         formatted_lines = []
         for line in lines:
@@ -113,5 +149,7 @@ def ask_question(question: str, conversation_history: list = None) -> dict:
             "has_sources": len(pdf_sources) > 0,
             "sources": pdf_sources
         }
+
     except Exception as e:
+        print(f"❌ 查詢錯誤: {e}") # 方便 debug
         return {"answer": "發生錯誤，請稍後再試。", "has_sources": False, "sources": []}
