@@ -811,7 +811,14 @@ def book_detail(request, pk):
     except Exception as e:
         logger.warning(f"無法獲取賣家聯絡資訊: {e}")
 
-    related_books_query = Book2.objects.exclude(pk=pk).exclude(status__name__in=['已售出', '下架'])
+    # 只查詢狀態為「在售」的書籍
+    try:
+        active_status = Status.objects.get(name='在售')
+        related_books_query = Book2.objects.filter(status=active_status).exclude(pk=pk)
+    except Status.DoesNotExist:
+        # 如果沒有「在售」的狀態，則使用原來的過濾條件
+        related_books_query = Book2.objects.exclude(pk=pk).exclude(status__name__in=['已售出', '已下架'])
+        logger.warning("找不到「在售」的狀態，使用舊的過濾條件")
     related_books = []
 
     # 同分類 + 同系所
