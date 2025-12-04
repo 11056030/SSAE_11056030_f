@@ -429,12 +429,6 @@ body {
   padding: 18px !important;
   /* min-height: 140px !important; */
 }
-/* 
-.activity-grid .activity-card.card-size-2 .bottom-section {
-  padding: 18px 22px !important;
-  margin: 0 -18px -18px !important;
-} */
-
 
 .activity-grid .activity-card.card-size-2 .activity-description {
   font-size: 14px !important;
@@ -1595,13 +1589,9 @@ body {
     min-height: 0 !important;
   }
   
-  /* .activity-card .bottom-section {
-    padding: 5px 7px !important;
-    margin: 0 -7px -7px !important;
-    min-height: 28px !important;
-    flex-shrink: 0;
-    font-size: 11px !important;
-  } */
+  .activity-card .content-wrapper .event-details
+  
+
 }
 /* 手機版的在上 -----------------------------------------------------------*/ 
 
@@ -1770,7 +1760,6 @@ body {
   }
   
   .pagination {
-    flex-direction: column;
     gap: 12px;
   }
   
@@ -1901,57 +1890,6 @@ body {
     min-height: 0 !important;
   }
   
-  /* .activity-card .bottom-section {
-    padding: 6px 8px !important;
-    margin: 0 -8px -8px !important;
-    min-height: 40px !important;
-    flex-shrink: 0;
-    font-size: 12px !important;
-  }
-   */
-  /* 極小螢幕卡片尺寸縮放規則 - 大幅縮小內容
-  .activity-grid .activity-card.card-size-1 .activity-title {
-    font-size: 16px !important;
-  }
-   */
-  /* .activity-grid .activity-card.card-size-1 .activity-description {
-    font-size: 10px !important;
-    height: 35px !important;
-  }
-  
-  .activity-grid .activity-card.card-size-1 .detail-text {
-    font-size: 9px !important;
-  }
-  
-  .activity-grid .activity-card.card-size-1 .activity-tag {
-    padding: 6px 8px !important;
-    font-size: 8px !important;
-  }
-  
-  .activity-grid .activity-card.card-size-1 .floating-date {
-    padding: 8px 10px !important;
-  }
-  
-  .activity-grid .activity-card.card-size-1 .floating-date .day {
-    font-size: 12px !important;
-  }
-  
-  .activity-grid .activity-card.card-size-1 .floating-date .month {
-    font-size: 7px !important;
-  }
-   */
-
-  
-/* 
-  .activity-grid .activity-card.card-size-2 .floating-date {
-    padding: 11px 15px !important;
-  }
-   */
-  
-  /* .activity-grid .activity-card.card-size-2 .floating-date .month {
-    font-size: 10px !important;
-  } */
-  
   .activity-grid .activity-card.card-size-3 .activity-image {
     height: 150px !important;
   }
@@ -2011,6 +1949,7 @@ body {
   .activity-grid .activity-card.card-size-5 .activity-description {
     font-size: 11px !important;
     height: 55px !important;
+
   }
   
   .activity-grid .activity-card.card-size-4 .detail-text,
@@ -2054,16 +1993,6 @@ body {
     flex-shrink: 0;
     min-height: 60px;
   }
-  /* .avatars-section {
-    justify-content: center;
-    padding-left: 0;
-  } */
-  /* .organizer-avatar {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-    margin-right: -6px;
-  } */
   .participant-avatar {
     width: 32px;
     height: 32px;
@@ -2097,6 +2026,8 @@ body {
   .activity-card .detail-text {
     font-size: 7px;
   }
+
+
 }
 
 .activity-card.visible {
@@ -2341,7 +2272,7 @@ body {
 }
 
 .participant-avatar.more {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #cfbad9, #6f557d);
   color: white;
   font-size: 12px;
   font-weight: 700;
@@ -3113,9 +3044,9 @@ body {
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
+  background: #f4f0ff;
+  border-color: #764ba2;
+  color: #9f66ea;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102,126,234,0.3);
 }
@@ -3157,9 +3088,9 @@ body {
 }
 
 .pagination-number:hover {
-  background: #f0f4ff;
-  border-color: #667eea;
-  color: #667eea;
+  background: #f4f0ff;
+  border-color: #764ba2;
+  color: #9f66ea;
   transform: translateY(-1px);
 }
 

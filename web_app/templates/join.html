@@ -67,8 +67,6 @@
         <div class="control-group">
             <label for="items-per-row">每行顯示：</label>
             <select id="items-per-row" class="items-selector desktop-selector">
-                <option value="1">1 個</option>
-                <option value="2">2 個</option>
                 <option value="3">3 個</option>
                 <option value="4" selected>4 個</option>
                 <option value="5">5 個</option>
@@ -175,7 +173,7 @@
                             </div>
                             
                             <!-- 已參加的人頭像 -->
-                            {% for participant in a.cleaned_participants|slice:":3" %}
+                            {% for participant in a.cleaned_participants|slice:":1" %}
                                 <div class="participant-avatar" title="{{ participant.user_display_name }}">
                                     {% if participant.user.profile.avatar %}
                                         <img src="{{ participant.user.profile.avatar.url }}" alt="{{ participant.user.username }}">
@@ -186,9 +184,9 @@
                                     {% endif %}
                                 </div>
                             {% endfor %}
-                            
-                            {% if a.participants_count > 3 %}
-                                <div class="participant-avatar more">+{{ a.participants_count|add:"-3" }}</div>
+
+                            {% if a.participants_count > 1 %}
+                                <div class="participant-avatar more">+{{ a.participants_count|add:"-1" }}</div>
                             {% endif %}
                         </div>
                         
@@ -304,256 +302,171 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentPageSpan = document.getElementById('current-page');
     const totalPagesSpan = document.getElementById('total-pages');
     const itemsPerPageDisplay = document.getElementById('items-per-page-display');
-    
+    const mobileButtons = document.querySelectorAll('.grid-btn');
+
     let currentPage = 1;
-    let itemsPerRow = 3;
-    let itemsPerPage = 18; // 預設每頁 18 個 (3行 × 6行)
+    let itemsPerRow = 3; // 桌面預設 3 個
+    let itemsPerPage = 18;
     let allCards = [];
     let totalPages = 1;
-    
-    // 初始化
+
     function init() {
         allCards = Array.from(activityGrid.querySelectorAll('.activity-card'));
-        
+
         // 恢復用戶設定
         const savedItemsPerRow = localStorage.getItem('itemsPerRow');
         const savedCurrentPage = localStorage.getItem('currentPage');
-        
-        if (savedItemsPerRow) {
-            itemsPerRow = parseInt(savedItemsPerRow);
-            itemsPerRowSelect.value = savedItemsPerRow;
+        if (savedItemsPerRow) itemsPerRow = parseInt(savedItemsPerRow);
+        if (savedCurrentPage) currentPage = parseInt(savedCurrentPage);
+
+        // 手機預設 2 個
+        if (window.innerWidth <= 480 && (!savedItemsPerRow || parseInt(savedItemsPerRow) > 2)) {
+            itemsPerRow = 2;
         }
-        
-        if (savedCurrentPage) {
-            currentPage = parseInt(savedCurrentPage);
-        }
-        
-        // 立即應用卡片尺寸，確保樣式生效
-        updateGridLayout(itemsPerRow);
-        
+
+        if (itemsPerRowSelect) itemsPerRowSelect.value = itemsPerRow;
+        updateMobileButtons();
         updateLayout();
-        
-        // 強制重新渲染，確保所有樣式都被應用
-        setTimeout(() => {
-            updateGridLayout(itemsPerRow);
-        }, 50);
     }
-    
-    // 更新佈局
-    function updateLayout() {
-        calculateItemsPerPage();
-        updateGridLayout(itemsPerRow);
-        updatePagination();
-        showCurrentPage();
-    }
-    
-    // 計算每頁顯示數量
-    function calculateItemsPerPage() {
-        // 根據每行數量計算每頁顯示數量
-        const rowsPerPage = 6; // 每頁顯示 6 行
-        itemsPerPage = itemsPerRow * rowsPerPage;
-        itemsPerPageDisplay.textContent = itemsPerPage;
-        
-        totalPages = Math.ceil(allCards.length / itemsPerPage);
-        totalPagesSpan.textContent = totalPages;
-        
-        // 確保當前頁碼不超過總頁數
-        if (currentPage > totalPages) {
-            currentPage = Math.max(1, totalPages);
-        }
-    }
-    
-    // 監聽選擇器變化
-    itemsPerRowSelect.addEventListener('change', function() {
-        itemsPerRow = parseInt(this.value);
-        currentPage = 1; // 重設到第一頁
-        
-        // 儲存用戶選擇
-        localStorage.setItem('itemsPerRow', itemsPerRow);
-        localStorage.setItem('currentPage', currentPage);
-        
-        updateLayout();
-    });
-    
-    // 更新網格佈局
-    function updateGridLayout(itemsPerRow) {
-        console.log('Updating grid layout for', itemsPerRow, 'items per row');
-        
-        // 移除所有現有的 items-per-row 類別
-        activityGrid.className = activityGrid.className.replace(/items-per-row-\d+/g, '');
-        
-        // 添加新的類別
-        activityGrid.classList.add(`items-per-row-${itemsPerRow}`);
-        
-        // 更新所有卡片的類別
-        allCards.forEach((card, index) => {
-            // 移除所有現有的 card-size 類別
-            card.className = card.className.replace(/card-size-\d+/g, '');
-            // 添加新的類別
-            card.classList.add(`card-size-${itemsPerRow}`);
-            
-            // 調試信息
-            if (index === 0) {
-                console.log('First card classes:', card.className);
-            }
+
+    function updateMobileButtons() {
+        mobileButtons.forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.getAttribute('data-value')) === itemsPerRow);
         });
-        
-        // 強制重新計算樣式
-        activityGrid.offsetHeight;
-        
-        // 觸發重新計算佈局
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 100);
     }
-    
-    // 顯示當前頁的卡片
+
+    function calculateItemsPerPage() {
+        const rowsPerPage = 6;
+        itemsPerPage = itemsPerRow * rowsPerPage;
+        if (itemsPerPageDisplay) itemsPerPageDisplay.textContent = itemsPerPage;
+
+        totalPages = Math.ceil(allCards.length / itemsPerPage);
+        if (totalPagesSpan) totalPagesSpan.textContent = totalPages;
+
+        if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+    }
+
+    function updateGridLayout(itemsPerRow) {
+        activityGrid.classList.remove(...Array.from(activityGrid.classList)
+            .filter(c => /^items-per-row-\d+$/.test(c)));
+        activityGrid.classList.add(`items-per-row-${itemsPerRow}`);
+
+        allCards.forEach(card => {
+            card.classList.remove(...Array.from(card.classList)
+                .filter(c => /^card-size-\d+$/.test(c)));
+            card.classList.add(`card-size-${itemsPerRow}`);
+        });
+
+        activityGrid.offsetHeight;
+    }
+
     function showCurrentPage() {
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        
+
         allCards.forEach((card, index) => {
             if (index >= startIndex && index < endIndex) {
                 card.style.display = 'flex';
-                // 添加動畫效果
-                setTimeout(() => {
-                    card.classList.add('visible');
-                }, index * 50);
+                setTimeout(() => card.classList.add('visible'), index * 50);
             } else {
                 card.style.display = 'none';
                 card.classList.remove('visible');
             }
         });
-        
-        currentPageSpan.textContent = currentPage;
-        
-        // 更新按鈕狀態
-        prevBtn.disabled = currentPage === 1;
-        nextBtn.disabled = currentPage === totalPages;
-        
-        // 儲存當前頁碼
+
+        if (currentPageSpan) currentPageSpan.textContent = currentPage;
+        if (prevBtn) prevBtn.disabled = currentPage === 1;
+        if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+
         localStorage.setItem('currentPage', currentPage);
     }
-    
-    // 更新分頁按鈕
+
     function updatePagination() {
+        if (!paginationNumbers || !paginationContainer) return;
         paginationNumbers.innerHTML = '';
-        
         if (totalPages <= 1) {
             paginationContainer.style.display = 'none';
             return;
         }
-        
         paginationContainer.style.display = 'block';
-        
-        // 計算顯示的頁碼範圍
+
         let startPage = Math.max(1, currentPage - 2);
         let endPage = Math.min(totalPages, currentPage + 2);
-        
-        // 調整範圍以顯示 5 個頁碼
+
         if (endPage - startPage < 4) {
-            if (startPage === 1) {
-                endPage = Math.min(totalPages, startPage + 4);
-            } else {
-                startPage = Math.max(1, endPage - 4);
-            }
+            if (startPage === 1) endPage = Math.min(totalPages, startPage + 4);
+            else startPage = Math.max(1, endPage - 4);
         }
-        
-        // 第一頁
+
         if (startPage > 1) {
             createPageButton(1);
-            if (startPage > 2) {
-                createEllipsis();
-            }
+            if (startPage > 2) createEllipsis();
         }
-        
-        // 中間頁碼
-        for (let i = startPage; i <= endPage; i++) {
-            createPageButton(i);
-        }
-        
-        // 最後一頁
+
+        for (let i = startPage; i <= endPage; i++) createPageButton(i);
+
         if (endPage < totalPages) {
-            if (endPage < totalPages - 1) {
-                createEllipsis();
-            }
+            if (endPage < totalPages - 1) createEllipsis();
             createPageButton(totalPages);
         }
     }
-    
-    // 創建頁碼按鈕
+
     function createPageButton(pageNum) {
         const button = document.createElement('button');
         button.className = 'pagination-number';
         button.textContent = pageNum;
-        
-        if (pageNum === currentPage) {
-            button.classList.add('active');
-        }
-        
+        if (pageNum === currentPage) button.classList.add('active');
+
         button.addEventListener('click', () => {
             currentPage = pageNum;
             updatePagination();
             showCurrentPage();
         });
-        
+
         paginationNumbers.appendChild(button);
     }
-    
-    // 創建省略號
+
     function createEllipsis() {
         const ellipsis = document.createElement('span');
         ellipsis.className = 'pagination-ellipsis';
         ellipsis.textContent = '...';
         paginationNumbers.appendChild(ellipsis);
     }
-    
-    // 上一頁按鈕
-    prevBtn.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            updatePagination();
-            showCurrentPage();
-        }
-    });
-    
-    // 下一頁按鈕
-    nextBtn.addEventListener('click', () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            updatePagination();
-            showCurrentPage();
-        }
-    });
-    
-    // 初始化
-    init();
-});
 
-//index
-window.addEventListener('DOMContentLoaded', () => {
-  const popupId = sessionStorage.getItem('openPopup');
-  if (popupId) {
-    const popup = document.getElementById(popupId);
-    if (popup) {
-      popup.classList.add('active');
-      console.log(`自動開啟彈窗: ${popupId}`);
-    } else {
-      console.warn(`找不到彈窗 ID: ${popupId}`);
+    function updateLayout() {
+        calculateItemsPerPage();
+        updateGridLayout(itemsPerRow);
+        updatePagination();
+        showCurrentPage();
+        updateMobileButtons();
     }
-    sessionStorage.removeItem('openPopup');
-  }
-});
 
-// 處理活動封面圖片載入錯誤
-document.addEventListener('DOMContentLoaded', function() {
-    const coverImages = document.querySelectorAll('.activity-cover-img');
-    coverImages.forEach(img => {
-        img.addEventListener('error', function() {
-            this.src = '{% static "image/activity_test.jpg" %}';
+    if (itemsPerRowSelect) {
+        itemsPerRowSelect.addEventListener('change', function() {
+            itemsPerRow = parseInt(this.value);
+            currentPage = 1;
+            localStorage.setItem('itemsPerRow', itemsPerRow);
+            localStorage.setItem('currentPage', currentPage);
+            updateLayout();
+        });
+    }
+
+    mobileButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const value = parseInt(this.getAttribute('data-value'));
+            itemsPerRow = value;
+            currentPage = 1;
+            localStorage.setItem('itemsPerRow', itemsPerRow);
+            localStorage.setItem('currentPage', currentPage);
+
+            if (itemsPerRowSelect) itemsPerRowSelect.value = value;
+            updateLayout();
         });
     });
+
+    init();
 });
 </script>
+
 
 {% endblock %}

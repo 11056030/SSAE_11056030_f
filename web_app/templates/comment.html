@@ -126,6 +126,10 @@
     </div>
   </div>
 
+  <button id="backToTopBtn">
+    回到頂端
+  </button>
+
   <div class="deco-line"></div>
 </div>
 
@@ -212,7 +216,29 @@
         });
       }
     });
-  
+  </script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("backToTopBtn");
+
+      if (!btn) {
+          console.error("backToTopBtn 不存在，請確認 HTML 有加！");
+          return;
+      }
+
+      window.addEventListener("scroll", () => {
+          console.log("scrollY:", window.scrollY);  // debug：確定有觸發
+          if (window.scrollY > 200) {
+              btn.classList.add("show");
+          } else {
+              btn.classList.remove("show");
+          }
+      });
+
+      btn.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+  });
   </script>
 
   

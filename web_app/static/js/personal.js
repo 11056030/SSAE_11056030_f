@@ -206,6 +206,7 @@ try {
 
   document.querySelectorAll('.gflag').forEach(btn=>{
     btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id || '';
       const title = btn.dataset.title || '活動';
       const weekday = btn.dataset.weekday || '';
       const month = btn.dataset.month || '';
@@ -217,6 +218,7 @@ try {
       const desc = btn.dataset.desc || '';
 
       elTitle.textContent = title;
+      elTitle.href = `/activities/${id}`;
       elWhen.textContent  = `${month}/${date} ${weekday} ${time}`;
       elWhere.textContent = location;
       elPeople.textContent= `${total}/${max} 人`;
@@ -274,10 +276,11 @@ window.addEventListener('load', function() {
     });
 });
 document.addEventListener('DOMContentLoaded', function() {
+    const segments = document.querySelectorAll('.progress-segment');
     segments.forEach(segment => {
         const w = parseFloat(getComputedStyle(segment).width);
-            if (w <= 1) segment.style.pointerEvents = 'none';
-        });
+        if (w <= 1) segment.style.pointerEvents = 'none';
+    });
 });
 
 

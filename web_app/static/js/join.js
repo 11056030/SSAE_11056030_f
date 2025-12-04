@@ -340,6 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // 設為全域函數
 window.triggerNavbarLogin = triggerNavbarLogin;
 
+/*
 // 初始化手機版網格按鈕功能
 function initializeMobileGridButtons() {
     const mobileButtons = document.querySelectorAll('.grid-btn');
@@ -430,6 +431,7 @@ function initializeMobileGridButtons() {
     
     console.log('手機版網格按鈕已初始化');
 }
+*/
 
 // 初始化AJAX表單處理
 function initializeAjaxForms() {
