@@ -1,0 +1,485 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}我的課表{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/personal.css' %}">
+<style>
+  .schedule-page-container { max-width: 1200px; margin: 40px auto; padding: 20px; }
+  .schedule-card { background: #fff; border-radius: 18px; padding: 28px 30px; box-shadow: 0 18px 40px rgba(15,23,42,.14); }
+  .schedule-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .schedule-header h1 { font-size:26px; font-weight:700; letter-spacing:0.03em; }
+  .schedule-form-row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; margin-bottom:16px; }
+  .schedule-form-group { display:flex; flex-direction:column; min-width:200px; }
+  .schedule-form-group label { font-size:14px; margin-bottom:4px; color:#4b5563; }
+  .schedule-form-group input { border-radius:8px; border:1px solid #d1d5db; padding:8px 11px; font-size:14px; transition:border-color .15s ease, box-shadow .15s ease; }
+  .schedule-form-group input:focus { outline:none; border-color:#7e6a8a; box-shadow:0 0 0 1px rgba(126,106,138,.28); }
+  .btn-primary { border:none; border-radius:999px; padding:8px 18px; background:#7e6a8a; color:#fff; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .btn-primary:disabled { opacity:.6; cursor:not-allowed; }
+  .status-text { font-size:13px; color:#4b5563; min-height:18px; margin-top:4px; }
+  #syncStatus { color:#7e6a8a; }
+  #scheduleHint { color:#6b7280; }
+  .schedule-table-wrapper { margin-top:24px; overflow-x:auto; }
+  table.schedule-table { border-collapse:collapse; width:100%; min-width:720px; font-size:13px; table-layout:fixed; }
+  table.schedule-table th, table.schedule-table td { border:1px solid #e5e7eb; padding:8px 8px; text-align:center; vertical-align:top; }
+  table.schedule-table th { background:#7e6a8a; font-weight:600; color:#fff; }
+  table.schedule-table td.period-cell { background:#f5f3f7; font-weight:600; width:80px; white-space:pre-line; color:#4b3c59; }
+  .course-cell { font-size:12px; line-height:1.5; padding:4px 4px; border-radius:8px; transition:background-color .15s ease, transform .1s ease; background:#f9f8fa; }
+  .course-cell:hover { background:#e9e4ee; transform:translateY(-1px); }
+  .course-name { font-weight:650; margin-bottom:2px; color:#111827; }
+  .course-meta { color:#4b5563; font-size:11px; }
+  .badge-semester { font-size:12px; padding:2px 8px; border-radius:999px; background:#e5e0eb; color:#6d5a7b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="schedule-page-container">
+  <div class="schedule-card">
+    <div class="schedule-header">
+      <h1>我的課表</h1>
+      <div style="display:flex; gap:12px;">
+        <button type="button" id="syncScheduleBtn" class="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          同步課表
+        </button>
+        <button type="button" class="btn-primary" style="background:#6b7280;" onclick="history.back();">
+          ← 回個人中心
+        </button>
+      </div>
+    </div>
+
+    <div class="schedule-table-wrapper">
+      <div class="status-text" id="scheduleHint">請先同步課表，或如果已同步可以直接載入現有課表。</div>
+      <table class="schedule-table" id="scheduleTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>節次 / 時間</th>
+            <th>一</th>
+            <th>二</th>
+            <th>三</th>
+            <th>四</th>
+            <th>五</th>
+            <th>六</th>
+            <th>日</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_js %}
+<script>
+// ===== 自訂彈窗函數（複製自 personal.html）=====
+function showCustomPrompt(title, message, inputType = 'password') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:10000; animation:fadeIn 0.2s ease;';
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background:#fff; border-radius:16px; padding:28px 32px; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:slideUp 0.3s ease;';
+    
+    modal.innerHTML = `
+      <h3 style="margin:0 0 8px 0; font-size:20px; font-weight:600; color:#1f2937;">${title}</h3>
+      <p style="margin:0 0 16px 0; font-size:14px; color:#6b7280; line-height:1.5;">${message}</p>
+      
+      <div style="background:#f9fafb; border-radius:8px; padding:14px 16px; margin-bottom:16px; border-left:3px solid #7e6a8a;">
+        <div style="display:flex; align-items:start; gap:10px; margin-bottom:10px;">
+          <input type="checkbox" id="agreeTerms" style="margin-top:3px; cursor:pointer; width:16px; height:16px;">
+          <label for="agreeTerms" style="font-size:13px; color:#374151; line-height:1.6; cursor:pointer; user-select:none;">
+            我已閱讀並同意以下事項：
+          </label>
+        </div>
+        <ul style="margin:8px 0 0 26px; padding:0; font-size:12px; color:#6b7280; line-height:1.7;">
+          <li style="margin-bottom:6px;">
+            <strong style="color:#374151;">隱私保護：</strong>我們不會儲存您的校務系統密碼，此密碼僅用於即時爬取資料。
+          </li>
+          <li>
+            <strong style="color:#374151;">資料使用：</strong>您的課表資料將被儲存於本系統資料庫，用於個人化功能展示。
+          </li>
+        </ul>
+      </div>
+      
+      <div style="position:relative;">
+        <input type="${inputType}" id="customPromptInput" disabled style="width:100%; padding:10px 40px 10px 14px; border:2px solid #e5e7eb; border-radius:8px; font-size:14px; transition:border-color 0.2s; box-sizing:border-box; background:#f3f4f6;" placeholder="請先勾選同意條款">
+        <button type="button" id="togglePassword" disabled style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:4px; display:flex; align-items:center; opacity:0.4;">
+          <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+      <div style="display:flex; gap:12px; margin-top:20px; justify-content:flex-end;">
+        <button id="customPromptCancel" style="padding:8px 20px; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:#374151; font-size:14px; cursor:pointer; transition:all 0.2s;">取消</button>
+        <button id="customPromptConfirm" disabled style="padding:8px 20px; border:none; border-radius:8px; background:#d1d5db; color:#9ca3af; font-size:14px; cursor:not-allowed; transition:all 0.2s;">確定</button>
+      </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const input = modal.querySelector('#customPromptInput');
+    const cancelBtn = modal.querySelector('#customPromptCancel');
+    const confirmBtn = modal.querySelector('#customPromptConfirm');
+    const agreeCheckbox = modal.querySelector('#agreeTerms');
+    const togglePasswordBtn = modal.querySelector('#togglePassword');
+    const eyeIcon = modal.querySelector('#eyeIcon');
+    
+    // 切換密碼顯示/隱藏
+    let isPasswordVisible = false;
+    togglePasswordBtn.onclick = () => {
+      isPasswordVisible = !isPasswordVisible;
+      input.type = isPasswordVisible ? 'text' : 'password';
+      
+      if (isPasswordVisible) {
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        `;
+      } else {
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        `;
+      }
+    };
+    
+    // 勾選條款後才能輸入密碼
+    agreeCheckbox.onchange = () => {
+      if (agreeCheckbox.checked) {
+        input.disabled = false;
+        input.style.background = '#fff';
+        input.placeholder = '請輸入密碼';
+        input.focus();
+        confirmBtn.disabled = false;
+        confirmBtn.style.background = '#7e6a8a';
+        confirmBtn.style.color = '#fff';
+        confirmBtn.style.cursor = 'pointer';
+        togglePasswordBtn.disabled = false;
+        togglePasswordBtn.style.opacity = '1';
+        togglePasswordBtn.style.cursor = 'pointer';
+      } else {
+        input.disabled = true;
+        input.style.background = '#f3f4f6';
+        input.placeholder = '請先勾選同意條款';
+        input.value = '';
+        confirmBtn.disabled = true;
+        confirmBtn.style.background = '#d1d5db';
+        confirmBtn.style.color = '#9ca3af';
+        confirmBtn.style.cursor = 'not-allowed';
+        togglePasswordBtn.disabled = true;
+        togglePasswordBtn.style.opacity = '0.4';
+        togglePasswordBtn.style.cursor = 'not-allowed';
+        isPasswordVisible = false;
+        input.type = 'password';
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        `;
+      }
+    };
+    
+    // Hover effects
+    confirmBtn.onmouseenter = () => {
+      if (!confirmBtn.disabled) confirmBtn.style.background = '#6d5a7b';
+    };
+    confirmBtn.onmouseleave = () => {
+      if (!confirmBtn.disabled) confirmBtn.style.background = '#7e6a8a';
+    };
+    cancelBtn.onmouseenter = () => cancelBtn.style.background = '#f3f4f6';
+    cancelBtn.onmouseleave = () => cancelBtn.style.background = '#fff';
+    input.onfocus = () => {
+      if (!input.disabled) input.style.borderColor = '#7e6a8a';
+    };
+    input.onblur = () => input.style.borderColor = '#e5e7eb';
+    
+    const close = (value) => {
+      overlay.style.animation = 'fadeOut 0.2s ease';
+      setTimeout(() => overlay.remove(), 200);
+      resolve(value);
+    };
+    
+    confirmBtn.onclick = () => {
+      if (!confirmBtn.disabled) close(input.value);
+    };
+    cancelBtn.onclick = () => close(null);
+    input.onkeypress = (e) => { 
+      if (e.key === 'Enter' && !confirmBtn.disabled) close(input.value); 
+    };
+    overlay.onclick = (e) => { if (e.target === overlay) close(null); };
+  });
+}
+
+function showCustomAlert(title, message, type = 'success') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:10000; animation:fadeIn 0.2s ease;';
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background:#fff; border-radius:16px; padding:28px 32px; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:slideUp 0.3s ease;';
+    
+    const icon = type === 'success' 
+      ? '<svg style="color:#10b981; margin-bottom:12px;" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+      : '<svg style="color:#f59e0b; margin-bottom:12px;" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    
+    modal.innerHTML = `
+      <div style="text-align:center;">
+        ${icon}
+        <h3 style="margin:0 0 8px 0; font-size:20px; font-weight:600; color:#1f2937;">${title}</h3>
+        <p style="margin:0 0 24px 0; font-size:14px; color:#6b7280; line-height:1.5;">${message}</p>
+        <button id="customAlertOk" style="padding:10px 32px; border:none; border-radius:8px; background:#7e6a8a; color:#fff; font-size:14px; cursor:pointer; transition:all 0.2s;">確定</button>
+      </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const okBtn = modal.querySelector('#customAlertOk');
+    okBtn.onmouseenter = () => okBtn.style.background = '#6d5a7b';
+    okBtn.onmouseleave = () => okBtn.style.background = '#7e6a8a';
+    
+    const close = () => {
+      overlay.style.animation = 'fadeOut 0.2s ease';
+      setTimeout(() => overlay.remove(), 200);
+      resolve();
+    };
+    
+    okBtn.onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+  });
+}
+
+// 加上動畫
+const modalStyle = document.createElement('style');
+modalStyle.textContent = `
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+`;
+document.head.appendChild(modalStyle);
+
+(function() {
+  const syncBtn = document.getElementById('syncScheduleBtn');
+  const scheduleTable = document.getElementById('scheduleTable');
+  const scheduleTableBody = document.getElementById('scheduleTableBody');
+  const scheduleHint = document.getElementById('scheduleHint');
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  const PERIOD_ORDER = [
+    '08:10-09:00',
+    '09:10-10:00',
+    '10:10-11:00',
+    '11:10-12:00',
+    '13:10-14:00',
+    '14:10-15:00',
+    '15:10-16:00',
+    '16:10-17:00',
+    '17:10-18:00',
+    '18:10-19:00',
+    '19:10-20:00',
+    '20:10-21:00'
+  ];
+
+  function buildScheduleGrid(courses) {
+    const grid = {};
+    const periodSet = new Set();
+
+    courses.forEach(c => {
+      const st = c.start_time;
+      const et = c.end_time;
+      if (!st || !et || !c.day_of_week) return;
+      const key = st + '-' + et;
+      periodSet.add(key);
+      const day = c.day_of_week;
+      if (!grid[key]) grid[key] = {};
+      if (!grid[key][day]) grid[key][day] = [];
+      grid[key][day].push(c);
+    });
+
+    const periods = Array.from(periodSet).sort((a,b) => {
+      const ai = PERIOD_ORDER.indexOf(a);
+      const bi = PERIOD_ORDER.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+
+    scheduleTableBody.innerHTML = '';
+
+    periods.forEach(pkey => {
+      const tr = document.createElement('tr');
+      const tdPeriod = document.createElement('td');
+      tdPeriod.className = 'period-cell';
+      const parts = pkey.split('-');
+      tdPeriod.textContent = (parts[0] || '') + '\n' + (parts[1] || '');
+      tr.appendChild(tdPeriod);
+
+      for (let day = 1; day <= 7; day++) {
+        const td = document.createElement('td');
+        const list = (grid[pkey] && grid[pkey][day]) || [];
+        if (list.length) {
+          list.forEach(c => {
+            const wrap = document.createElement('div');
+            wrap.className = 'course-cell';
+            const nameEl = document.createElement('div');
+            nameEl.className = 'course-name';
+            nameEl.textContent = c.course_name || '';
+            const metaEl = document.createElement('div');
+            metaEl.className = 'course-meta';
+            metaEl.textContent = [c.teacher || '', c.classroom || ''].filter(Boolean).join(' / ');
+            wrap.appendChild(nameEl);
+            wrap.appendChild(metaEl);
+            td.appendChild(wrap);
+          });
+        }
+        tr.appendChild(td);
+      }
+      scheduleTableBody.appendChild(tr);
+    });
+
+    if (periods.length === 0) {
+      scheduleHint.textContent = '目前沒有找到課表資料，請先同步或稍後再試。';
+      scheduleTable.style.display = 'none';
+    } else {
+      scheduleHint.textContent = '';
+      scheduleTable.style.display = '';
+    }
+  }
+
+  async function fetchCurrentSchedule() {
+    try {
+      const resp = await fetch('/api/class-schedule/', { credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('載入課表失敗');
+      const data = await resp.json();
+      if (!data.success) throw new Error(data.message || '載入課表失敗');
+
+      const payload = data.data || {};
+      const list = Array.isArray(payload.schedules) ? payload.schedules : [];
+      if (list.length === 0) return;  // 沒有歷史課表就不顯示
+
+      buildScheduleGrid(list);
+
+      if (payload.semester) {
+        const sem = payload.semester;
+        const semText = typeof sem === 'string' ? sem : (sem.fullText || '');
+        if (semText) {
+          syncStatus.textContent = '已載入上次同步的課表（' + semText + '）';
+        } else {
+          syncStatus.textContent = '已載入上次同步的課表。';
+        }
+      } else {
+        syncStatus.textContent = '已載入上次同步的課表。';
+      }
+    } catch (e) {
+      // 沒有歷史課表或載入失敗時可以靜默忽略
+    }
+  }
+
+  // 同步課表按鈕
+  syncBtn.addEventListener('click', async function() {
+    const password = await showCustomPrompt('同步課表', '請輸入校務系統密碼以同步課表資料：');
+    if (!password) return;
+
+    syncBtn.disabled = true;
+    const originalHTML = syncBtn.innerHTML;
+    syncBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>同步中...';
+    scheduleHint.textContent = '正在同步課表，可能需要數十秒，請稍候...';
+
+    try {
+      const csrfToken = getCookie('csrftoken');
+      
+      const resp = await fetch('/api/sync-schedule/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ password })
+      });
+
+      if (!resp.ok) {
+        let errorMessage = '同步失敗，請稍後再試';
+        try {
+          const errorData = await resp.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // 如果無法解析 JSON，使用預設訊息
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await resp.json();
+      if (!data.success) {
+        throw new Error(data.message || '同步失敗');
+      }
+
+      // 直接使用同步 API 回傳的課表資料在前端顯示
+      const payload = data.data || {};
+      const courses = payload.courses || [];
+      buildScheduleGrid(Array.isArray(courses) ? courses : []);
+
+      let successMsg = '課表同步成功！';
+      if (payload.semester) {
+        const s = payload.semester;
+        let semText = '';
+        
+        if (typeof s === 'string') {
+          // 如果是字串格式（例如 "1131"），解析成學年度和學期
+          if (s.length === 4) {
+            const year = s.substring(0, 3);
+            const term = s.substring(3);
+            semText = `${year}學年度第${term}學期`;
+          } else {
+            semText = s;
+          }
+        } else if (typeof s === 'object') {
+          // 如果是物件格式
+          semText = s.fullText || `${s.year || ''}學年度第${s.term || ''}學期`;
+        }
+        
+        if (semText) {
+          successMsg = `課表同步成功（${semText}）！`;
+        }
+      }
+      
+      await showCustomAlert('同步成功', successMsg, 'success');
+    } catch (err) {
+      let errorMessage = err.message;
+      if (err.message === 'Failed to fetch') {
+        errorMessage = '無法連接到伺服器，請確認 Django 伺服器是否正在運行';
+      }
+      await showCustomAlert('同步失敗', errorMessage, 'error');
+    } finally {
+      syncBtn.disabled = false;
+      syncBtn.innerHTML = originalHTML;
+    }
+  });
+
+  // 頁面載入時，嘗試載入上次同步的課表
+  fetchCurrentSchedule();
+
+})();
+</script>
+{% endblock %}
