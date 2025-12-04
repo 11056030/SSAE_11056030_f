@@ -173,7 +173,7 @@
                             </div>
                             
                             <!-- 已參加的人頭像 -->
-                            {% for participant in a.cleaned_participants|slice:":3" %}
+                            {% for participant in a.cleaned_participants|slice:":1" %}
                                 <div class="participant-avatar" title="{{ participant.user_display_name }}">
                                     {% if participant.user.profile.avatar %}
                                         <img src="{{ participant.user.profile.avatar.url }}" alt="{{ participant.user.username }}">
@@ -184,9 +184,9 @@
                                     {% endif %}
                                 </div>
                             {% endfor %}
-                            
-                            {% if a.participants_count > 3 %}
-                                <div class="participant-avatar more">+{{ a.participants_count|add:"-3" }}</div>
+
+                            {% if a.participants_count > 1 %}
+                                <div class="participant-avatar more">+{{ a.participants_count|add:"-1" }}</div>
                             {% endif %}
                         </div>
                         
