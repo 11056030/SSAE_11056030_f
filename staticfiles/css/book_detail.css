@@ -499,7 +499,6 @@ body {
     border-radius: 16px;
     overflow: hidden;
     text-decoration: none;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     position: relative;
     border: 1px solid rgba(111, 85, 125, 0.1);

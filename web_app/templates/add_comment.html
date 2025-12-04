@@ -171,6 +171,23 @@
 
 <script src="{% static 'js/pop_window/comment_toast.js' %}"></script>
 
+
+<!-- 學制→科系對應表 -->
+<script id="departments-data" type="application/json">
+  {{ departments_data|safe }}
+</script>
+
+<!-- 學制→年級對應表 -->
+<script id="grades-data" type="application/json">
+  {{ grades_data|safe }}
+</script>
+
+<!-- 課程清單（含學制／科系／年級） -->
+<script id="courses-data" type="application/json">
+  {{ courses_json|safe }}
+</script>
+
+
 <!-- 提供目前使用者資訊，實名顯示時會使用 -->
 <script type="application/json" id="current-user">
 {
